@@ -160,11 +160,6 @@ async function secureFetchRaw(url: URL): Promise<Buffer> {
   }
 }
 
-async function secureFetch(url: URL): Promise<string> {
-  const raw = await secureFetchRaw(url);
-  return new TextDecoder("utf-8").decode(raw);
-}
-
 /** Fetch a URL and decompress if gzip. */
 async function secureFetchText(url: URL): Promise<string> {
   const raw = await secureFetchRaw(url);
@@ -225,6 +220,22 @@ function fail(err: unknown): IpcError {
   return { ok: false, error: message };
 }
 
+/** Validate that a value is a non-empty string. */
+function requireString(val: unknown, label: string): string {
+  if (typeof val !== "string" || val.trim() === "") {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return val;
+}
+
+/** Validate that a value is a finite non-negative number. */
+function requireFiniteNumber(val: unknown, label: string): number {
+  if (typeof val !== "number" || !Number.isFinite(val) || val < 0) {
+    throw new Error(`${label} must be a finite non-negative number`);
+  }
+  return val;
+}
+
 // ── Register all IPC handlers ─────────────────────────────────────────
 
 export function registerIpcHandlers(): void {
@@ -256,7 +267,7 @@ export function registerIpcHandlers(): void {
     async (_event, rawUrl: unknown): Promise<IpcResponse<Playlist>> => {
       try {
         const url = validateUrl(rawUrl);
-        const text = await secureFetch(url);
+        const text = await secureFetchText(url);
         return ok(parseM3U(text));
       } catch (err) {
         return fail(err);
@@ -462,6 +473,8 @@ export function registerIpcHandlers(): void {
     IpcChannels.DB_SET_SETTING,
     (_event, args: { key: string; value: string }) => {
       try {
+        requireString(args.key, "settings key");
+        if (typeof args.value !== "string") throw new Error("settings value must be a string");
         setSetting(args.key, args.value);
         // Side-effects for certain settings
         if (args.key === "discordRpcEnabled") {
@@ -493,11 +506,16 @@ export function registerIpcHandlers(): void {
       },
     ) => {
       try {
+        requireString(args.channelUrl, "channelUrl");
+        requireString(args.channelName, "channelName");
+        requireFiniteNumber(args.startedAt, "startedAt");
+        requireFiniteNumber(args.stoppedAt, "stoppedAt");
+        requireFiniteNumber(args.durationSec, "durationSec");
         const row = saveWatchSession(
           args.channelUrl,
           args.channelName,
-          args.channelLogo,
-          args.groupTitle,
+          args.channelLogo || "",
+          args.groupTitle || "",
           args.startedAt,
           args.stoppedAt,
           args.durationSec,
