@@ -42,6 +42,10 @@ let socket: net.Socket | null = null;
 let connected = false;
 let enabled = false;
 let nonce = 0;
+/** Timestamp of the last failed connection attempt (backoff). */
+let lastConnectAttempt = 0;
+/** Minimum ms between connection attempts. */
+const CONNECT_COOLDOWN_MS = 15_000;
 
 // ── Public API ────────────────────────────────────────────────────────
 
@@ -58,6 +62,8 @@ export async function setActivity(activity: DiscordActivity): Promise<void> {
   if (!enabled) return;
 
   if (!connected) {
+    // Backoff: don't spam connection attempts
+    if (Date.now() - lastConnectAttempt < CONNECT_COOLDOWN_MS) return;
     const ok = await tryConnect();
     if (!ok) return;
   }
@@ -113,6 +119,7 @@ function getSocketPath(): string {
 }
 
 async function tryConnect(): Promise<boolean> {
+  lastConnectAttempt = Date.now();
   return new Promise((resolve) => {
     try {
       const sockPath = getSocketPath();
@@ -176,7 +183,7 @@ function sendFrame(payload: Record<string, unknown>): void {
 }
 
 function sendPacket(opCode: OpCode, payload: Record<string, unknown>): void {
-  if (!socket) return;
+  if (!socket || socket.destroyed) return;
 
   try {
     const data = JSON.stringify(payload);
@@ -187,6 +194,9 @@ function sendPacket(opCode: OpCode, payload: Record<string, unknown>): void {
     socket.write(header);
     socket.write(data);
   } catch {
-    /* fail silently */
+    // Socket may have been destroyed between the check and the write —
+    // fail silently and let the next setActivity reconnect.
+    connected = false;
+    socket = null;
   }
 }

@@ -95,6 +95,9 @@ function stopTimer(): void {
   }
 }
 
+/** Maximum time (ms) a single refresh cycle is allowed to take. */
+const MAX_REFRESH_DURATION_MS = 60_000;
+
 /**
  * Perform the actual refresh:
  * 1. Notify renderer that refresh has started
@@ -103,18 +106,26 @@ function stopTimer(): void {
  *
  * Heavy lifting (fetch + parse) is done by the existing IPC handlers,
  * but we invoke the DB layer directly here to keep things simple.
+ *
+ * A timeout guard ensures `refreshing` is always cleared even if the
+ * listed operations stall.
  */
 async function doRefresh(): Promise<void> {
   refreshing = true;
   notifyRenderer({ type: "start" });
 
+  const timeout = setTimeout(() => {
+    if (refreshing) {
+      console.warn("[scheduler] doRefresh timed out — forcing reset");
+      refreshing = false;
+      notifyRenderer({ type: "error", error: "Refresh timed out" });
+    }
+  }, MAX_REFRESH_DURATION_MS);
+
   try {
     const playlists = listPlaylists();
     const epgSources = listEpgSources();
 
-    // Notify completion with counts (actual re-fetch would be done via
-    // the same IPC load handlers — the renderer should trigger those).
-    // For now we just signal the renderer to re-trigger its load logic.
     lastRefreshAt = Date.now();
 
     notifyRenderer({
@@ -129,6 +140,7 @@ async function doRefresh(): Promise<void> {
       error: err instanceof Error ? err.message : String(err),
     });
   } finally {
+    clearTimeout(timeout);
     refreshing = false;
   }
 }

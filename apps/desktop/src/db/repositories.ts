@@ -411,7 +411,10 @@ export function setSetting(key: string, value: string): void {
 //  Watch History (F4)
 // ═══════════════════════════════════════════════════════════════════════
 
-/** Record a watch session. */
+/** Maximum rows to keep in watch_history. */
+const MAX_WATCH_HISTORY_ROWS = 500;
+
+/** Record a watch session and prune old rows beyond the limit. */
 export function saveWatchSession(
   channelUrl: string,
   channelName: string,
@@ -422,27 +425,39 @@ export function saveWatchSession(
   durationSec: number,
 ): WatchHistoryRow {
   const db = getDb();
-  const info = db
-    .prepare(
-      `INSERT INTO watch_history
-         (channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(channelUrl, startedAt) DO UPDATE SET
-         stoppedAt   = excluded.stoppedAt,
-         durationSec = excluded.durationSec`,
-    )
-    .run(channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec);
 
-  return {
-    id: Number(info.lastInsertRowid),
-    channelUrl,
-    channelName,
-    channelLogo,
-    groupTitle,
-    startedAt,
-    stoppedAt,
-    durationSec,
-  };
+  const row = db.transaction(() => {
+    const info = db
+      .prepare(
+        `INSERT INTO watch_history
+           (channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(channelUrl, startedAt) DO UPDATE SET
+           stoppedAt   = excluded.stoppedAt,
+           durationSec = excluded.durationSec`,
+      )
+      .run(channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec);
+
+    // Prune old rows beyond the limit
+    db.prepare(
+      `DELETE FROM watch_history WHERE id NOT IN (
+         SELECT id FROM watch_history ORDER BY startedAt DESC LIMIT ?
+       )`,
+    ).run(MAX_WATCH_HISTORY_ROWS);
+
+    return {
+      id: Number(info.lastInsertRowid),
+      channelUrl,
+      channelName,
+      channelLogo,
+      groupTitle,
+      startedAt,
+      stoppedAt,
+      durationSec,
+    };
+  })();
+
+  return row;
 }
 
 /** List recent watch sessions. */
