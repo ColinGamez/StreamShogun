@@ -1,0 +1,29 @@
+{
+  "name": "@stream-shogun/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "concurrently -k -n UI,ELECTRON \"vite\" \"pnpm --filter @stream-shogun/desktop dev\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@stream-shogun/core": "workspace:*",
+    "hls.js": "^1.6.15",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^7.13.1",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^8.2.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0"
+  }
+}

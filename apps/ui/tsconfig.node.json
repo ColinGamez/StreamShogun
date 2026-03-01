@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "composite": true,
+    "outDir": "./dist-node",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["vite.config.ts"]
+}

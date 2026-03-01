@@ -1,0 +1,28 @@
+{
+  "name": "@stream-shogun/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "npx tsx src/__demo__/m3u-parser.demo.ts && npx tsx src/__demo__/xmltv-epg.demo.ts",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.4.1"
+  }
+}

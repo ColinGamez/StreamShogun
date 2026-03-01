@@ -1,0 +1,7 @@
+node_modules
+dist
+dist-tsc
+release
+out
+pnpm-lock.yaml
+CHANGELOG.md

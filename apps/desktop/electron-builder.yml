@@ -1,0 +1,43 @@
+appId: com.stream-shogun.app
+productName: StreamShōgun
+copyright: Copyright © 2026 StreamShōgun
+
+directories:
+  output: release
+  buildResources: build
+
+icon: build/icon.png
+
+files:
+  - dist/**/*
+  - node_modules/better-sqlite3/**/*
+  - "!node_modules/**/*"
+
+extraResources:
+  - from: ../ui/dist
+    to: renderer
+
+mac:
+  category: public.app-category.entertainment
+  icon: build/icon.png
+  target:
+    - dmg
+    - zip
+
+win:
+  icon: build/icon.png
+  target:
+    - nsis
+    - portable
+
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+
+linux:
+  icon: build/icon.png
+  target:
+    - AppImage
+    - deb
+  category: Utility
