@@ -5,6 +5,7 @@ import { useAppStore } from "./stores/app-store";
 import { Sidebar, type Page } from "./components/Sidebar";
 import { Welcome } from "./components/Welcome";
 import { ToastContainer } from "./components/Toast";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LibraryPage } from "./pages/Library";
 import { ChannelsPage } from "./pages/Channels";
 import { GuidePage } from "./pages/Guide";
@@ -55,11 +56,13 @@ function App() {
   if (isPip && pipUrl) {
     return (
       <div className="app-pip">
-        <PlayerPage
-          onNavigate={() => { /* noop in PIP mode */ }}
-          pipUrl={pipUrl}
-          pipName={pipName}
-        />
+        <ErrorBoundary label="PIP Player">
+          <PlayerPage
+            onNavigate={() => { /* noop in PIP mode */ }}
+            pipUrl={pipUrl}
+            pipName={pipName}
+          />
+        </ErrorBoundary>
       </div>
     );
   }
@@ -82,12 +85,12 @@ function App() {
       <Sidebar current={page} onChange={setPage} />
 
       <main className="app-main">
-        {page === "library" && <LibraryPage />}
-        {page === "channels" && <ChannelsPage onPlay={handlePlay} />}
-        {page === "guide" && <GuidePage onPlay={handlePlay} />}
-        {page === "player" && <PlayerPage onNavigate={(p) => setPage(p)} />}
-        {page === "history" && <HistoryPage onPlay={handlePlay} />}
-        {page === "settings" && <SettingsPage />}
+        {page === "library" && <ErrorBoundary label="Library"><LibraryPage /></ErrorBoundary>}
+        {page === "channels" && <ErrorBoundary label="Channels"><ChannelsPage onPlay={handlePlay} /></ErrorBoundary>}
+        {page === "guide" && <ErrorBoundary label="Guide"><GuidePage onPlay={handlePlay} /></ErrorBoundary>}
+        {page === "player" && <ErrorBoundary label="Player"><PlayerPage onNavigate={(p) => setPage(p)} /></ErrorBoundary>}
+        {page === "history" && <ErrorBoundary label="History"><HistoryPage onPlay={handlePlay} /></ErrorBoundary>}
+        {page === "settings" && <ErrorBoundary label="Settings"><SettingsPage /></ErrorBoundary>}
       </main>
 
       <ToastContainer />

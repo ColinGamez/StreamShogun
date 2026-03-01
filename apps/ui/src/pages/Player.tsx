@@ -47,8 +47,8 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
       const durationSec = Math.round((stoppedAt - startedAt) / 1000);
       if (durationSec >= 5) {
         // Only save if watched for at least 5 seconds
-        // We can't easily get prev channel details, but we track the URL at minimum
-        saveWatch(prevUrl, prevChannelRef.current || "", "", "", startedAt, stoppedAt, durationSec);
+        saveWatch(prevUrl, prevChannelRef.current || "", "", "", startedAt, stoppedAt, durationSec)
+          .catch(() => { /* best-effort */ });
       }
     }
 
@@ -68,7 +68,7 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
           watchStartRef.current,
           stoppedAt,
           dur,
-        );
+        ).catch(() => { /* best-effort on unmount */ });
       }
     };
   }, [effectiveChannel?.url]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -80,10 +80,10 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
       `Watching ${effectiveChannel.name}`,
       effectiveChannel.groupTitle || "Live TV",
       Math.floor(Date.now() / 1000),
-    );
+    ).catch(() => { /* best-effort */ });
 
     return () => {
-      bridge.discordClearActivity();
+      bridge.discordClearActivity().catch(() => { /* best-effort */ });
     };
   }, [effectiveChannel?.url, settings.discordRpcEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 

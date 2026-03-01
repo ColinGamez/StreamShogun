@@ -246,8 +246,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ dbReady: true, dbPlaylists, dbFavorites, dbEpgSources });
 
     // Load settings & watch history (non-blocking for startup)
-    get().loadSettings();
-    get().loadWatchHistory();
+    get().loadSettings().catch(() => { /* best-effort */ });
+    get().loadWatchHistory().catch(() => { /* best-effort */ });
   },
 
   dbSavePlaylist: async (name, sourceType, sourceValue, channels) => {
