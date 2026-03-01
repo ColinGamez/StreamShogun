@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tv SYSTEM "xmltv.dtd">
+<tv source-info-url="https://example.com/epg" generator-info-name="StreamShogun-Sample">
+
+  <!-- ── Channels ────────────────────────────────────── -->
+  <channel id="bbc1.uk">
+    <display-name>BBC One</display-name>
+    <display-name>BBC 1</display-name>
+    <icon src="https://logo.example.com/bbc1.png"/>
+    <url>https://www.bbc.co.uk/bbcone</url>
+  </channel>
+
+  <channel id="cnn.us">
+    <display-name>CNN International</display-name>
+    <icon src="https://logo.example.com/cnn.png"/>
+  </channel>
+
+  <channel id="nhk.jp">
+    <display-name>NHK World</display-name>
+    <display-name>NHK ワールド</display-name>
+    <icon src="https://logo.example.com/nhk.png"/>
+  </channel>
+
+  <!-- ── BBC One programmes (2 Mar 2026, UTC) ────────── -->
+  <programme start="20260302060000 +0000" stop="20260302073000 +0000" channel="bbc1.uk">
+    <title>BBC Breakfast</title>
+    <desc>The latest news, sport, business and weather from the BBC's Breakfast team.</desc>
+    <category>News</category>
+    <category>Morning</category>
+  </programme>
+
+  <programme start="20260302073000 +0000" stop="20260302100000 +0000" channel="bbc1.uk">
+    <title>Morning Live</title>
+    <sub-title>Episode 312</sub-title>
+    <desc>Topical magazine show with expert advice and celebrity guests.</desc>
+    <category>Magazine</category>
+    <episode-num system="onscreen">S04E12</episode-num>
+  </programme>
+
+  <programme start="20260302100000 +0000" stop="20260302110000 +0000" channel="bbc1.uk">
+    <title>Homes Under the Hammer</title>
+    <desc>Property auction programme following first-time buyers and seasoned investors.</desc>
+    <category>Lifestyle</category>
+    <category>Property</category>
+    <episode-num system="xmltv_ns">14.7.</episode-num>
+    <icon src="https://images.example.com/huth.jpg"/>
+    <rating>
+      <value>7.2/10</value>
+    </rating>
+  </programme>
+
+  <programme start="20260302110000 +0000" stop="20260302120000 +0000" channel="bbc1.uk">
+    <title>Bargain Hunt</title>
+    <desc>Teams compete to find bargains at antiques fairs and car boot sales.</desc>
+    <category>Entertainment</category>
+  </programme>
+
+  <programme start="20260302120000 +0000" stop="20260302130000 +0000" channel="bbc1.uk">
+    <title>BBC News at One</title>
+    <desc>National and international news from the BBC.</desc>
+    <category>News</category>
+  </programme>
+
+  <programme start="20260302130000 +0000" stop="20260302141500 +0000" channel="bbc1.uk">
+    <title>Doctors</title>
+    <sub-title>A New Dawn</sub-title>
+    <desc>Drama series set in a doctor's surgery in the fictional town of Letherbridge.</desc>
+    <category>Drama</category>
+    <episode-num system="onscreen">S24E96</episode-num>
+  </programme>
+
+  <programme start="20260302180000 +0000" stop="20260302183000 +0000" channel="bbc1.uk">
+    <title>BBC News at Six</title>
+    <desc>The latest national and international news stories from the BBC.</desc>
+    <category>News</category>
+  </programme>
+
+  <programme start="20260302200000 +0000" stop="20260302210000 +0000" channel="bbc1.uk">
+    <title>EastEnders</title>
+    <sub-title>Tuesday</sub-title>
+    <desc>Drama in Albert Square.</desc>
+    <category>Drama</category>
+    <category>Soap</category>
+    <episode-num system="onscreen">S41E38</episode-num>
+    <rating>
+      <value>6.8/10</value>
+    </rating>
+  </programme>
+
+  <!-- ── CNN programmes (timezone +0100 to test offset handling) ── -->
+  <programme start="20260302060000 +0100" stop="20260302120000 +0100" channel="cnn.us">
+    <title>CNN Newsroom</title>
+    <desc>Live news coverage with anchors reporting from around the world.</desc>
+    <category>News</category>
+  </programme>
+
+  <programme start="20260302120000 +0100" stop="20260302160000 +0100" channel="cnn.us">
+    <title>Connect the World</title>
+    <desc>Becky Anderson connects stories, cultures and opinions from around the globe.</desc>
+    <category>News</category>
+    <category>Current Affairs</category>
+  </programme>
+
+  <programme start="20260302160000 +0100" stop="20260302200000 +0100" channel="cnn.us">
+    <title>The Lead</title>
+    <desc>In-depth analysis of the top stories of the day.</desc>
+    <category>News</category>
+  </programme>
+
+  <!-- ── NHK programmes (timezone +0900) ─────────────── -->
+  <programme start="20260302070000 +0900" stop="20260302080000 +0900" channel="nhk.jp">
+    <title>NHK World News</title>
+    <desc>The latest world news from Japan's public broadcaster.</desc>
+    <category>News</category>
+  </programme>
+
+  <programme start="20260302120000 +0900" stop="20260302130000 +0900" channel="nhk.jp">
+    <title>Japan Railway Journal</title>
+    <desc>Exploring Japan's extensive and efficient railway network.</desc>
+    <category>Documentary</category>
+    <category>Travel</category>
+    <icon src="https://images.example.com/jrj.jpg"/>
+  </programme>
+
+  <programme start="20260302190000 +0900" stop="20260302200000 +0900" channel="nhk.jp">
+    <title>Newsline</title>
+    <desc>Up-to-the-minute news and in-depth reports from Asia and around the world.</desc>
+    <category>News</category>
+  </programme>
+
+</tv>

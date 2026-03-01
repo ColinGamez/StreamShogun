@@ -1,0 +1,66 @@
+{
+  "name": "stream-shogun",
+  "private": true,
+  "version": "0.1.0",
+  "description": "StreamShōgun — a desktop IPTV player built with Electron, React, and TypeScript. Manage M3U playlists, browse XMLTV programme guides, and watch HLS streams.",
+  "author": "StreamShōgun Contributors",
+  "license": "MIT",
+  "homepage": "https://github.com/stream-shogun/stream-shogun#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stream-shogun/stream-shogun.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stream-shogun/stream-shogun/issues"
+  },
+  "keywords": [
+    "iptv",
+    "electron",
+    "react",
+    "m3u",
+    "xmltv",
+    "epg",
+    "hls",
+    "streaming",
+    "desktop",
+    "typescript"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @stream-shogun/ui dev:electron",
+    "dev:ui": "pnpm --filter @stream-shogun/ui dev",
+    "dev:electron": "pnpm --filter @stream-shogun/desktop dev",
+    "build": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build",
+    "build:win": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:win",
+    "build:mac": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:mac",
+    "build:linux": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:linux",
+    "build:ui": "pnpm --filter @stream-shogun/ui build",
+    "build:desktop": "pnpm --filter @stream-shogun/desktop build",
+    "test": "pnpm --filter @stream-shogun/core test",
+    "typecheck": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui exec tsc --noEmit && pnpm --filter @stream-shogun/desktop exec tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx --cache",
+    "lint:fix": "eslint . --ext .ts,.tsx --cache --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,yaml,yml,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md,yaml,yml,css}\"",
+    "audit:security": "pnpm audit --audit-level=high",
+    "clean": "node scripts/clean.js",
+    "prepare": "git config core.hooksPath .githooks || true"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.4.0"
+  }
+}

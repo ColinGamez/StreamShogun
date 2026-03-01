@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    reviewers:
+      - stream-shogun/maintainers
+    labels:
+      - dependencies
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@typescript-eslint/*"
+      eslint:
+        patterns:
+          - "eslint*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      electron:
+        patterns:
+          - "electron"
+          - "electron-builder"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - ci
+      - dependencies
