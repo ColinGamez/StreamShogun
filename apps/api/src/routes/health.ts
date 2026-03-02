@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { HealthResponse } from "@stream-shogun/shared";
 import { prisma } from "../lib/prisma.js";
 import { isSentryEnabled } from "../lib/sentry.js";
+import { env } from "../config/env.js";
 
 const startedAt = Date.now();
 
@@ -19,10 +20,16 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
         // db down
       }
 
+      const stripeKeyConfigured = !!env.STRIPE_SECRET_KEY;
+      const billingEnabled =
+        stripeKeyConfigured && env.BILLING_DISABLED !== "true";
+
       const response: HealthResponse = {
         status: dbOk ? "ok" : "degraded",
         timestamp: new Date().toISOString(),
         db: dbOk,
+        stripeKeyConfigured,
+        billingEnabled,
         uptime: Math.floor((Date.now() - startedAt) / 1000),
         version: process.env.npm_package_version ?? "0.0.0",
       };

@@ -34,6 +34,27 @@ const envSchema = z.object({
 
   // Portal return URL (defaults to APP_PUBLIC_URL)
   STRIPE_PORTAL_RETURN_URL: z.string().url().optional(),
+
+  // Kill-switch: set to "true" to disable billing routes at runtime
+  BILLING_DISABLED: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // When billing is configured, enforce that essential companion vars are present
+  if (data.STRIPE_SECRET_KEY && data.BILLING_DISABLED !== "true") {
+    if (!data.STRIPE_WEBHOOK_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_WEBHOOK_SECRET"],
+        message: "Required when STRIPE_SECRET_KEY is set (billing enabled)",
+      });
+    }
+    if (!data.STRIPE_PRICE_ID_PRO_MONTHLY && !data.STRIPE_PRICE_ID_PRO_YEARLY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_PRICE_ID_PRO_MONTHLY"],
+        message: "At least one of STRIPE_PRICE_ID_PRO_MONTHLY or STRIPE_PRICE_ID_PRO_YEARLY is required when billing is enabled",
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

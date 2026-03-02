@@ -1,10 +1,11 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply, FastifyBaseLogger } from "fastify";
 import type Stripe from "stripe";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { getStripe } from "../../lib/stripe.js";
 import { env } from "../../config/env.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { captureError } from "../../lib/sentry.js";
 import {
   mapStripeStatus,
   derivePlan,
@@ -12,6 +13,7 @@ import {
   extractPeriodEnd,
   extractBillingInterval,
   resolveStripeId,
+  isIncompleteStatus,
 } from "../../lib/billing-helpers.js";
 
 // ── Request schemas ─────────────────────────────────────────────
@@ -73,11 +75,14 @@ async function getOrCreateStripeCustomer(userId: string): Promise<string> {
 // ── Plugin ──────────────────────────────────────────────────────
 
 export async function billingRoutes(app: FastifyInstance) {
+  // ── Kill-switch: BILLING_DISABLED=true → 503 all billing ──────
+  const billingDisabled = env.BILLING_DISABLED === "true";
+
   // Rate-limit checkout and portal (not webhooks)
   const billingRateLimit = {
     config: {
       rateLimit: {
-        max: 10,
+        max: 5,
         timeWindow: "1 minute",
       },
     },
@@ -89,6 +94,12 @@ export async function billingRoutes(app: FastifyInstance) {
     "/checkout",
     { preHandler: [authenticate], ...billingRateLimit },
     async (request: FastifyRequest, reply: FastifyReply) => {
+      if (billingDisabled) {
+        return reply
+          .code(503)
+          .send({ error: "ServiceUnavailable", message: "Billing is temporarily disabled" });
+      }
+
       if (!env.STRIPE_SECRET_KEY) {
         return reply
           .code(501)
@@ -120,6 +131,12 @@ export async function billingRoutes(app: FastifyInstance) {
       const customerId = await getOrCreateStripeCustomer(sub);
 
       const base = returnUrlBase();
+
+      // Determine if this user qualifies for a free trial.
+      // Only first-time subscribers (never had a Stripe subscription) get a trial.
+      const existingSub = await prisma.subscription.findUnique({ where: { userId: sub } });
+      const isFirstSubscription = !existingSub?.stripeSubscriptionId;
+
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         mode: "subscription",
@@ -127,7 +144,10 @@ export async function billingRoutes(app: FastifyInstance) {
         allow_promotion_codes: true,
         success_url: `${base}/billing/success`,
         cancel_url: `${base}/billing/cancel`,
-        subscription_data: { metadata: { userId: sub } },
+        subscription_data: {
+          metadata: { userId: sub },
+          ...(isFirstSubscription ? { trial_period_days: 7 } : {}),
+        },
         metadata: { userId: sub },
       });
 
@@ -141,6 +161,12 @@ export async function billingRoutes(app: FastifyInstance) {
     "/portal",
     { preHandler: [authenticate], ...billingRateLimit },
     async (request: FastifyRequest, reply: FastifyReply) => {
+      if (billingDisabled) {
+        return reply
+          .code(503)
+          .send({ error: "ServiceUnavailable", message: "Billing is temporarily disabled" });
+      }
+
       if (!env.STRIPE_SECRET_KEY) {
         return reply
           .code(501)
@@ -202,9 +228,45 @@ export async function billingRoutes(app: FastifyInstance) {
     }
 
     // Structured context attached to every log line for this event
-    const wCtx = { eventId: event.id, eventType: event.type };
+    const wCtx: WebhookCtx = { eventId: event.id, eventType: event.type };
 
-    // ── Idempotency: claim via unique constraint on stripeEventId ──
+    // ── Kill-switch: accept event but skip processing ───────────
+    if (billingDisabled) {
+      await prisma.webhookEvent.upsert({
+        where: { stripeEventId: event.id },
+        update: { status: "ignored", errorMessage: "billing_disabled", processedAt: new Date() },
+        create: {
+          stripeEventId: event.id,
+          type: event.type,
+          status: "ignored",
+          errorMessage: "billing_disabled",
+          processedAt: new Date(),
+        },
+      }).catch(() => { /* non-fatal */ });
+      request.log.info({ ...wCtx, outcome: "ignored", reason: "billing_disabled" }, "webhook.billing_disabled");
+      return reply.code(200).send({ received: true });
+    }
+
+    // ── Idempotency: fast-path for already-handled events ───────
+
+    const prior = await prisma.webhookEvent.findUnique({
+      where: { stripeEventId: event.id },
+      select: { id: true, status: true },
+    });
+
+    if (prior) {
+      if (prior.status === "processed" || prior.status === "ignored") {
+        request.log.info(
+          { ...wCtx, outcome: "duplicate_skipped", priorStatus: prior.status },
+          "webhook.duplicate",
+        );
+        return reply.code(200).send({ received: true });
+      }
+      // Prior attempt failed or crashed ("failed" / "processing") — allow retry
+      await prisma.webhookEvent.delete({ where: { id: prior.id } }).catch(() => { /* retry cleanup — non-fatal */ });
+    }
+
+    // ── Idempotency: claim via unique constraint (race-safe) ────
 
     let webhookEventId: string;
     try {
@@ -212,79 +274,103 @@ export async function billingRoutes(app: FastifyInstance) {
         data: {
           stripeEventId: event.id,
           type: event.type,
-          status: "processed",
+          status: "processing",
         },
       });
       webhookEventId = row.id;
     } catch (err) {
       if (isPrismaUniqueViolation(err)) {
-        request.log.info({ ...wCtx, outcome: "duplicate_skipped" }, "webhook.duplicate");
+        request.log.info({ ...wCtx, outcome: "duplicate_race" }, "webhook.duplicate");
         return reply.code(200).send({ received: true });
       }
       throw err; // unexpected DB error → let Stripe retry
     }
 
-    // ── Handle events ───────────────────────────────────────
+    // ── Dispatch to handler ─────────────────────────────────
 
-    let outcome = "processed";
+    let result: HandlerResult;
     try {
       switch (event.type) {
         case "checkout.session.completed":
-          await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, request, wCtx);
+          result = await handleCheckoutCompleted(
+            event.data.object as Stripe.Checkout.Session, webhookEventId, wCtx, request.log,
+          );
           break;
 
         case "customer.subscription.created":
         case "customer.subscription.updated":
-          await handleSubscriptionUpsert(event.data.object as Stripe.Subscription, request, wCtx);
+          result = await handleSubscriptionUpsert(
+            event.data.object as Stripe.Subscription, webhookEventId, wCtx, request.log,
+          );
           break;
 
         case "customer.subscription.deleted":
-          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription, request, wCtx);
+          result = await handleSubscriptionDeleted(
+            event.data.object as Stripe.Subscription, webhookEventId, wCtx, request.log,
+          );
           break;
 
         case "invoice.paid":
-          await handleInvoicePaid(event.data.object as Stripe.Invoice, request, wCtx);
+          result = await handleInvoicePaid(
+            event.data.object as Stripe.Invoice, webhookEventId, wCtx, request.log,
+          );
           break;
 
         case "invoice.payment_failed":
-          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, request, wCtx);
+          result = await handleInvoicePaymentFailed(
+            event.data.object as Stripe.Invoice, webhookEventId, wCtx, request.log,
+          );
           break;
 
         default:
-          outcome = "ignored";
-          request.log.debug({ ...wCtx, outcome }, "webhook.unhandled");
+          result = { outcome: "ignored", reason: "unhandled_event_type" };
+          await prisma.webhookEvent
+            .update({
+              where: { id: webhookEventId },
+              data: { status: "ignored", errorMessage: "unhandled_event_type", processedAt: new Date() },
+            })
+            .catch(() => {});
       }
     } catch (err) {
-      outcome = "failed";
       const sanitized = sanitizeError(err);
       request.log.error(
-        { ...wCtx, outcome, err: sanitized },
+        { ...wCtx, outcome: "failed", err: sanitized },
         "webhook.handler_error",
       );
-
-      // Record failure on the WebhookEvent row
-      await prisma.webhookEvent.update({
-        where: { id: webhookEventId },
-        data: {
-          status: "failed",
-          errorMessage: sanitized.message.slice(0, 500),
-        },
-      }).catch(() => { /* swallow — don't mask the original error */ });
+      // Report unhandled webhook errors to Sentry (if configured)
+      captureError(err instanceof Error ? err : new Error(sanitized.message), request);
+      await prisma.webhookEvent
+        .update({
+          where: { id: webhookEventId },
+          data: {
+            status: "failed",
+            errorMessage: sanitized.message.slice(0, 500),
+            processedAt: new Date(),
+          },
+        })
+        .catch(() => { /* swallow — don't mask the original error */ });
+      // Return 200 — failure is recorded; Stripe should not retry
+      return reply.code(200).send({ received: true });
     }
 
-    // Mark final state
-    if (outcome !== "failed") {
-      await prisma.webhookEvent.update({
-        where: { id: webhookEventId },
-        data: {
-          status: outcome as "processed" | "ignored",
-          processedAt: new Date(),
-        },
-      }).catch(() => { /* swallow */ });
+    // ── Stripe failure metrics (structured log counters) ─────────
+    if (event.type === "invoice.payment_failed") {
+      request.log.warn(
+        { ...wCtx, metric: "stripe.invoice_payment_failed" },
+        "stripe.metric: invoice.payment_failed",
+      );
+    }
+    if (event.type === "customer.subscription.deleted") {
+      request.log.warn(
+        { ...wCtx, metric: "stripe.subscription_deleted" },
+      "stripe.metric: subscription.deleted",
+      );
     }
 
-    // Metrics-friendly summary line — one per event, always emitted
-    request.log.info({ ...wCtx, outcome }, "webhook.completed");
+    request.log.info(
+      { ...wCtx, outcome: result.outcome, ...(result.reason && { reason: result.reason }) },
+      "webhook.completed",
+    );
 
     return reply.code(200).send({ received: true });
   });
@@ -310,303 +396,399 @@ function sanitizeError(err: unknown): { message: string; name?: string } {
   return { message: String(err) };
 }
 
-/**
- * Verify a Stripe subscription ID belongs to a known user in our DB.
- * Returns the subscription row or null if no match.
- */
-async function findSubscriptionByStripeSubId(stripeSubscriptionId: string) {
-  return prisma.subscription.findUnique({
-    where: { stripeSubscriptionId },
-  });
-}
-
 // ── Webhook context type ──────────────────────────────────────────
 interface WebhookCtx { eventId: string; eventType: string }
 
+/** Structured return from each event handler for outcome tracking. */
+interface HandlerResult {
+  outcome: "processed" | "ignored";
+  reason?: string;
+}
+
 /**
- * Stripe statuses that represent incomplete/pending subscriptions.
- * We must NOT flip a user to PRO based on these.
+ * Record a webhook event outcome for pre-transaction early returns
+ * (e.g. missing metadata, incomplete status) and return the result.
  */
-const INCOMPLETE_STATUSES = new Set(["incomplete", "incomplete_expired", "paused"]);
+async function recordAndReturn(
+  webhookEventId: string,
+  result: HandlerResult,
+): Promise<HandlerResult> {
+  await prisma.webhookEvent
+    .update({
+      where: { id: webhookEventId },
+      data: {
+        status: result.outcome,
+        errorMessage: result.reason?.slice(0, 500) ?? null,
+        processedAt: new Date(),
+      },
+    })
+    .catch(() => {});
+  return result;
+}
 
 // ── Webhook Handlers ──────────────────────────────────────────────
 
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
-  request: FastifyRequest,
+  webhookEventId: string,
   wCtx: WebhookCtx,
-) {
+  log: FastifyBaseLogger,
+): Promise<HandlerResult> {
   const userId = session.metadata?.userId;
   if (!userId) {
-    request.log.warn(
-      { ...wCtx, outcome: "missing_metadata" },
-      "webhook.checkout: no userId in metadata",
-    );
-    return;
+    log.warn({ ...wCtx, reason: "missing_metadata" }, "webhook.checkout: no userId in metadata");
+    return recordAndReturn(webhookEventId, { outcome: "ignored", reason: "missing_metadata" });
   }
 
   const stripeSubscriptionId = resolveStripeId(session.subscription);
   if (!stripeSubscriptionId) {
-    request.log.warn(
-      { ...wCtx, outcome: "missing_subscription_id" },
+    log.warn(
+      { ...wCtx, reason: "missing_subscription_id" },
       "webhook.checkout: no subscription ID on session",
     );
-    return;
+    return recordAndReturn(webhookEventId, { outcome: "ignored", reason: "missing_subscription_id" });
   }
 
   const customerId = resolveStripeId(session.customer);
 
-  // Ownership: verify userId maps to an existing subscription row
-  const existing = await prisma.subscription.findUnique({ where: { userId } });
-  if (!existing) {
-    request.log.warn(
-      { ...wCtx, outcome: "user_not_found" },
-      "webhook.checkout: no subscription row for userId",
-    );
-    return;
-  }
-
-  // Retrieve the Stripe subscription to extract billing interval
+  // Fetch billing interval from Stripe outside the transaction to avoid long row locks
   let billingInterval: "MONTHLY" | "YEARLY" | null = null;
   try {
     const stripe = getStripe();
     const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
     billingInterval = extractBillingInterval(stripeSub);
   } catch {
-    request.log.warn({ ...wCtx }, "webhook.checkout: could not retrieve subscription for interval");
+    log.warn({ ...wCtx }, "webhook.checkout: could not retrieve subscription for interval");
   }
 
-  await prisma.subscription.update({
-    where: { userId },
-    data: {
-      plan: "PRO",
-      status: "ACTIVE",
-      billingInterval,
-      stripeCustomerId: customerId ?? undefined,
-      stripeSubscriptionId,
-    },
-  });
+  return prisma.$transaction<HandlerResult>(async (tx) => {
+    const existing = await tx.subscription.findUnique({ where: { userId } });
+    if (!existing) {
+      log.warn({ ...wCtx, reason: "user_not_found" }, "webhook.checkout: no subscription row");
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "user_not_found", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "user_not_found" };
+    }
 
-  request.log.info(
-    { ...wCtx, outcome: "activated", plan: "PRO", billingInterval },
-    "webhook.checkout: completed",
-  );
+    // Ownership: verify customer ID matches if both are set
+    if (
+      existing.stripeCustomerId &&
+      customerId &&
+      existing.stripeCustomerId !== customerId
+    ) {
+      log.warn(
+        { ...wCtx, reason: "customer_mismatch" },
+        "webhook.checkout: customer ID mismatch",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "customer_mismatch", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "customer_mismatch" };
+    }
+
+    await tx.subscription.update({
+      where: { userId },
+      data: {
+        plan: "PRO",
+        status: "ACTIVE",
+        billingInterval,
+        stripeCustomerId: customerId ?? undefined,
+        stripeSubscriptionId,
+      },
+    });
+
+    await tx.webhookEvent.update({
+      where: { id: webhookEventId },
+      data: { status: "processed", processedAt: new Date() },
+    });
+
+    return { outcome: "processed" };
+  });
 }
 
 async function handleSubscriptionUpsert(
   sub: Stripe.Subscription,
-  request: FastifyRequest,
+  webhookEventId: string,
   wCtx: WebhookCtx,
-) {
-  // Guard: skip incomplete subscriptions — don't flip plan on partial data
-  if (INCOMPLETE_STATUSES.has(sub.status)) {
-    request.log.info(
-      { ...wCtx, stripeStatus: sub.status, outcome: "skipped_incomplete" },
-      "webhook.subscription_upsert: incomplete status, skipping plan change",
+  log: FastifyBaseLogger,
+): Promise<HandlerResult> {
+  // Guard: skip incomplete subscriptions — don't activate on partial data
+  if (isIncompleteStatus(sub.status)) {
+    log.info(
+      { ...wCtx, stripeStatus: sub.status, reason: "incomplete_status" },
+      "webhook.subscription_upsert: incomplete status, skipping",
     );
-    return;
+    return recordAndReturn(webhookEventId, { outcome: "ignored", reason: `incomplete_status:${sub.status}` });
   }
 
   const mappedStatus = mapStripeStatus(sub.status);
   const plan = derivePlan(mappedStatus);
   const periodEnd = extractPeriodEnd(sub);
   const billingInterval = extractBillingInterval(sub);
-
-  // Primary lookup: by Stripe subscription ID
-  let subscription = await findSubscriptionByStripeSubId(sub.id);
-
-  // Fallback: may arrive before checkout.session.completed — try metadata
-  if (!subscription) {
-    const userId = sub.metadata?.userId;
-    if (!userId) {
-      request.log.warn(
-        { ...wCtx, outcome: "no_owner" },
-        "webhook.subscription_upsert: no matching row and no userId metadata",
-      );
-      return;
-    }
-
-    const byUser = await prisma.subscription.findUnique({ where: { userId } });
-    if (!byUser) {
-      request.log.warn(
-        { ...wCtx, outcome: "user_not_found" },
-        "webhook.subscription_upsert: userId from metadata not found in DB",
-      );
-      return;
-    }
-
-    subscription = byUser;
-  }
-
-  // Ownership: if the subscription already has a customer ID, verify it matches
   const incomingCustomerId = resolveStripeId(sub.customer);
-  if (
-    subscription.stripeCustomerId &&
-    incomingCustomerId &&
-    subscription.stripeCustomerId !== incomingCustomerId
-  ) {
-    request.log.warn(
-      { ...wCtx, outcome: "customer_mismatch" },
-      "webhook.subscription_upsert: Stripe customer ID does not match DB record",
-    );
-    return;
-  }
 
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: {
-      plan,
-      status: mappedStatus,
-      billingInterval,
-      stripeSubscriptionId: sub.id,
-      currentPeriodEnd: periodEnd,
-    },
+  return prisma.$transaction<HandlerResult>(async (tx) => {
+    // Primary lookup: by Stripe subscription ID
+    let subscription = await tx.subscription.findUnique({
+      where: { stripeSubscriptionId: sub.id },
+    });
+
+    // Fallback: may arrive before checkout.session.completed — try metadata
+    if (!subscription) {
+      const userId = sub.metadata?.userId;
+      if (!userId) {
+        log.warn(
+          { ...wCtx, reason: "no_owner" },
+          "webhook.subscription_upsert: no matching row and no userId metadata",
+        );
+        await tx.webhookEvent.update({
+          where: { id: webhookEventId },
+          data: { status: "ignored", errorMessage: "no_owner", processedAt: new Date() },
+        });
+        return { outcome: "ignored", reason: "no_owner" };
+      }
+      subscription = await tx.subscription.findUnique({ where: { userId } });
+      if (!subscription) {
+        log.warn(
+          { ...wCtx, reason: "user_not_found" },
+          "webhook.subscription_upsert: userId from metadata not found",
+        );
+        await tx.webhookEvent.update({
+          where: { id: webhookEventId },
+          data: { status: "ignored", errorMessage: "user_not_found", processedAt: new Date() },
+        });
+        return { outcome: "ignored", reason: "user_not_found" };
+      }
+    }
+
+    // Ownership: verify customer ID matches
+    if (
+      subscription.stripeCustomerId &&
+      incomingCustomerId &&
+      subscription.stripeCustomerId !== incomingCustomerId
+    ) {
+      log.warn(
+        { ...wCtx, reason: "customer_mismatch" },
+        "webhook.subscription_upsert: customer ID mismatch",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "customer_mismatch", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "customer_mismatch" };
+    }
+
+    await tx.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        plan,
+        status: mappedStatus,
+        billingInterval,
+        stripeSubscriptionId: sub.id,
+        currentPeriodEnd: periodEnd,
+      },
+    });
+
+    await tx.webhookEvent.update({
+      where: { id: webhookEventId },
+      data: { status: "processed", processedAt: new Date() },
+    });
+
+    return { outcome: "processed" };
   });
-
-  request.log.info(
-    { ...wCtx, outcome: "updated", plan, status: mappedStatus, billingInterval },
-    "webhook.subscription_upsert: completed",
-  );
 }
 
 async function handleSubscriptionDeleted(
   sub: Stripe.Subscription,
-  request: FastifyRequest,
+  webhookEventId: string,
   wCtx: WebhookCtx,
-) {
-  const subscription = await findSubscriptionByStripeSubId(sub.id);
-
-  if (!subscription) {
-    request.log.warn(
-      { ...wCtx, outcome: "no_matching_row" },
-      "webhook.subscription_deleted: no matching subscription",
-    );
-    return;
-  }
-
-  // Ownership: verify customer ID matches if both are present
+  log: FastifyBaseLogger,
+): Promise<HandlerResult> {
   const incomingCustomerId = resolveStripeId(sub.customer);
-  if (
-    subscription.stripeCustomerId &&
-    incomingCustomerId &&
-    subscription.stripeCustomerId !== incomingCustomerId
-  ) {
-    request.log.warn(
-      { ...wCtx, outcome: "customer_mismatch" },
-      "webhook.subscription_deleted: customer ID mismatch, refusing downgrade",
-    );
-    return;
-  }
 
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: {
-      plan: "FREE",
-      status: "CANCELED",
-      billingInterval: null,
-      stripeSubscriptionId: null,
-      currentPeriodEnd: null,
-    },
+  return prisma.$transaction<HandlerResult>(async (tx) => {
+    const subscription = await tx.subscription.findUnique({
+      where: { stripeSubscriptionId: sub.id },
+    });
+
+    if (!subscription) {
+      log.warn(
+        { ...wCtx, reason: "no_matching_row" },
+        "webhook.subscription_deleted: no matching subscription",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "no_matching_row", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "no_matching_row" };
+    }
+
+    // Ownership: verify customer ID matches
+    if (
+      subscription.stripeCustomerId &&
+      incomingCustomerId &&
+      subscription.stripeCustomerId !== incomingCustomerId
+    ) {
+      log.warn(
+        { ...wCtx, reason: "customer_mismatch" },
+        "webhook.subscription_deleted: customer ID mismatch",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "customer_mismatch", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "customer_mismatch" };
+    }
+
+    await tx.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        plan: "FREE",
+        status: "CANCELED",
+        billingInterval: null,
+        stripeSubscriptionId: null,
+        currentPeriodEnd: null,
+      },
+    });
+
+    await tx.webhookEvent.update({
+      where: { id: webhookEventId },
+      data: { status: "processed", processedAt: new Date() },
+    });
+
+    return { outcome: "processed" };
   });
-
-  request.log.info(
-    { ...wCtx, outcome: "downgraded", plan: "FREE" },
-    "webhook.subscription_deleted: completed",
-  );
 }
 
 async function handleInvoicePaid(
   invoice: Stripe.Invoice,
-  request: FastifyRequest,
+  webhookEventId: string,
   wCtx: WebhookCtx,
-) {
+  log: FastifyBaseLogger,
+): Promise<HandlerResult> {
   const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
   if (!stripeSubscriptionId) {
-    request.log.debug(
-      { ...wCtx, outcome: "no_subscription_id" },
+    log.debug(
+      { ...wCtx, reason: "no_subscription_id" },
       "webhook.invoice_paid: no subscription on invoice, skipping",
     );
-    return;
+    return recordAndReturn(webhookEventId, { outcome: "ignored", reason: "no_subscription_id" });
   }
 
-  const subscription = await findSubscriptionByStripeSubId(stripeSubscriptionId);
-  if (!subscription) {
-    request.log.warn(
-      { ...wCtx, outcome: "no_matching_row" },
-      "webhook.invoice_paid: subscription not found",
-    );
-    return;
-  }
-
-  // Ownership: verify customer matches
   const incomingCustomerId = resolveStripeId(invoice.customer);
-  if (
-    subscription.stripeCustomerId &&
-    incomingCustomerId &&
-    subscription.stripeCustomerId !== incomingCustomerId
-  ) {
-    request.log.warn(
-      { ...wCtx, outcome: "customer_mismatch" },
-      "webhook.invoice_paid: customer ID mismatch",
-    );
-    return;
-  }
 
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: { status: "ACTIVE" },
+  return prisma.$transaction<HandlerResult>(async (tx) => {
+    const subscription = await tx.subscription.findUnique({
+      where: { stripeSubscriptionId },
+    });
+
+    if (!subscription) {
+      log.warn(
+        { ...wCtx, reason: "no_matching_row" },
+        "webhook.invoice_paid: subscription not found",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "no_matching_row", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "no_matching_row" };
+    }
+
+    // Ownership: verify customer matches
+    if (
+      subscription.stripeCustomerId &&
+      incomingCustomerId &&
+      subscription.stripeCustomerId !== incomingCustomerId
+    ) {
+      log.warn(
+        { ...wCtx, reason: "customer_mismatch" },
+        "webhook.invoice_paid: customer ID mismatch",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "customer_mismatch", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "customer_mismatch" };
+    }
+
+    await tx.subscription.update({
+      where: { id: subscription.id },
+      data: { status: "ACTIVE" },
+    });
+
+    await tx.webhookEvent.update({
+      where: { id: webhookEventId },
+      data: { status: "processed", processedAt: new Date() },
+    });
+
+    return { outcome: "processed" };
   });
-
-  request.log.info(
-    { ...wCtx, outcome: "reactivated" },
-    "webhook.invoice_paid: completed",
-  );
 }
 
 async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice,
-  request: FastifyRequest,
+  webhookEventId: string,
   wCtx: WebhookCtx,
-) {
+  log: FastifyBaseLogger,
+): Promise<HandlerResult> {
   const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
   if (!stripeSubscriptionId) {
-    request.log.debug(
-      { ...wCtx, outcome: "no_subscription_id" },
+    log.debug(
+      { ...wCtx, reason: "no_subscription_id" },
       "webhook.invoice_failed: no subscription on invoice, skipping",
     );
-    return;
+    return recordAndReturn(webhookEventId, { outcome: "ignored", reason: "no_subscription_id" });
   }
 
-  const subscription = await findSubscriptionByStripeSubId(stripeSubscriptionId);
-  if (!subscription) {
-    request.log.warn(
-      { ...wCtx, outcome: "no_matching_row" },
-      "webhook.invoice_failed: subscription not found",
-    );
-    return;
-  }
-
-  // Ownership: verify customer matches
   const incomingCustomerId = resolveStripeId(invoice.customer);
-  if (
-    subscription.stripeCustomerId &&
-    incomingCustomerId &&
-    subscription.stripeCustomerId !== incomingCustomerId
-  ) {
-    request.log.warn(
-      { ...wCtx, outcome: "customer_mismatch" },
-      "webhook.invoice_failed: customer ID mismatch",
-    );
-    return;
-  }
 
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: { status: "PAST_DUE" },
+  return prisma.$transaction<HandlerResult>(async (tx) => {
+    const subscription = await tx.subscription.findUnique({
+      where: { stripeSubscriptionId },
+    });
+
+    if (!subscription) {
+      log.warn(
+        { ...wCtx, reason: "no_matching_row" },
+        "webhook.invoice_failed: subscription not found",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "no_matching_row", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "no_matching_row" };
+    }
+
+    // Ownership: verify customer matches
+    if (
+      subscription.stripeCustomerId &&
+      incomingCustomerId &&
+      subscription.stripeCustomerId !== incomingCustomerId
+    ) {
+      log.warn(
+        { ...wCtx, reason: "customer_mismatch" },
+        "webhook.invoice_failed: customer ID mismatch",
+      );
+      await tx.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: { status: "ignored", errorMessage: "customer_mismatch", processedAt: new Date() },
+      });
+      return { outcome: "ignored", reason: "customer_mismatch" };
+    }
+
+    await tx.subscription.update({
+      where: { id: subscription.id },
+      data: { status: "PAST_DUE" },
+    });
+
+    await tx.webhookEvent.update({
+      where: { id: webhookEventId },
+      data: { status: "processed", processedAt: new Date() },
+    });
+
+    return { outcome: "processed" };
   });
-
-  request.log.info(
-    { ...wCtx, outcome: "marked_past_due" },
-    "webhook.invoice_failed: completed",
-  );
 }

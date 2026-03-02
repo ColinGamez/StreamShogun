@@ -5,17 +5,19 @@ import type Stripe from "stripe";
 /**
  * Map a Stripe subscription status string to our internal enum.
  *
- * - active / trialing → ACTIVE
+ * - active → ACTIVE
+ * - trialing → TRIALING
  * - past_due / unpaid → PAST_DUE
  * - canceled / incomplete_expired / paused / anything else → CANCELED
  */
 export function mapStripeStatus(
   status: string,
-): "ACTIVE" | "PAST_DUE" | "CANCELED" {
+): "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" {
   switch (status) {
     case "active":
-    case "trialing":
       return "ACTIVE";
+    case "trialing":
+      return "TRIALING";
     case "past_due":
     case "unpaid":
       return "PAST_DUE";
@@ -26,12 +28,12 @@ export function mapStripeStatus(
 
 /**
  * Derive plan from subscription status.
- * PRO only when ACTIVE; everything else falls back to FREE.
+ * PRO when ACTIVE or TRIALING; everything else falls back to FREE.
  */
 export function derivePlan(
-  mappedStatus: "ACTIVE" | "PAST_DUE" | "CANCELED",
+  mappedStatus: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED",
 ): "PRO" | "FREE" {
-  return mappedStatus === "ACTIVE" ? "PRO" : "FREE";
+  return mappedStatus === "ACTIVE" || mappedStatus === "TRIALING" ? "PRO" : "FREE";
 }
 
 /**
@@ -78,4 +80,20 @@ export function extractBillingInterval(
   if (interval === "month") return "MONTHLY";
   if (interval === "year") return "YEARLY";
   return null;
+}
+
+/**
+ * Whether the Stripe subscription status represents an incomplete or
+ * pending state where we must NOT activate the subscription.
+ *
+ * - incomplete: initial payment failed; sub exists but isn't usable
+ * - incomplete_expired: timed out waiting for first payment
+ * - paused: billing paused by merchant
+ */
+export function isIncompleteStatus(status: string): boolean {
+  return (
+    status === "incomplete" ||
+    status === "incomplete_expired" ||
+    status === "paused"
+  );
 }

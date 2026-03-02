@@ -3,6 +3,12 @@ import { FLAG_KEYS, Plan, SubscriptionStatus, BillingInterval, type FeaturesResp
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 
+/**
+ * Users created before this date are considered "founding members"
+ * and may receive special badge / pricing treatment.
+ */
+const FOUNDING_MEMBER_CUTOFF = new Date("2026-06-01T00:00:00Z");
+
 export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /v1/features ──────────────────────────────────────────
 
@@ -12,20 +18,23 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { sub } = request.user as { sub: string; email: string };
 
-      const [subscription, overrides] = await Promise.all([
+      const [user, subscription, overrides] = await Promise.all([
+        prisma.user.findUnique({ where: { id: sub }, select: { createdAt: true } }),
         prisma.subscription.findUnique({ where: { userId: sub } }),
         prisma.featureFlag.findMany({ where: { userId: sub } }),
       ]);
 
       const plan = subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE;
       const isPro = plan === Plan.PRO;
-      const isActive = subscription?.status === "ACTIVE";
+      const isActive =
+        subscription?.status === "ACTIVE" ||
+        subscription?.status === "TRIALING";
 
       // Build override map
       const overrideMap = new Map(overrides.map((f) => [f.key, f.enabled]));
 
       // Compute effective flags:
-      // PRO + ACTIVE → all true unless explicitly overridden
+      // PRO + (ACTIVE | TRIALING) → all true unless explicitly overridden
       // PRO + PAST_DUE/CANCELED → treat as FREE (no premium features)
       const flags: Record<string, boolean> = {};
       for (const key of FLAG_KEYS) {
@@ -43,11 +52,21 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
             ? BillingInterval.YEARLY
             : null;
 
+      // Derive trial end: when status is TRIALING and we have a period end,
+      // that period end IS the trial end (Stripe trial_end = period end).
+      const isTrial = subscription?.status === "TRIALING";
+      const trialEndsAt = isTrial && subscription?.currentPeriodEnd
+        ? subscription.currentPeriodEnd.toISOString()
+        : null;
+
       const response: FeaturesResponse = {
         plan,
         subscriptionStatus: (subscription?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
         billingInterval,
         flags,
+        currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() ?? null,
+        trialEndsAt,
+        isFoundingMember: user ? user.createdAt < FOUNDING_MEMBER_CUTOFF : false,
       };
       return reply.code(200).send(response);
     }

@@ -188,7 +188,11 @@ export interface ShogunAPI {
   }>>;
   authLogout: () => Promise<IpcResponse<null>>;
   authRefresh: () => Promise<IpcResponse<{ hasTokens: boolean }>>;
-  featuresFetch: () => Promise<IpcResponse<{ plan: string; flags: Record<string, boolean> }>>;
+  featuresFetch: () => Promise<IpcResponse<{ plan: string; subscriptionStatus: string; billingInterval: string | null; flags: Record<string, boolean>; currentPeriodEnd: string | null; trialEndsAt: string | null; isFoundingMember: boolean }>>;
+
+  // Billing
+  billingCheckout: (args?: { interval?: string }) => Promise<IpcResponse<{ url: string }>>;
+  billingPortal: () => Promise<IpcResponse<{ url: string }>>;
 
   // Cloud Sync v1
   cloudSyncPull: () => Promise<IpcResponse<import("@stream-shogun/shared").CloudSyncPayload>>;

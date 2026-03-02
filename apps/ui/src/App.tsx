@@ -14,6 +14,9 @@ import { SettingsPage } from "./pages/Settings";
 import { HistoryPage } from "./pages/History";
 import { LoginModal } from "./components/LoginModal";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { PaywallModal } from "./components/PaywallModal";
+import { BillingStateBanner } from "./components/BillingStateBanner";
+import { UpgradeNudgeBanner } from "./components/UpgradeNudgeBanner";
 
 function App() {
   // ── PIP mode detection ─────────────────────────────────────────────
@@ -29,10 +32,13 @@ function App() {
   );
   const initAuth = useAppStore((s) => s.initAuth);
 
+  const incrementAppOpen = useAppStore((s) => s.incrementAppOpen);
+
   // Silent auth refresh on startup
   useEffect(() => {
     initAuth();
-  }, [initAuth]);
+    incrementAppOpen();
+  }, [initAuth, incrementAppOpen]);
 
   // Play a channel → switch to player page
   const handlePlay = useCallback(
@@ -82,9 +88,12 @@ function App() {
         <Sidebar current={page} onChange={setPage} />
         <main className="app-main">
           <OfflineBanner />
+          <BillingStateBanner />
+          <UpgradeNudgeBanner />
           <Welcome onGoToLibrary={() => setPage("library")} />
         </main>
         <ToastContainer />
+        <PaywallModal />
       </div>
     );
   }
@@ -95,6 +104,8 @@ function App() {
 
       <main className="app-main">
         <OfflineBanner />
+        <BillingStateBanner />
+        <UpgradeNudgeBanner />
         {page === "library" && <ErrorBoundary label="Library"><LibraryPage /></ErrorBoundary>}
         {page === "channels" && <ErrorBoundary label="Channels"><ChannelsPage onPlay={handlePlay} /></ErrorBoundary>}
         {page === "guide" && <ErrorBoundary label="Guide"><GuidePage onPlay={handlePlay} /></ErrorBoundary>}
@@ -105,6 +116,7 @@ function App() {
 
       <ToastContainer />
       <LoginModal />
+      <PaywallModal />
     </div>
   );
 }

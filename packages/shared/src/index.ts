@@ -18,6 +18,7 @@ export const SubscriptionStatus = {
   ACTIVE: "ACTIVE",
   CANCELED: "CANCELED",
   PAST_DUE: "PAST_DUE",
+  TRIALING: "TRIALING",
 } as const;
 export type SubscriptionStatus =
   (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
@@ -40,8 +41,46 @@ export const FLAG_KEYS = [
   "pip_window",
   "discord_rpc",
   "cloud_sync",
+  "unlimited_playlists",
 ] as const;
 export type FlagKey = (typeof FLAG_KEYS)[number];
+
+// ═══════════════════════════════════════════════════════════════════════
+//  Pricing constants
+// ═══════════════════════════════════════════════════════════════════════
+
+export const PRICING = {
+  MONTHLY: 6.99,
+  YEARLY: 69.99,
+  YEARLY_MONTHLY_EQUIVALENT: 5.83,
+  YEARLY_SAVINGS: 13.89,
+  TRIAL_DAYS: 7,
+  CURRENCY: "USD",
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PRO feature catalog (used by paywall UI)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface ProFeatureInfo {
+  key: FlagKey;
+  label: string;
+  icon: string;
+  description: string;
+}
+
+export const PRO_FEATURES_CATALOG: readonly ProFeatureInfo[] = [
+  { key: "cloud_sync", label: "Cloud Sync", icon: "☁️", description: "Sync settings, favorites, and history across devices." },
+  { key: "auto_refresh", label: "Auto Refresh", icon: "🔄", description: "Auto-refresh playlists and EPG in the background." },
+  { key: "multi_epg_merge", label: "Multi-EPG Merge", icon: "📡", description: "Merge multiple EPG sources into one guide." },
+  { key: "pip_window", label: "Picture-in-Picture", icon: "🖼️", description: "Pop-out mini player that stays on top." },
+  { key: "discord_rpc", label: "Discord Presence", icon: "🎮", description: "Show what you're watching on Discord." },
+  { key: "smart_matching", label: "Smart Matching", icon: "🔗", description: "Fuzzy channel ↔ EPG auto-matching." },
+  { key: "unlimited_playlists", label: "Unlimited Playlists", icon: "📋", description: "Add as many playlists as you want." },
+] as const;
+
+/** Maximum playlists for FREE tier. */
+export const FREE_PLAYLIST_LIMIT = 1;
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Request schemas (Zod)
@@ -140,6 +179,9 @@ export interface FeaturesResponse {
   subscriptionStatus: SubscriptionStatus;
   billingInterval: BillingInterval | null;
   flags: Record<string, boolean>;
+  currentPeriodEnd: string | null;
+  trialEndsAt: string | null;
+  isFoundingMember: boolean;
 }
 
 export interface CloudSettingsResponse {
@@ -159,6 +201,8 @@ export interface HealthResponse {
   status: string;
   timestamp: string;
   db: boolean;
+  stripeKeyConfigured: boolean;
+  billingEnabled: boolean;
   uptime: number;
   version: string;
 }

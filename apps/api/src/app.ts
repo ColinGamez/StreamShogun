@@ -51,9 +51,12 @@ export async function buildApp() {
 
   // ── Request lifecycle hooks (structured observability) ────────
 
-  app.addHook("onRequest", (request, _reply, done) => {
+  app.addHook("onRequest", (request, reply, done) => {
     // Attach request start time for response-time calculation
     (request as unknown as { _startTime: number })._startTime = performance.now();
+
+    // Echo request-id so clients can correlate
+    void reply.header("X-Request-Id", request.id);
 
     // Skip logging /healthz to avoid noise from Railway health checks
     if (request.url.startsWith("/healthz")) return done();
@@ -74,13 +77,19 @@ export async function buildApp() {
       ? Math.round(performance.now() - startTime)
       : -1;
 
+    // Extract route pattern (e.g. "/v1/auth/login") and userId if authenticated
+    const route = request.routeOptions?.url ?? request.url;
+    const userId = (request as unknown as { user?: { sub?: string } }).user?.sub;
+
     request.log.info(
       {
         reqId: request.id,
         method: request.method,
         url: request.url,
+        route,
         statusCode: reply.statusCode,
         responseTimeMs,
+        ...(userId && { userId }),
       },
       "request completed",
     );

@@ -203,13 +203,16 @@ export async function apiGetFeatures(): Promise<{
 
 // ── Billing ───────────────────────────────────────────────────────────
 
-export async function apiBillingCheckout(): Promise<{
+export async function apiBillingCheckout(
+  interval: "monthly" | "yearly" = "monthly"
+): Promise<{
   ok: boolean;
   status: number;
   data: { url: string };
 }> {
   return apiFetchWithRefresh<{ url: string }>("/v1/billing/checkout", {
     method: "POST",
+    body: { interval },
   });
 }
 

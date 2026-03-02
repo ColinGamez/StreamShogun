@@ -304,8 +304,28 @@ export async function authRefresh(): Promise<IpcResponse<{ hasTokens: boolean }>
   return NO_BRIDGE;
 }
 
-export async function featuresFetch(): Promise<IpcResponse<{ plan: string; flags: Record<string, boolean> }>> {
+export async function featuresFetch(): Promise<IpcResponse<{
+  plan: string;
+  subscriptionStatus: string;
+  billingInterval: string | null;
+  flags: Record<string, boolean>;
+  currentPeriodEnd: string | null;
+  trialEndsAt: string | null;
+  isFoundingMember: boolean;
+}>> {
   if (hasBridge()) return window.shogun!.featuresFetch();
+  return NO_BRIDGE;
+}
+
+// ── Billing ──────────────────────────────────────────────────────────
+
+export async function billingCheckout(interval?: "monthly" | "yearly"): Promise<IpcResponse<{ url: string }>> {
+  if (hasBridge()) return window.shogun!.billingCheckout({ interval });
+  return NO_BRIDGE;
+}
+
+export async function billingPortal(): Promise<IpcResponse<{ url: string }>> {
+  if (hasBridge()) return window.shogun!.billingPortal();
   return NO_BRIDGE;
 }
 

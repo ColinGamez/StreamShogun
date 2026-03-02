@@ -4,7 +4,7 @@
 // The renderer never touches `fs` or `fetch` directly — it calls these
 // handlers through the narrow preload bridge.
 
-import { ipcMain, app } from "electron";
+import { ipcMain, app, shell } from "electron";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { gunzip } from "zlib";
@@ -55,6 +55,8 @@ import {
   apiRefreshTokens,
   apiCloudSyncGet,
   apiCloudSyncPut,
+  apiBillingCheckout,
+  apiBillingPortal,
 } from "./api-client";
 import { loadTokens } from "./token-store";
 
@@ -770,6 +772,33 @@ export function registerIpcHandlers(): void {
       const result = await apiGetFeatures();
       if (!result.ok) return fail(new Error("Failed to fetch features"));
       return ok(result.data);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Billing (opens Stripe in system browser)
+  // ═══════════════════════════════════════════════════════════════
+
+  ipcMain.handle(IpcChannels.BILLING_CHECKOUT, async (_event, args?: { interval?: string }) => {
+    try {
+      const interval = args?.interval === "yearly" ? "yearly" : "monthly";
+      const result = await apiBillingCheckout(interval);
+      if (!result.ok) return fail(new Error("Failed to create checkout session"));
+      await shell.openExternal(result.data.url);
+      return ok({ url: result.data.url });
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.BILLING_PORTAL, async () => {
+    try {
+      const result = await apiBillingPortal();
+      if (!result.ok) return fail(new Error("Failed to create portal session"));
+      await shell.openExternal(result.data.url);
+      return ok({ url: result.data.url });
     } catch (err) {
       return fail(err);
     }

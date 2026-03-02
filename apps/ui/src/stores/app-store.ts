@@ -2,8 +2,7 @@
 
 import { create } from "zustand";
 import type { Channel, Programme, LicenseStatus , Feature} from "@stream-shogun/core";
-import { isFeatureEnabled, DEFAULT_LICENSE_STATUS } from "@stream-shogun/core";
-import type {
+import { isFeatureEnabled, DEFAULT_LICENSE_STATUS } from "@stream-shogun/core";import { FREE_PLAYLIST_LIMIT } from "@stream-shogun/shared";import type {
   SerializedEpgIndex,
   DbPlaylistRow,
   DbEpgSourceRow,
@@ -11,6 +10,7 @@ import type {
 } from "../vite-env";
 import type { Locale } from "../lib/i18n";
 import { localStorageAdapter, loadJson, saveJson } from "../lib/persistence";
+import { logUpgradeIntent, logCheckoutCompleted } from "../lib/analytics";
 import * as bridge from "../lib/bridge";
 
 const P = localStorageAdapter;
@@ -135,10 +135,20 @@ export interface AppState {
   // ── Auth / SaaS ────────────────────────────────────────────────
   authUser: { id: string; email: string; displayName?: string; createdAt: string } | null;
   authPlan: string; // "FREE" | "PRO"
+  subscriptionStatus: string; // "ACTIVE" | "PAST_DUE" | "CANCELED" | "TRIALING" | …
+  billingInterval: string | null; // "MONTHLY" | "YEARLY" | null
+  currentPeriodEnd: string | null; // ISO-8601
+  trialEndsAt: string | null; // ISO-8601 (only during TRIALING)
+  isFoundingMember: boolean;
   serverFlags: Record<string, boolean>;
   serverFlagsTimestamp: number; // ms epoch — for offline cache validity
   authLoading: boolean;
   authError: string | null;
+
+  /** Number of times the app has been opened (persisted). */
+  appOpenCount: number;
+  /** Increment open count + check nudge eligibility. */
+  incrementAppOpen: () => void;
 
   /** Attempt silent token refresh + feature fetch on app start. */
   initAuth: () => Promise<void>;
@@ -148,6 +158,16 @@ export interface AppState {
   fetchServerFeatures: () => Promise<void>;
   /** Check a server-side feature flag with offline fallback. */
   isServerFeatureEnabled: (flagKey: string) => boolean;
+
+  /**
+   * Try to use a feature. If gated, dispatches the paywall event
+   * so the PaywallModal opens, and returns `false`.
+   * Usage: `if (!requestFeature("cloud_sync")) return;`
+   */
+  requestFeature: (flagKey: string) => boolean;
+
+  /** Whether the FREE playlist limit has been reached. */
+  playlistLimitReached: () => boolean;
 
   // ── Entitlement hardening ──────────────────────────────────────
   /** True when the last server fetch failed (network unavailable). */
@@ -451,10 +471,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   authUser: loadJson<{ id: string; email: string; displayName?: string; createdAt: string } | null>(P, "shogun:auth-user", null),
   authPlan: loadJson<string>(P, "shogun:auth-plan", "FREE") ?? "FREE",
+  subscriptionStatus: loadJson<string>(P, "shogun:subscription-status", "NONE") ?? "NONE",
+  billingInterval: loadJson<string | null>(P, "shogun:billing-interval", null) ?? null,
+  currentPeriodEnd: loadJson<string | null>(P, "shogun:current-period-end", null) ?? null,
+  trialEndsAt: loadJson<string | null>(P, "shogun:trial-ends-at", null) ?? null,
+  isFoundingMember: loadJson<boolean>(P, "shogun:founding-member", false),
   serverFlags: loadJson<Record<string, boolean>>(P, "shogun:server-flags", {}),
   serverFlagsTimestamp: loadJson<number>(P, "shogun:server-flags-ts", 0) ?? 0,
   authLoading: false,
   authError: null,
+
+  appOpenCount: loadJson<number>(P, "shogun:app-open-count", 0) ?? 0,
+
+  incrementAppOpen: () => {
+    const count = get().appOpenCount + 1;
+    saveJson(P, "shogun:app-open-count", count);
+    set({ appOpenCount: count });
+  },
 
   initAuth: async () => {
     set({ authLoading: true, authError: null });
@@ -471,8 +504,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
         if (ts > 0 && Date.now() - ts > SEVEN_DAYS) {
           // Cache expired — reset to FREE defaults
-          set({ authPlan: "FREE", serverFlags: {}, authUser: null, isOffline: false, usingCachedPlan: false });
+          set({ authPlan: "FREE", subscriptionStatus: "NONE", billingInterval: null, currentPeriodEnd: null, trialEndsAt: null, isFoundingMember: false, serverFlags: {}, authUser: null, isOffline: false, usingCachedPlan: false });
           saveJson(P, "shogun:auth-plan", "FREE");
+          saveJson(P, "shogun:subscription-status", "NONE");
+          saveJson(P, "shogun:billing-interval", null);
+          saveJson(P, "shogun:current-period-end", null);
+          saveJson(P, "shogun:trial-ends-at", null);
+          saveJson(P, "shogun:founding-member", false);
           saveJson(P, "shogun:server-flags", {});
           saveJson(P, "shogun:auth-user", null);
           // Force re-login so user can re-authenticate
@@ -489,8 +527,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (ts > 0) {
         const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
         if (Date.now() - ts > SEVEN_DAYS) {
-          set({ authPlan: "FREE", serverFlags: {}, authUser: null, isOffline: true, usingCachedPlan: false });
+          set({ authPlan: "FREE", subscriptionStatus: "NONE", billingInterval: null, currentPeriodEnd: null, trialEndsAt: null, isFoundingMember: false, serverFlags: {}, authUser: null, isOffline: true, usingCachedPlan: false });
           saveJson(P, "shogun:auth-plan", "FREE");
+          saveJson(P, "shogun:subscription-status", "NONE");
+          saveJson(P, "shogun:billing-interval", null);
+          saveJson(P, "shogun:current-period-end", null);
+          saveJson(P, "shogun:trial-ends-at", null);
+          saveJson(P, "shogun:founding-member", false);
           saveJson(P, "shogun:server-flags", {});
           saveJson(P, "shogun:auth-user", null);
         } else {
@@ -547,9 +590,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   authLogoutAction: async () => {
     await bridge.authLogout();
-    set({ authUser: null, authPlan: "FREE", serverFlags: {}, serverFlagsTimestamp: 0, authError: null });
+    set({ authUser: null, authPlan: "FREE", subscriptionStatus: "NONE", billingInterval: null, currentPeriodEnd: null, trialEndsAt: null, isFoundingMember: false, serverFlags: {}, serverFlagsTimestamp: 0, authError: null });
     saveJson(P, "shogun:auth-user", null);
     saveJson(P, "shogun:auth-plan", "FREE");
+    saveJson(P, "shogun:subscription-status", "NONE");
+    saveJson(P, "shogun:billing-interval", null);
+    saveJson(P, "shogun:current-period-end", null);
+    saveJson(P, "shogun:trial-ends-at", null);
+    saveJson(P, "shogun:founding-member", false);
     saveJson(P, "shogun:server-flags", {});
     saveJson(P, "shogun:server-flags-ts", 0);
   },
@@ -559,16 +607,31 @@ export const useAppStore = create<AppState>((set, get) => ({
       const res = await bridge.featuresFetch();
       if (res.ok) {
         const now = Date.now();
+        const prevPlan = get().authPlan;
         set({
           authPlan: res.data.plan,
+          subscriptionStatus: res.data.subscriptionStatus ?? "NONE",
+          billingInterval: res.data.billingInterval ?? null,
+          currentPeriodEnd: res.data.currentPeriodEnd ?? null,
+          trialEndsAt: res.data.trialEndsAt ?? null,
+          isFoundingMember: res.data.isFoundingMember ?? false,
           serverFlags: res.data.flags,
           serverFlagsTimestamp: now,
           isOffline: false,
           usingCachedPlan: false,
         });
         saveJson(P, "shogun:auth-plan", res.data.plan);
+        saveJson(P, "shogun:subscription-status", res.data.subscriptionStatus ?? "NONE");
+        saveJson(P, "shogun:billing-interval", res.data.billingInterval ?? null);
+        saveJson(P, "shogun:current-period-end", res.data.currentPeriodEnd ?? null);
+        saveJson(P, "shogun:trial-ends-at", res.data.trialEndsAt ?? null);
+        saveJson(P, "shogun:founding-member", res.data.isFoundingMember ?? false);
         saveJson(P, "shogun:server-flags", res.data.flags);
         saveJson(P, "shogun:server-flags-ts", now);
+        // Track upgrade completion
+        if (prevPlan === "FREE" && res.data.plan === "PRO") {
+          logCheckoutCompleted(res.data.billingInterval);
+        }
       }
     } catch {
       // Offline — keep cached values, mark offline
@@ -599,6 +662,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (get().license.isProEnabled) return true;
     // Server-side entitlement (respects 7-day cache TTL)
     return get().isServerFeatureEnabled(flagKey);
+  },
+
+  requestFeature: (flagKey) => {
+    if (get().canUse(flagKey)) return true;
+    // Feature gated — fire paywall
+    logUpgradeIntent(flagKey);
+    window.dispatchEvent(
+      new CustomEvent("shogun:show-paywall", { detail: { feature: flagKey } }),
+    );
+    return false;
+  },
+
+  playlistLimitReached: () => {
+    if (get().canUse("unlimited_playlists")) return false;
+    const total = get().dbPlaylists.length || get().playlistEntries.length;
+    return total >= FREE_PLAYLIST_LIMIT;
   },
 
   // ── Cloud Sync v1 ──────────────────────────────────────────────

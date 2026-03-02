@@ -162,6 +162,13 @@ contextBridge.exposeInMainWorld("shogun", {
   featuresFetch: (): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.FEATURES_FETCH),
 
+  // ── Billing ────────────────────────────────────────────────────
+  billingCheckout: (args?: { interval?: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.BILLING_CHECKOUT, args),
+
+  billingPortal: (): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.BILLING_PORTAL),
+
   // ── Cloud Sync v1 ─────────────────────────────────────────────
   cloudSyncPull: (): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PULL),

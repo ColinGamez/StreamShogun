@@ -3,6 +3,13 @@ import { useAppStore } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import * as bridge from "../lib/bridge";
 import { showToast } from "../components/Toast";
+import { logCheckoutStarted } from "../lib/analytics";
+import {
+  MONTHLY_LABEL,
+  YEARLY_LABEL,
+  YEARLY_PER_MONTH_LABEL,
+  YEARLY_SAVINGS_LABEL,
+} from "../lib/pricing";
 
 interface RefreshStatus {
   enabled: boolean;
@@ -21,10 +28,18 @@ export function SettingsPage() {
   // ── Account state ───────────────────────────────────────────────────
   const authUser = useAppStore((s) => s.authUser);
   const authPlan = useAppStore((s) => s.authPlan);
+  const subscriptionStatus = useAppStore((s) => s.subscriptionStatus);
+  const billingInterval = useAppStore((s) => s.billingInterval);
   const serverFlagsTimestamp = useAppStore((s) => s.serverFlagsTimestamp);
   const isOffline = useAppStore((s) => s.isOffline);
   const usingCachedPlan = useAppStore((s) => s.usingCachedPlan);
   const authLogoutAction = useAppStore((s) => s.authLogoutAction);
+  const fetchServerFeatures = useAppStore((s) => s.fetchServerFeatures);
+  const currentPeriodEnd = useAppStore((s) => s.currentPeriodEnd);
+  const trialEndsAt = useAppStore((s) => s.trialEndsAt);
+  const isFoundingMember = useAppStore((s) => s.isFoundingMember);
+  // ── Billing state ──────────────────────────────────────────────────
+  const [billingLoading, setBillingLoading] = useState<"monthly" | "yearly" | "portal" | null>(null);
   // ── Cloud Sync state ───────────────────────────────────────────────────────
   const canUseCloudSync = useAppStore((s) => s.canUse("cloud_sync"));
   const cloudSyncEnabled = useAppStore((s) => s.cloudSyncEnabled);
@@ -100,8 +115,40 @@ export function SettingsPage() {
 
             <div className="settings-row">
               <label>Plan</label>
-              <span className={`plan-badge plan-${authPlan.toLowerCase()}`}>{authPlan}</span>
+              <span className={`plan-badge plan-${authPlan.toLowerCase()}`}>
+                {authPlan === "PRO" && billingInterval
+                  ? `PRO (${billingInterval === "YEARLY" ? "Yearly" : "Monthly"})`
+                  : authPlan}
+                {subscriptionStatus === "TRIALING" && " — Trial"}
+              </span>
+              {isFoundingMember && (
+                <span className="founding-badge" style={{ marginLeft: 8 }}>
+                  🏅 Founding Member
+                </span>
+              )}
             </div>
+
+            {subscriptionStatus && subscriptionStatus !== "NONE" && (
+              <div className="settings-row">
+                <label>Status</label>
+                <span className={`settings-value${subscriptionStatus === "PAST_DUE" ? " text-warning" : ""}`}>
+                  {subscriptionStatus === "TRIALING"
+                    ? `Trial${trialEndsAt ? ` (ends ${new Date(trialEndsAt).toLocaleDateString()})` : ""}`
+                    : subscriptionStatus === "PAST_DUE"
+                      ? "⚠️ Payment Issue"
+                      : subscriptionStatus === "CANCELED" && currentPeriodEnd
+                        ? `Canceled (access until ${new Date(currentPeriodEnd).toLocaleDateString()})`
+                        : subscriptionStatus}
+                </span>
+              </div>
+            )}
+
+            {billingInterval && (
+              <div className="settings-row">
+                <label>Billing</label>
+                <span className="settings-value">{billingInterval === "YEARLY" ? "Yearly" : "Monthly"}</span>
+              </div>
+            )}
 
             <div className="settings-row">
               <label>Last Sync</label>
@@ -123,6 +170,68 @@ export function SettingsPage() {
             <div className="settings-row">
               <button className="btn-danger" onClick={authLogoutAction}>
                 Sign Out
+              </button>
+            </div>
+
+            {/* ── Billing actions ─────────────────────────── */}
+            <div className="settings-row settings-row-buttons">
+              {authPlan !== "PRO" && (
+                <>
+                  <button
+                    className="btn-primary"
+                    disabled={billingLoading !== null}
+                    onClick={async () => {
+                      setBillingLoading("monthly");
+                      logCheckoutStarted("monthly");
+                      const res = await bridge.billingCheckout("monthly");
+                      setBillingLoading(null);
+                      if (!res.ok) showToast("Failed to open checkout", "error");
+                    }}
+                  >
+                    {billingLoading === "monthly" ? "Opening…" : `⭐ Upgrade ${MONTHLY_LABEL}`}
+                  </button>
+                  <button
+                    className="btn-primary btn-best-value"
+                    disabled={billingLoading !== null}
+                    onClick={async () => {
+                      setBillingLoading("yearly");
+                      logCheckoutStarted("yearly");
+                      const res = await bridge.billingCheckout("yearly");
+                      setBillingLoading(null);
+                      if (!res.ok) showToast("Failed to open checkout", "error");
+                    }}
+                  >
+                    {billingLoading === "yearly"
+                      ? "Opening…"
+                      : `⭐ Upgrade ${YEARLY_LABEL} (${YEARLY_PER_MONTH_LABEL})`}
+                  </button>
+                  <span className="settings-savings-note">{YEARLY_SAVINGS_LABEL}</span>
+                </>
+              )}
+
+              {authPlan === "PRO" && (
+                <button
+                  className="btn-secondary"
+                  disabled={billingLoading !== null}
+                  onClick={async () => {
+                    setBillingLoading("portal");
+                    const res = await bridge.billingPortal();
+                    setBillingLoading(null);
+                    if (!res.ok) showToast("Failed to open billing portal", "error");
+                  }}
+                >
+                  {billingLoading === "portal" ? "Opening…" : "💳 Manage Subscription"}
+                </button>
+              )}
+
+              <button
+                className="btn-secondary"
+                onClick={async () => {
+                  await fetchServerFeatures();
+                  showToast("Plan status refreshed", "success");
+                }}
+              >
+                🔄 Refresh Status
               </button>
             </div>
           </>

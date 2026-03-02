@@ -24,7 +24,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post(
     "/register",
-    { preValidation: [validateBody(registerSchema)] },
+    {
+      preValidation: [validateBody(registerSchema)],
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
     async (
       request: FastifyRequest<{ Body: { email: string; password: string; displayName?: string } }>,
       reply: FastifyReply
@@ -96,7 +99,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post(
     "/login",
-    { preValidation: [validateBody(loginSchema)] },
+    {
+      preValidation: [validateBody(loginSchema)],
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
     async (
       request: FastifyRequest<{ Body: { email: string; password: string } }>,
       reply: FastifyReply
@@ -151,7 +157,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post(
     "/refresh",
-    { preValidation: [validateBody(refreshSchema)] },
+    {
+      preValidation: [validateBody(refreshSchema)],
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
     async (
       request: FastifyRequest<{ Body: { refreshToken: string } }>,
       reply: FastifyReply
@@ -211,6 +220,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     "/logout",
     {
       preValidation: [validateBody(logoutSchema)],
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     },
     async (
       request: FastifyRequest<{ Body: { refreshToken: string } }>,

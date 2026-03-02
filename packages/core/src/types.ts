@@ -89,6 +89,10 @@ export const IpcChannels = {
   AUTH_REFRESH: "auth:refresh",
   FEATURES_FETCH: "features:fetch",
 
+  // ── Billing ────────────────────────────────────────────────────
+  BILLING_CHECKOUT: "billing:checkout",
+  BILLING_PORTAL: "billing:portal",
+
   // ── Cloud Sync (v1) ──────────────────────────────────────────
   CLOUD_SYNC_PULL: "cloud:sync-pull",
   CLOUD_SYNC_PUSH: "cloud:sync-push",

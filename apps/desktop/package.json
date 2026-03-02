@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@stream-shogun/core": "workspace:*",
+    "@stream-shogun/shared": "workspace:*",
     "better-sqlite3": "^12.6.2"
   },
   "devDependencies": {
