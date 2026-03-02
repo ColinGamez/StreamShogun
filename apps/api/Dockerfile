@@ -47,5 +47,7 @@ WORKDIR /app/apps/api
 
 EXPOSE 8787
 
+ENV PORT=8787
+
 # db push on startup (idempotent), then start the API
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/server.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma db push --skip-generate --accept-data-loss 2>&1 && node dist/server.js"]
