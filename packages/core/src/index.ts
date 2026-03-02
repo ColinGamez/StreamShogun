@@ -7,3 +7,4 @@ export * from "./xmltv-parser.js";
 export * from "./epg-index.js";
 export * from "./fuzzy-match.js";
 export * from "./epg-merge.js";
+export * from "./licensing.js";

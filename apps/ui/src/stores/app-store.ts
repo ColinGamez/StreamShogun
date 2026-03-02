@@ -1,7 +1,8 @@
 // ── Application store (Zustand) ───────────────────────────────────────
 
 import { create } from "zustand";
-import type { Channel, Programme } from "@stream-shogun/core";
+import type { Channel, Programme, LicenseStatus , Feature} from "@stream-shogun/core";
+import { isFeatureEnabled, DEFAULT_LICENSE_STATUS } from "@stream-shogun/core";
 import type {
   SerializedEpgIndex,
   DbPlaylistRow,
@@ -122,6 +123,59 @@ export interface AppState {
   // ── Tracking: when the current channel started playing ─────────
   watchStartedAt: number;
   setWatchStartedAt: (ts: number) => void;
+
+  // ── License / Pro ──────────────────────────────────────────────
+  license: LicenseStatus;
+  loadLicense: () => Promise<void>;
+  activateLicenseKey: (key: string) => Promise<LicenseStatus | null>;
+  setProEnabled: (enabled: boolean) => Promise<LicenseStatus | null>;
+  /** Check whether a specific Pro feature is currently enabled. */
+  isFeatureEnabled: (feature: Feature) => boolean;
+
+  // ── Auth / SaaS ────────────────────────────────────────────────
+  authUser: { id: string; email: string; displayName?: string; createdAt: string } | null;
+  authPlan: string; // "FREE" | "PRO"
+  serverFlags: Record<string, boolean>;
+  serverFlagsTimestamp: number; // ms epoch — for offline cache validity
+  authLoading: boolean;
+  authError: string | null;
+
+  /** Attempt silent token refresh + feature fetch on app start. */
+  initAuth: () => Promise<void>;
+  authLoginAction: (email: string, password: string) => Promise<boolean>;
+  authRegisterAction: (email: string, password: string, displayName?: string) => Promise<boolean>;
+  authLogoutAction: () => Promise<void>;
+  fetchServerFeatures: () => Promise<void>;
+  /** Check a server-side feature flag with offline fallback. */
+  isServerFeatureEnabled: (flagKey: string) => boolean;
+
+  // ── Entitlement hardening ──────────────────────────────────────
+  /** True when the last server fetch failed (network unavailable). */
+  isOffline: boolean;
+  /** True when using cached entitlements because we're offline. */
+  usingCachedPlan: boolean;
+
+  /**
+   * Unified feature gate — combines local license + server entitlements.
+   * Returns `true` when the feature is enabled by **either** the local
+   * offline license key OR the server-side subscription flags.
+   * Core playback is never gated.
+   */
+  canUse: (flagKey: string) => boolean;
+
+  // ── Cloud Sync v1 ──────────────────────────────────────────────
+  /** Whether cloud sync is enabled (PRO-only, persisted). */
+  cloudSyncEnabled: boolean;
+  /** Timestamp of last successful cloud sync (ms epoch). */
+  cloudSyncLastAt: number;
+  /** Whether a sync is currently in flight. */
+  cloudSyncing: boolean;
+
+  setCloudSyncEnabled: (enabled: boolean) => void;
+  /** Pull cloud → merge into local. Never throws. */
+  cloudPull: () => Promise<void>;
+  /** Push local → cloud (debounced externally). Never throws. */
+  cloudPush: () => Promise<void>;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -248,6 +302,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Load settings & watch history (non-blocking for startup)
     get().loadSettings().catch(() => { /* best-effort */ });
     get().loadWatchHistory().catch(() => { /* best-effort */ });
+    get().loadLicense().catch(() => { /* best-effort */ });
   },
 
   dbSavePlaylist: async (name, sourceType, sourceValue, channels) => {
@@ -360,4 +415,301 @@ export const useAppStore = create<AppState>((set, get) => ({
   // ── Watch tracking ─────────────────────────────────────────────
   watchStartedAt: 0,
   setWatchStartedAt: (ts) => set({ watchStartedAt: ts }),
+
+  // ── License / Pro ──────────────────────────────────────────────
+
+  license: DEFAULT_LICENSE_STATUS,
+
+  loadLicense: async () => {
+    const res = await bridge.licenseGetStatus();
+    if (res.ok) set({ license: res.data });
+  },
+
+  activateLicenseKey: async (key) => {
+    const res = await bridge.licenseSetKey(key);
+    if (res.ok) {
+      set({ license: res.data });
+      return res.data;
+    }
+    return null;
+  },
+
+  setProEnabled: async (enabled) => {
+    const res = await bridge.licenseSetProEnabled(enabled);
+    if (res.ok) {
+      set({ license: res.data });
+      return res.data;
+    }
+    return null;
+  },
+
+  isFeatureEnabled: (feature: Feature) => {
+    return isFeatureEnabled(feature, get().license);
+  },
+
+  // ── Auth / SaaS ────────────────────────────────────────────────
+
+  authUser: loadJson<{ id: string; email: string; displayName?: string; createdAt: string } | null>(P, "shogun:auth-user", null),
+  authPlan: loadJson<string>(P, "shogun:auth-plan", "FREE") ?? "FREE",
+  serverFlags: loadJson<Record<string, boolean>>(P, "shogun:server-flags", {}),
+  serverFlagsTimestamp: loadJson<number>(P, "shogun:server-flags-ts", 0) ?? 0,
+  authLoading: false,
+  authError: null,
+
+  initAuth: async () => {
+    set({ authLoading: true, authError: null });
+    try {
+      const refreshRes = await bridge.authRefresh();
+      if (refreshRes.ok) {
+        // We have valid tokens — fetch features (marks online)
+        await get().fetchServerFeatures();
+        // Cloud sync pull on startup (fire-and-forget)
+        get().cloudPull().catch(() => { /* never block */ });
+      } else {
+        // Token refresh failed — check offline cache validity (7 days)
+        const ts = get().serverFlagsTimestamp;
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        if (ts > 0 && Date.now() - ts > SEVEN_DAYS) {
+          // Cache expired — reset to FREE defaults
+          set({ authPlan: "FREE", serverFlags: {}, authUser: null, isOffline: false, usingCachedPlan: false });
+          saveJson(P, "shogun:auth-plan", "FREE");
+          saveJson(P, "shogun:server-flags", {});
+          saveJson(P, "shogun:auth-user", null);
+          // Force re-login so user can re-authenticate
+          window.dispatchEvent(new CustomEvent("shogun:show-login"));
+        } else if (ts > 0) {
+          // Have valid cached data — offline grace period
+          set({ isOffline: true, usingCachedPlan: true });
+        }
+        // If ts === 0, user was never logged in — nothing to do
+      }
+    } catch {
+      // Network unavailable — offline mode, keep cached values
+      const ts = get().serverFlagsTimestamp;
+      if (ts > 0) {
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        if (Date.now() - ts > SEVEN_DAYS) {
+          set({ authPlan: "FREE", serverFlags: {}, authUser: null, isOffline: true, usingCachedPlan: false });
+          saveJson(P, "shogun:auth-plan", "FREE");
+          saveJson(P, "shogun:server-flags", {});
+          saveJson(P, "shogun:auth-user", null);
+        } else {
+          set({ isOffline: true, usingCachedPlan: true });
+        }
+      }
+    } finally {
+      set({ authLoading: false });
+    }
+  },
+
+  authLoginAction: async (email, password) => {
+    set({ authLoading: true, authError: null });
+    try {
+      const res = await bridge.authLogin(email, password);
+      if (res.ok) {
+        const { user, subscription } = res.data;
+        set({ authUser: user, authPlan: subscription.plan });
+        saveJson(P, "shogun:auth-user", user);
+        saveJson(P, "shogun:auth-plan", subscription.plan);
+        // Fetch features right after login
+        await get().fetchServerFeatures();
+        set({ authLoading: false });
+        return true;
+      }
+      set({ authError: "Invalid credentials", authLoading: false });
+      return false;
+    } catch (err) {
+      set({ authError: (err as Error).message, authLoading: false });
+      return false;
+    }
+  },
+
+  authRegisterAction: async (email, password, displayName) => {
+    set({ authLoading: true, authError: null });
+    try {
+      const res = await bridge.authRegister(email, password, displayName);
+      if (res.ok) {
+        const { user, subscription } = res.data;
+        set({ authUser: user, authPlan: subscription.plan });
+        saveJson(P, "shogun:auth-user", user);
+        saveJson(P, "shogun:auth-plan", subscription.plan);
+        await get().fetchServerFeatures();
+        set({ authLoading: false });
+        return true;
+      }
+      set({ authError: "Registration failed", authLoading: false });
+      return false;
+    } catch (err) {
+      set({ authError: (err as Error).message, authLoading: false });
+      return false;
+    }
+  },
+
+  authLogoutAction: async () => {
+    await bridge.authLogout();
+    set({ authUser: null, authPlan: "FREE", serverFlags: {}, serverFlagsTimestamp: 0, authError: null });
+    saveJson(P, "shogun:auth-user", null);
+    saveJson(P, "shogun:auth-plan", "FREE");
+    saveJson(P, "shogun:server-flags", {});
+    saveJson(P, "shogun:server-flags-ts", 0);
+  },
+
+  fetchServerFeatures: async () => {
+    try {
+      const res = await bridge.featuresFetch();
+      if (res.ok) {
+        const now = Date.now();
+        set({
+          authPlan: res.data.plan,
+          serverFlags: res.data.flags,
+          serverFlagsTimestamp: now,
+          isOffline: false,
+          usingCachedPlan: false,
+        });
+        saveJson(P, "shogun:auth-plan", res.data.plan);
+        saveJson(P, "shogun:server-flags", res.data.flags);
+        saveJson(P, "shogun:server-flags-ts", now);
+      }
+    } catch {
+      // Offline — keep cached values, mark offline
+      set({ isOffline: true, usingCachedPlan: get().serverFlagsTimestamp > 0 });
+    }
+  },
+
+  isServerFeatureEnabled: (flagKey) => {
+    const { serverFlags, authPlan, serverFlagsTimestamp } = get();
+    // If we have no cached data or cache is older than 7 days, default to FREE
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    if (serverFlagsTimestamp === 0 || Date.now() - serverFlagsTimestamp > SEVEN_DAYS) {
+      return false;
+    }
+    // Check explicit flag
+    if (flagKey in serverFlags) return serverFlags[flagKey];
+    // PRO plan → true by default
+    return authPlan === "PRO";
+  },
+
+  // ── Entitlement hardening ──────────────────────────────────────
+
+  isOffline: false,
+  usingCachedPlan: false,
+
+  canUse: (flagKey) => {
+    // Local offline license always grants access (license key activation)
+    if (get().license.isProEnabled) return true;
+    // Server-side entitlement (respects 7-day cache TTL)
+    return get().isServerFeatureEnabled(flagKey);
+  },
+
+  // ── Cloud Sync v1 ──────────────────────────────────────────────
+
+  cloudSyncEnabled: loadJson<boolean>(P, "shogun:cloud-sync-enabled", false),
+  cloudSyncLastAt: loadJson<number>(P, "shogun:cloud-sync-last", 0) ?? 0,
+  cloudSyncing: false,
+
+  setCloudSyncEnabled: (enabled) => {
+    saveJson(P, "shogun:cloud-sync-enabled", enabled);
+    set({ cloudSyncEnabled: enabled });
+  },
+
+  cloudPull: async () => {
+    if (!get().cloudSyncEnabled || !get().authUser) return;
+    set({ cloudSyncing: true });
+    try {
+      const res = await bridge.cloudSyncPull();
+      if (!res.ok) return;
+
+      const { settings, favorites, history, updatedAt } = res.data;
+
+      // Merge settings — cloud wins for keys present in cloud
+      if (settings && Object.keys(settings).length > 0) {
+        const local = { ...get().settings };
+        const merged = { ...local, ...settings };
+        set({ settings: merged });
+        // Persist each cloud key locally
+        for (const [key, value] of Object.entries(settings)) {
+          bridge.dbSetSetting(key, value).catch(() => { /* best-effort */ });
+        }
+      }
+
+      // Merge favorites — union of local + cloud
+      if (favorites && favorites.length > 0) {
+        const local = get().favorites;
+        const merged = new Set([...local, ...favorites]);
+        persistFavorites(merged);
+        set({ favorites: merged });
+      }
+
+      // Merge history — union by channelUrl+watchedAt, keep most recent
+      if (history && history.length > 0) {
+        // History is informational in the store (watchHistory comes from DB).
+        // We store cloud history snapshot in localStorage for the push cycle.
+        const existing = loadJson<typeof history>(P, "shogun:cloud-history", []);
+        const byKey = new Map(existing.map((h) => [`${h.channelUrl}:${h.watchedAt}`, h]));
+        for (const h of history) byKey.set(`${h.channelUrl}:${h.watchedAt}`, h);
+        const merged = [...byKey.values()]
+          .sort((a, b) => b.watchedAt - a.watchedAt)
+          .slice(0, 50);
+        saveJson(P, "shogun:cloud-history", merged);
+      }
+
+      if (updatedAt) {
+        const ts = new Date(updatedAt).getTime();
+        set({ cloudSyncLastAt: ts });
+        saveJson(P, "shogun:cloud-sync-last", ts);
+      }
+    } catch {
+      // Never block playback — swallow
+    } finally {
+      set({ cloudSyncing: false });
+    }
+  },
+
+  cloudPush: async () => {
+    if (!get().cloudSyncEnabled || !get().authUser) return;
+    set({ cloudSyncing: true });
+    try {
+      const localSettings = { ...get().settings };
+      const localFavorites = [...get().favorites];
+
+      // Build bounded history from watch history
+      const localHistory = get().watchHistory.slice(0, 50).map((w) => ({
+        channelUrl: w.channelUrl,
+        channelName: w.channelName,
+        channelLogo: w.channelLogo ?? "",
+        groupTitle: w.groupTitle ?? "",
+        watchedAt: w.startedAt,
+      }));
+
+      const lastAt = get().cloudSyncLastAt;
+      const localUpdatedAt = lastAt > 0
+        ? new Date(lastAt).toISOString()
+        : new Date(0).toISOString();
+
+      const res = await bridge.cloudSyncPush({
+        settings: localSettings,
+        favorites: localFavorites,
+        history: localHistory,
+        localUpdatedAt,
+      });
+
+      if (!res.ok) return;
+
+      if (res.data.conflict) {
+        // Server was newer — re-pull to get latest then retry push
+        await get().cloudPull();
+        return;
+      }
+
+      if (res.data.updatedAt) {
+        const ts = new Date(res.data.updatedAt).getTime();
+        set({ cloudSyncLastAt: ts });
+        saveJson(P, "shogun:cloud-sync-last", ts);
+      }
+    } catch {
+      // Never block playback — swallow
+    } finally {
+      set({ cloudSyncing: false });
+    }
+  },
 }));

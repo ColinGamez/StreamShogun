@@ -1,0 +1,86 @@
+// ── Prisma schema — StreamShōgun SaaS backend ─────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── User ──────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  subscription  Subscription?
+  featureFlags  FeatureFlag[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+// ── Subscription ──────────────────────────────────────────────────────
+
+enum Plan {
+  free
+  pro
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  past_due
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  userId           String             @unique @map("user_id")
+  plan             Plan               @default(free)
+  status           SubscriptionStatus @default(active)
+  stripeCustomerId String?            @map("stripe_customer_id")
+  stripeSubId      String?            @map("stripe_sub_id")
+  currentPeriodEnd DateTime?          @map("current_period_end")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ── Feature Flags ─────────────────────────────────────────────────────
+
+model FeatureFlag {
+  id       String  @id @default(cuid())
+  userId   String  @map("user_id")
+  flagName String  @map("flag_name")
+  enabled  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, flagName])
+  @@map("feature_flags")
+}
+
+// ── Refresh Tokens ────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  revoked   Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("refresh_tokens")
+}

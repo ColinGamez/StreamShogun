@@ -77,6 +77,21 @@ export const IpcChannels = {
   // ── Discord Rich Presence (F6) ────────────────────────────────
   DISCORD_SET_ACTIVITY: "discord:set-activity",
   DISCORD_CLEAR_ACTIVITY: "discord:clear-activity",
+  // ── License / Pro (Monetization) ──────────────────────────────────
+  LICENSE_GET_STATUS: "license:get-status",
+  LICENSE_SET_KEY: "license:set-key",
+  LICENSE_SET_PRO_ENABLED: "license:set-pro-enabled",
+
+  // ── Auth / SaaS ────────────────────────────────────────────────
+  AUTH_REGISTER: "auth:register",
+  AUTH_LOGIN: "auth:login",
+  AUTH_LOGOUT: "auth:logout",
+  AUTH_REFRESH: "auth:refresh",
+  FEATURES_FETCH: "features:fetch",
+
+  // ── Cloud Sync (v1) ──────────────────────────────────────────
+  CLOUD_SYNC_PULL: "cloud:sync-pull",
+  CLOUD_SYNC_PUSH: "cloud:sync-push",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

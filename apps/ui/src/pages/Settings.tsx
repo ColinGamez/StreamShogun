@@ -18,6 +18,20 @@ export function SettingsPage() {
   const settings = useAppStore((s) => s.settings);
   const setSetting = useAppStore((s) => s.setSetting);
 
+  // ── Account state ───────────────────────────────────────────────────
+  const authUser = useAppStore((s) => s.authUser);
+  const authPlan = useAppStore((s) => s.authPlan);
+  const serverFlagsTimestamp = useAppStore((s) => s.serverFlagsTimestamp);
+  const isOffline = useAppStore((s) => s.isOffline);
+  const usingCachedPlan = useAppStore((s) => s.usingCachedPlan);
+  const authLogoutAction = useAppStore((s) => s.authLogoutAction);
+  // ── Cloud Sync state ───────────────────────────────────────────────────────
+  const canUseCloudSync = useAppStore((s) => s.canUse("cloud_sync"));
+  const cloudSyncEnabled = useAppStore((s) => s.cloudSyncEnabled);
+  const cloudSyncLastAt = useAppStore((s) => s.cloudSyncLastAt);
+  const cloudSyncing = useAppStore((s) => s.cloudSyncing);
+  const setCloudSyncEnabled = useAppStore((s) => s.setCloudSyncEnabled);
+  const cloudPush = useAppStore((s) => s.cloudPush);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus | null>(null);
 
   // ── Fetch refresh status ────────────────────────────────────────────
@@ -65,6 +79,69 @@ export function SettingsPage() {
   return (
     <div className="page page-settings">
       <h2 className="page-title">⚙️ {t("nav.settings", locale)}</h2>
+
+      {/* ── Account ─────────────────────────────────────── */}
+      <section className="settings-section">
+        <h3 className="settings-heading">👤 Account</h3>
+
+        {authUser ? (
+          <>
+            <div className="settings-row">
+              <label>Email</label>
+              <span className="settings-value">{authUser.email}</span>
+            </div>
+
+            {authUser.displayName && (
+              <div className="settings-row">
+                <label>Display Name</label>
+                <span className="settings-value">{authUser.displayName}</span>
+              </div>
+            )}
+
+            <div className="settings-row">
+              <label>Plan</label>
+              <span className={`plan-badge plan-${authPlan.toLowerCase()}`}>{authPlan}</span>
+            </div>
+
+            <div className="settings-row">
+              <label>Last Sync</label>
+              <span className="settings-value">
+                {serverFlagsTimestamp
+                  ? new Date(serverFlagsTimestamp).toLocaleString()
+                  : "Never"}
+              </span>
+            </div>
+
+            {(isOffline || usingCachedPlan) && (
+              <div className="settings-row">
+                <span className="settings-offline-notice">
+                  ⚡ Offline – using cached entitlements
+                </span>
+              </div>
+            )}
+
+            <div className="settings-row">
+              <button className="btn-danger" onClick={authLogoutAction}>
+                Sign Out
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="settings-row">
+            <span className="settings-value" style={{ opacity: 0.7 }}>
+              Not signed in
+            </span>
+            <button
+              className="btn-primary"
+              onClick={() =>
+                window.dispatchEvent(new CustomEvent("shogun:show-login"))
+              }
+            >
+              Sign In
+            </button>
+          </div>
+        )}
+      </section>
 
       {/* ── Appearance ──────────────────────────────────── */}
       <section className="settings-section">
@@ -182,7 +259,50 @@ export function SettingsPage() {
           </button>
         </div>
       </section>
+      {/* ── Cloud Sync (PRO) ────────────────────────────── */}
+      <section className="settings-section">
+        <h3 className="settings-heading">☁️ Cloud Sync {!canUseCloudSync && <span className="plan-badge plan-pro" style={{ marginLeft: 8, fontSize: "0.75em" }}>PRO</span>}</h3>
 
+        <div className="settings-row">
+          <label>Enable Cloud Sync</label>
+          <button
+            className={`toggle-btn ${cloudSyncEnabled ? "on" : "off"}`}
+            disabled={!canUseCloudSync}
+            onClick={() => {
+              setCloudSyncEnabled(!cloudSyncEnabled);
+              if (!cloudSyncEnabled) {
+                // Immediately push when enabling
+                setTimeout(() => cloudPush(), 100);
+              }
+            }}
+          >
+            {cloudSyncEnabled ? "ON" : "OFF"}
+          </button>
+        </div>
+
+        {cloudSyncEnabled && (
+          <>
+            <div className="settings-row">
+              <label>Last Cloud Sync</label>
+              <span className="settings-value">
+                {cloudSyncLastAt
+                  ? new Date(cloudSyncLastAt).toLocaleString()
+                  : "Never"}
+              </span>
+            </div>
+
+            <div className="settings-row">
+              <button
+                className="btn-secondary"
+                disabled={cloudSyncing}
+                onClick={() => cloudPush()}
+              >
+                {cloudSyncing ? "↻ Syncing…" : "☁️ Sync Now"}
+              </button>
+            </div>
+          </>
+        )}
+      </section>
       {/* ── Data ────────────────────────────────────────── */}
       <section className="settings-section">
         <h3 className="settings-heading">{t("settings.data", locale)}</h3>

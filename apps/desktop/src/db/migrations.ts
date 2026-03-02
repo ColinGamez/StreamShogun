@@ -115,4 +115,13 @@ export const migrations: Migration[] = [
       INSERT INTO settings (key, value) VALUES ('pipAlwaysOnTop', 'true');
     `,
   },
+  {
+    version: 3,
+    sql: `
+      -- ── License / Pro settings ─────────────────────────────────────
+      INSERT OR IGNORE INTO settings (key, value) VALUES ('isProEnabled', 'false');
+      INSERT OR IGNORE INTO settings (key, value) VALUES ('licenseKey', '');
+      INSERT OR IGNORE INTO settings (key, value) VALUES ('licenseValidationState', 'none');
+    `,
+  },
 ];

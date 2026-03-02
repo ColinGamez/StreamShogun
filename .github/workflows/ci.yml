@@ -12,13 +12,15 @@ concurrency:
 
 jobs:
   quality:
-    name: Quality Gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    name: Quality Gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18, 20, 22]
+        os: [ubuntu-latest, windows-latest]
+        node-version: [20]
 
     steps:
       - name: Checkout
@@ -38,13 +40,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build core library
-        run: pnpm --filter @stream-shogun/core build
-
-      - name: Typecheck
-        run: |
-          pnpm --filter @stream-shogun/ui exec tsc --noEmit
-          pnpm --filter @stream-shogun/desktop exec tsc --noEmit
+      - name: Typecheck (all workspaces)
+        run: pnpm typecheck
 
       - name: Lint
         run: pnpm lint
@@ -55,11 +52,8 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Build UI
-        run: pnpm --filter @stream-shogun/ui build
-
-      - name: Build desktop (unpackaged)
-        run: pnpm --filter @stream-shogun/desktop build:unpackaged
+      - name: Build (all workspaces)
+        run: pnpm build
 
   audit:
     name: Security Audit

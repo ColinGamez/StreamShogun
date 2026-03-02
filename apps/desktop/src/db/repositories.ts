@@ -4,7 +4,8 @@
 // returns plain-object DTOs that survive Electron's structured-clone IPC.
 
 import { getDb } from "./database";
-import type { Channel, Programme } from "@stream-shogun/core";
+import type { Channel, Programme, LicenseStatus, LicenseValidationState } from "@stream-shogun/core";
+import { validateLicenseKeyFormat, DEFAULT_LICENSE_STATUS } from "@stream-shogun/core";
 import * as crypto from "crypto";
 
 // ── Row types (DB rows → plain objects) ───────────────────────────────
@@ -479,4 +480,57 @@ export function getLastWatched(): WatchHistoryRow | null {
 /** Clear all watch history. */
 export function clearWatchHistory(): void {
   getDb().prepare("DELETE FROM watch_history").run();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  License / Pro (Monetization)
+// ═══════════════════════════════════════════════════════════════════════
+
+/** Retrieve the current license status from settings. */
+export function getLicenseStatus(): LicenseStatus {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT key, value FROM settings WHERE key IN ('isProEnabled', 'licenseKey', 'licenseValidationState')")
+    .all() as { key: string; value: string }[];
+
+  const map: Record<string, string> = {};
+  for (const r of rows) map[r.key] = r.value;
+
+  return {
+    isProEnabled: map.isProEnabled === "true",
+    licenseKey: map.licenseKey ?? DEFAULT_LICENSE_STATUS.licenseKey,
+    validationState: (map.licenseValidationState as LicenseValidationState) ?? DEFAULT_LICENSE_STATUS.validationState,
+  };
+}
+
+/** Store a license key and run offline format validation. */
+export function setLicenseKey(key: string): LicenseStatus {
+  const db = getDb();
+  const trimmed = key.trim();
+
+  const validationState: LicenseValidationState =
+    trimmed === "" ? "none" : validateLicenseKeyFormat(trimmed) ? "valid" : "invalid";
+
+  const isProEnabled = validationState === "valid";
+
+  db.transaction(() => {
+    const upsert = db.prepare(
+      "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    );
+    upsert.run("licenseKey", trimmed);
+    upsert.run("licenseValidationState", validationState);
+    upsert.run("isProEnabled", String(isProEnabled));
+  })();
+
+  return { isProEnabled, licenseKey: trimmed, validationState };
+}
+
+/** Manually toggle Pro mode (for dev / testing). */
+export function setProEnabled(enabled: boolean): LicenseStatus {
+  const db = getDb();
+  db.prepare(
+    "INSERT INTO settings (key, value) VALUES ('isProEnabled', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+  ).run(String(enabled));
+
+  return getLicenseStatus();
 }

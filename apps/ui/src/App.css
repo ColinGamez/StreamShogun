@@ -1862,3 +1862,306 @@ button:disabled {
 .error-boundary-retry {
   margin-top: 0.5rem;
 }
+
+/* ── Pro Badge ───────────────────────────────────────────────────── */
+
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, #7c5cfc 0%, #a78bfa 100%);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: transform 0.15s, box-shadow 0.15s;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.pro-badge:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 8px rgba(124, 92, 252, 0.5);
+}
+
+.pro-badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Modal / Overlay ─────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 480px;
+  max-width: 92vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+
+.modal-close:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+/* ── Upgrade Modal ───────────────────────────────────────────────── */
+
+.upgrade-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 0.75rem;
+}
+
+.upgrade-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.upgrade-feature-list {
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.upgrade-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.upgrade-feature-row.highlighted {
+  border-color: var(--accent);
+  background: rgba(124, 92, 252, 0.08);
+}
+
+.upgrade-feature-row.enabled {
+  opacity: 0.85;
+}
+
+.upgrade-feature-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.upgrade-feature-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.upgrade-feature-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.upgrade-feature-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.upgrade-feature-status {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* ── Upgrade form ────────────────────────────────────────────────── */
+
+.upgrade-form {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.upgrade-form label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.upgrade-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.upgrade-input-row input {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  letter-spacing: 0.06em;
+  transition: border-color 0.15s;
+}
+
+.upgrade-input-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.upgrade-input-row input.input-error {
+  border-color: var(--danger);
+}
+
+.upgrade-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.upgrade-activated {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.upgrade-activated-icon {
+  font-size: 2rem;
+}
+
+.upgrade-activated p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ── License settings section ────────────────────────────────────── */
+
+.license-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.license-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.license-status-badge.pro {
+  background: linear-gradient(135deg, #7c5cfc 0%, #a78bfa 100%);
+  color: #fff;
+}
+
+.license-status-badge.free {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.license-key-display {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.license-features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.license-feature-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.license-feature-chip.enabled {
+  color: var(--success);
+}
+
+.license-feature-chip.disabled {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* ── Pro-gated control style ─────────────────────────────────────── */
+
+.pro-gated {
+  position: relative;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.pro-gated-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pro-gated-wrap .pro-badge {
+  pointer-events: auto;
+  opacity: 1;
+}

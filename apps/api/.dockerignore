@@ -1,0 +1,9 @@
+# Ignore everything not needed in the Docker build context
+node_modules
+dist
+generated
+.env
+.env.local
+*.tsbuildinfo
+.eslintcache
+.git

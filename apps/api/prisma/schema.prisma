@@ -1,0 +1,128 @@
+// ── Prisma Schema for StreamShōgun SaaS API ───────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── User ──────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  subscription  Subscription?
+  featureFlags  FeatureFlag[]
+  cloudSettings AppSettingsCloud?
+
+  @@map("users")
+}
+
+// ── Session (refresh-token rotation) ──────────────────────────────
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @map("refresh_token_hash")
+  userAgent        String?   @map("user_agent")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ── Subscription ──────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String             @unique @map("user_id")
+  plan               Plan               @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId   String?            @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?          @unique @map("stripe_subscription_id")
+  currentPeriodEnd   DateTime?          @map("current_period_end")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ── Feature Flags ─────────────────────────────────────────────────
+
+model FeatureFlag {
+  id      String  @id @default(cuid())
+  userId  String  @map("user_id")
+  key     String
+  enabled Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@map("feature_flags")
+}
+
+// ── Cloud Settings & Sync ─────────────────────────────────────────
+
+model AppSettingsCloud {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  blobJson      String   @map("blob_json") @db.Text          // legacy / raw settings
+  favoritesJson String   @default("[]") @map("favorites_json") @db.Text
+  historyJson   String   @default("[]") @map("history_json") @db.Text
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("app_settings_cloud")
+}
+
+// ── Processed Stripe Events (webhook idempotency) ─────────────────
+
+model ProcessedEvent {
+  id          String   @id                     // Stripe event id (evt_...)
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("processed_events")
+}
+
+// ── Audit Log (admin actions) ─────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  admin      String              // identifier of admin (e.g. "founder" or key prefix)
+  action     String              // e.g. "feature-flag.set"
+  targetType String   @map("target_type") // e.g. "FeatureFlag", "User"
+  targetId   String   @map("target_id")   // id of the affected record
+  payload    Json?               // optional before/after snapshot
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}

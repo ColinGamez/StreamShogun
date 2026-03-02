@@ -135,6 +135,44 @@ contextBridge.exposeInMainWorld("shogun", {
 
   discordClearActivity: (): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DISCORD_CLEAR_ACTIVITY),
+
+  // ── License / Pro (Monetization) ──────────────────────────────
+  licenseGetStatus: (): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.LICENSE_GET_STATUS),
+
+  licenseSetKey: (args: { key: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.LICENSE_SET_KEY, args),
+
+  licenseSetProEnabled: (args: { enabled: boolean }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.LICENSE_SET_PRO_ENABLED, args),
+
+  // ── Auth / SaaS ───────────────────────────────────────────────
+  authRegister: (args: { email: string; password: string; displayName?: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.AUTH_REGISTER, args),
+
+  authLogin: (args: { email: string; password: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.AUTH_LOGIN, args),
+
+  authLogout: (): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.AUTH_LOGOUT),
+
+  authRefresh: (): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.AUTH_REFRESH),
+
+  featuresFetch: (): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.FEATURES_FETCH),
+
+  // ── Cloud Sync v1 ─────────────────────────────────────────────
+  cloudSyncPull: (): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PULL),
+
+  cloudSyncPush: (args: {
+    settings?: Record<string, string>;
+    favorites?: string[];
+    history?: Array<{ channelUrl: string; channelName: string; channelLogo?: string; groupTitle?: string; watchedAt: number }>;
+    localUpdatedAt: string;
+  }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PUSH, args),
 });
 
 // Keep the legacy "electronAPI" alias for backward-compat with the UI

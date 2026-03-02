@@ -38,6 +38,7 @@ module.exports = {
     "dist-tsc",
     "dist-node",
     "release",
+    "generated",
     "node_modules",
     "*.js",
     "*.cjs",

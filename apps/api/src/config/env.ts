@@ -1,0 +1,42 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  PORT: z.coerce.number().default(8787),
+  HOST: z.string().default("0.0.0.0"),
+
+  DATABASE_URL: z.string().url(),
+
+  JWT_SECRET: z.string().min(16),
+  JWT_ACCESS_TTL: z.string().default("15m"),
+  JWT_REFRESH_TTL: z.string().default("7d"),
+
+  CORS_ORIGIN: z.string().default("http://localhost:5173"),
+
+  // Logging
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).optional(),
+
+  // Optional — Sentry error tracking (set to enable)
+  SENTRY_DSN: z.string().url().optional(),
+
+  // Optional — Admin API key (set to enable admin endpoints)
+  ADMIN_KEY: z.string().min(16).optional(),
+
+  // Stripe billing (optional — enables /v1/billing endpoints)
+  STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
+  STRIPE_PRICE_ID: z.string().startsWith("price_").optional(),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+function loadEnv(): Env {
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    console.error("❌ Invalid environment variables:");
+    console.error(result.error.format());
+    process.exit(1);
+  }
+  return result.data;
+}
+
+export const env = loadEnv();

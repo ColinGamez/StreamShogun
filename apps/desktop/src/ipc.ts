@@ -31,6 +31,9 @@ import {
   listWatchHistory,
   getLastWatched,
   clearWatchHistory,
+  getLicenseStatus,
+  setLicenseKey,
+  setProEnabled,
 } from "./db";
 import {
   initScheduler,
@@ -44,6 +47,16 @@ import {
   setActivity as discordSetActivity,
   clearActivity as discordClearActivity,
 } from "./discord";
+import {
+  apiRegister,
+  apiLogin,
+  apiLogout,
+  apiGetFeatures,
+  apiRefreshTokens,
+  apiCloudSyncGet,
+  apiCloudSyncPut,
+} from "./api-client";
+import { loadTokens } from "./token-store";
 
 // ── Security constants ────────────────────────────────────────────────
 
@@ -660,6 +673,142 @@ export function registerIpcHandlers(): void {
       return fail(err);
     }
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  License / Pro (Monetization)
+  // ═══════════════════════════════════════════════════════════════════
+
+  ipcMain.handle(IpcChannels.LICENSE_GET_STATUS, () => {
+    try {
+      return ok(getLicenseStatus());
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(
+    IpcChannels.LICENSE_SET_KEY,
+    (_event, args: { key: string }) => {
+      try {
+        requireString(args.key, "license key");
+        return ok(setLicenseKey(args.key));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.LICENSE_SET_PRO_ENABLED,
+    (_event, args: { enabled: boolean }) => {
+      try {
+        return ok(setProEnabled(args.enabled));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Auth / SaaS
+  // ═══════════════════════════════════════════════════════════════════
+
+  ipcMain.handle(
+    IpcChannels.AUTH_REGISTER,
+    async (_event, args: { email: string; password: string; displayName?: string }) => {
+      try {
+        requireString(args.email, "email");
+        requireString(args.password, "password");
+        const result = await apiRegister(args.email, args.password, args.displayName);
+        if (!result.ok) return fail(new Error((result.data as unknown as { message?: string }).message ?? "Registration failed"));
+        return ok(result.data);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.AUTH_LOGIN,
+    async (_event, args: { email: string; password: string }) => {
+      try {
+        requireString(args.email, "email");
+        requireString(args.password, "password");
+        const result = await apiLogin(args.email, args.password);
+        if (!result.ok) return fail(new Error((result.data as unknown as { message?: string }).message ?? "Login failed"));
+        return ok(result.data);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  ipcMain.handle(IpcChannels.AUTH_LOGOUT, async () => {
+    try {
+      await apiLogout();
+      return ok(null);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.AUTH_REFRESH, async () => {
+    try {
+      const tokens = await loadTokens();
+      if (!tokens?.refreshToken) return fail(new Error("No refresh token"));
+      // Actually attempt a token refresh against the API
+      const refreshed = await apiRefreshTokens();
+      if (!refreshed) return fail(new Error("Token refresh failed"));
+      return ok({ hasTokens: true });
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.FEATURES_FETCH, async () => {
+    try {
+      const result = await apiGetFeatures();
+      if (!result.ok) return fail(new Error("Failed to fetch features"));
+      return ok(result.data);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Cloud Sync v1
+  // ═══════════════════════════════════════════════════════════════
+
+  ipcMain.handle(IpcChannels.CLOUD_SYNC_PULL, async () => {
+    try {
+      const result = await apiCloudSyncGet();
+      if (!result.ok) return fail(new Error("Failed to pull cloud sync"));
+      return ok(result.data);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(
+    IpcChannels.CLOUD_SYNC_PUSH,
+    async (_event, args: {
+      settings?: Record<string, string>;
+      favorites?: string[];
+      history?: Array<{ channelUrl: string; channelName: string; channelLogo?: string; groupTitle?: string; watchedAt: number }>;
+      localUpdatedAt: string;
+    }) => {
+      try {
+        const result = await apiCloudSyncPut(args);
+        // 409 = conflict; still return the payload so the client can merge
+        if (!result.ok && result.status !== 409) {
+          return fail(new Error("Cloud sync push failed"));
+        }
+        return ok({ ...result.data, conflict: result.status === 409 });
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
 
   // Initialise scheduler after all handlers are registered
   initScheduler();
