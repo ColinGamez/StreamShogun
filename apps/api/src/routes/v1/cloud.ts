@@ -18,7 +18,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
     "/settings",
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { sub } = request.user as { sub: string; email: string };
+      const { sub } = request.user;
 
       const settings = await prisma.appSettingsCloud.findUnique({
         where: { userId: sub },
@@ -49,7 +49,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
       request: FastifyRequest,
       reply: FastifyReply
     ) => {
-      const { sub } = request.user as { sub: string; email: string };
+      const { sub } = request.user;
       const { settings } = request.body as { settings: Record<string, unknown> };
 
       const updated = await prisma.appSettingsCloud.upsert({
@@ -82,7 +82,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
     "/sync",
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { sub } = request.user as { sub: string; email: string };
+      const { sub } = request.user;
 
       const row = await prisma.appSettingsCloud.findUnique({
         where: { userId: sub },
@@ -118,7 +118,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
       preValidation: [validateBody(cloudSyncPutSchema)],
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { sub } = request.user as { sub: string; email: string };
+      const { sub } = request.user;
       const body = request.body as {
         settings?: Record<string, string>;
         favorites?: string[];
@@ -191,7 +191,8 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
 function safeParse<T>(json: string, fallback: T | null): T | null {
   try {
     return JSON.parse(json) as T;
-  } catch {
+  } catch (err) {
+    console.warn("[cloud] Failed to parse stored JSON:", (err as Error).message);
     return fallback;
   }
 }

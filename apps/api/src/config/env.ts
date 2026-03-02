@@ -37,6 +37,10 @@ const envSchema = z.object({
 
   // Kill-switch: set to "true" to disable billing routes at runtime
   BILLING_DISABLED: z.string().optional(),
+
+  // Founding member cutoff date (ISO 8601). Users created before this
+  // date get a founding-member badge. Defaults to 2026-06-01.
+  FOUNDING_MEMBER_CUTOFF: z.string().datetime().optional(),
 }).superRefine((data, ctx) => {
   // When billing is configured, enforce that essential companion vars are present
   if (data.STRIPE_SECRET_KEY && data.BILLING_DISABLED !== "true") {

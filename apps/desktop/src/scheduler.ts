@@ -7,9 +7,20 @@
 // The scheduler is controlled via IPC from the renderer (set interval,
 // trigger now, get status).
 
-import { BrowserWindow } from "electron";
-import { IpcChannels } from "@stream-shogun/core";
-import { getSetting, setSetting, listPlaylists, listEpgSources } from "./db";
+import { BrowserWindow, app } from "electron";
+import { IpcChannels, parseM3U, parseXmltv } from "@stream-shogun/core";
+import {
+  getSetting,
+  setSetting,
+  listPlaylists,
+  listEpgSources,
+  savePlaylist,
+  saveEpgSource,
+} from "./db";
+import { gunzip } from "zlib";
+import { promisify } from "util";
+
+const gunzipAsync = promisify(gunzip);
 
 // ── State ─────────────────────────────────────────────────────────────
 
@@ -98,17 +109,18 @@ function stopTimer(): void {
 /** Maximum time (ms) a single refresh cycle is allowed to take. */
 const MAX_REFRESH_DURATION_MS = 60_000;
 
+/** Maximum download size per source (25 MB). */
+const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
+
+/** Fetch timeout per source (30 s). */
+const FETCH_TIMEOUT_MS = 30_000;
+
 /**
  * Perform the actual refresh:
  * 1. Notify renderer that refresh has started
- * 2. Re-fetch each playlist and EPG source
- * 3. Notify renderer with results
- *
- * Heavy lifting (fetch + parse) is done by the existing IPC handlers,
- * but we invoke the DB layer directly here to keep things simple.
- *
- * A timeout guard ensures `refreshing` is always cleared even if the
- * listed operations stall.
+ * 2. Re-fetch each URL-based playlist and EPG source
+ * 3. Re-parse and persist updated data
+ * 4. Notify renderer with results
  */
 async function doRefresh(): Promise<void> {
   refreshing = true;
@@ -126,6 +138,39 @@ async function doRefresh(): Promise<void> {
     const playlists = listPlaylists();
     const epgSources = listEpgSources();
 
+    let playlistOk = 0;
+    let playlistFail = 0;
+    let epgOk = 0;
+    let epgFail = 0;
+
+    // ── Re-fetch URL-based playlists ──────────────────────────────
+    for (const pl of playlists) {
+      if (pl.sourceType !== "url") continue;
+      try {
+        const text = await fetchText(pl.sourceValue);
+        const parsed = parseM3U(text);
+        savePlaylist(pl.name, "url", pl.sourceValue, parsed.channels);
+        playlistOk++;
+      } catch (err) {
+        playlistFail++;
+        console.warn(`[scheduler] playlist refresh failed: ${pl.sourceValue}`, err);
+      }
+    }
+
+    // ── Re-fetch URL-based EPG sources ────────────────────────────
+    for (const ep of epgSources) {
+      if (ep.sourceType !== "url") continue;
+      try {
+        const text = await fetchText(ep.sourceValue);
+        const result = parseXmltv(text);
+        saveEpgSource(ep.name, "url", ep.sourceValue, result.programmes);
+        epgOk++;
+      } catch (err) {
+        epgFail++;
+        console.warn(`[scheduler] EPG refresh failed: ${ep.sourceValue}`, err);
+      }
+    }
+
     lastRefreshAt = Date.now();
 
     notifyRenderer({
@@ -133,6 +178,7 @@ async function doRefresh(): Promise<void> {
       lastRefreshAt,
       playlistIds: playlists.map((p) => p.id),
       epgSourceIds: epgSources.map((e) => e.id),
+      stats: { playlistOk, playlistFail, epgOk, epgFail },
     });
   } catch (err) {
     notifyRenderer({
@@ -142,6 +188,60 @@ async function doRefresh(): Promise<void> {
   } finally {
     clearTimeout(timeout);
     refreshing = false;
+  }
+}
+
+/** Fetch a URL with size + timeout enforcement, auto-decompress gzip. */
+async function fetchText(rawUrl: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(rawUrl, {
+      signal: controller.signal,
+      headers: { "User-Agent": `StreamShogun/${app.getVersion()}` },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No readable body");
+
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_DOWNLOAD_BYTES) {
+        reader.cancel();
+        throw new Error(`Download exceeded ${MAX_DOWNLOAD_BYTES} bytes`);
+      }
+      chunks.push(value);
+    }
+
+    const merged = Buffer.alloc(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+
+    // Auto-decompress gzip
+    const isGz =
+      rawUrl.endsWith(".gz") ||
+      (merged.length >= 2 && merged[0] === 0x1f && merged[1] === 0x8b);
+    if (isGz) {
+      const decompressed = await gunzipAsync(merged);
+      return new TextDecoder("utf-8").decode(decompressed);
+    }
+
+    return new TextDecoder("utf-8").decode(merged);
+  } finally {
+    clearTimeout(timer);
   }
 }
 

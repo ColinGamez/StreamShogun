@@ -1,7 +1,16 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { adminAuth } from "../../middleware/admin-auth.js";
+
+// ── Admin identity derivation ──────────────────────────────────────────
+
+/** Derive admin identity from the request (key prefix or header). */
+function getAdminIdentity(request: FastifyRequest): string {
+  const header = request.headers["x-admin-identity"];
+  if (typeof header === "string" && header.length > 0) return header;
+  return "admin";
+}
 
 // ── Shared pagination ───────────────────────────────────────────
 
@@ -176,7 +185,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     await prisma.auditLog.create({
       data: {
-        admin: "founder",
+        admin: getAdminIdentity(request),
         action: "feature-flag.set",
         targetType: "FeatureFlag",
         targetId: flag.id,
@@ -236,7 +245,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     await prisma.auditLog.create({
       data: {
-        admin: "founder",
+        admin: getAdminIdentity(request),
         action: "grant-pro",
         targetType: "Subscription",
         targetId: subscription.id,
@@ -294,7 +303,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     await prisma.auditLog.create({
       data: {
-        admin: "founder",
+        admin: getAdminIdentity(request),
         action: "revoke-pro",
         targetType: "Subscription",
         targetId: subscription.id,

@@ -29,5 +29,5 @@ WORKDIR /app/apps/api
 
 EXPOSE 8787
 
-# db push on startup (idempotent), then start the API
-CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss 2>&1; node dist/server.js"]
+# Run migrations on startup (safe, no data loss), then start the API
+CMD ["sh", "-c", "npx prisma migrate deploy 2>&1; node dist/server.js"]

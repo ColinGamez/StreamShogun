@@ -32,7 +32,17 @@ function App() {
   );
   const initAuth = useAppStore((s) => s.initAuth);
 
+  const settings = useAppStore((s) => s.settings);
   const incrementAppOpen = useAppStore((s) => s.incrementAppOpen);
+
+  // Theme toggle
+  useEffect(() => {
+    if (settings.theme === "light") {
+      document.documentElement.classList.add("theme-light");
+    } else {
+      document.documentElement.classList.remove("theme-light");
+    }
+  }, [settings.theme]);
 
   // Silent auth refresh on startup
   useEffect(() => {
@@ -85,6 +95,11 @@ function App() {
   if (!hasPlaylists) {
     return (
       <div className="app-shell">
+        <div className="aurora-bg" aria-hidden="true">
+          <div className="aurora-orb aurora-orb-1" />
+          <div className="aurora-orb aurora-orb-2" />
+          <div className="aurora-orb aurora-orb-3" />
+        </div>
         <Sidebar current={page} onChange={setPage} />
         <main className="app-main">
           <OfflineBanner />
@@ -93,6 +108,7 @@ function App() {
           <Welcome onGoToLibrary={() => setPage("library")} />
         </main>
         <ToastContainer />
+        <LoginModal />
         <PaywallModal />
       </div>
     );
@@ -100,6 +116,11 @@ function App() {
 
   return (
     <div className="app-shell">
+      <div className="aurora-bg" aria-hidden="true">
+        <div className="aurora-orb aurora-orb-1" />
+        <div className="aurora-orb aurora-orb-2" />
+        <div className="aurora-orb aurora-orb-3" />
+      </div>
       <Sidebar current={page} onChange={setPage} />
 
       <main className="app-main">

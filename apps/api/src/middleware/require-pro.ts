@@ -15,12 +15,19 @@ export function requirePro(featureKey: string) {
     request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<void> {
-    const { sub } = request.user as { sub: string; email: string };
+    const { sub } = request.user;
 
-    const [subscription, override] = await Promise.all([
-      prisma.subscription.findUnique({ where: { userId: sub } }),
-      prisma.featureFlag.findFirst({ where: { userId: sub, key: featureKey } }),
-    ]);
+    // Single query with include instead of 2 parallel round-trips
+    const user = await prisma.user.findUnique({
+      where: { id: sub },
+      select: {
+        subscription: true,
+        featureFlags: { where: { key: featureKey }, take: 1 },
+      },
+    });
+
+    const subscription = user?.subscription ?? null;
+    const override = user?.featureFlags?.[0] ?? null;
 
     // Explicit per-user override takes precedence
     if (override) {

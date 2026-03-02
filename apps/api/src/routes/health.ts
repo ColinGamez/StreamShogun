@@ -16,8 +16,8 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
       try {
         await prisma.$queryRaw`SELECT 1`;
         dbOk = true;
-      } catch {
-        // db down
+      } catch (err) {
+        _request.log.error({ err }, "healthz: database ping failed");
       }
 
       const stripeKeyConfigured = !!env.STRIPE_SECRET_KEY;
@@ -50,8 +50,8 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
         await prisma.$queryRaw`SELECT 1`;
         dbLatencyMs = Math.round(performance.now() - t0);
         dbOk = true;
-      } catch {
-        // db down
+      } catch (err) {
+        _request.log.error({ err }, "healthz/details: database ping failed");
       }
 
       return reply.code(dbOk ? 200 : 503).send({

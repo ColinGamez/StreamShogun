@@ -1,5 +1,4 @@
 export * from "./types.js";
-export * from "./parsers.js";
 export * from "./iptv-types.js";
 export * from "./m3u-parser.js";
 export * from "./xmltv-types.js";

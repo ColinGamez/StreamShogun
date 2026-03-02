@@ -10,6 +10,7 @@ import type { Feature } from "@stream-shogun/core";
 import {
   type LicenseStatus,
 } from "@stream-shogun/core";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import { PRO_FEATURES_CATALOG } from "@stream-shogun/shared";
 import { useAppStore } from "../stores/app-store";
 import * as bridge from "../lib/bridge";
@@ -36,6 +37,8 @@ export function PaywallModal() {
   const [activating, setActivating] = useState(false);
   const [keyError, setKeyError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, open);
 
   const authUser = useAppStore((s) => s.authUser);
   const authPlan = useAppStore((s) => s.authPlan);
@@ -129,6 +132,7 @@ export function PaywallModal() {
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div
+        ref={dialogRef}
         className="modal paywall-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"

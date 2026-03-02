@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { env } from "../config/env.js";
 
@@ -28,7 +29,7 @@ export async function adminAuth(
 
   const key = request.headers["x-admin-key"];
 
-  if (!key || key !== env.ADMIN_KEY) {
+  if (!key || typeof key !== "string" || !safeEqual(key, env.ADMIN_KEY)) {
     request.log.warn(
       { reqId: request.id, path: request.url },
       "admin.auth_rejected",
@@ -37,4 +38,16 @@ export async function adminAuth(
       .code(401)
       .send({ error: "Unauthorized", message: "Invalid or missing admin key" });
   }
+}
+
+/** Constant-time string comparison to prevent timing attacks. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) {
+    // Compare against self to keep constant time, then return false
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
 }

@@ -15,6 +15,19 @@ import { adminRoutes } from "./routes/v1/admin.js";
 import { billingRoutes } from "./routes/v1/billing.js";
 import { healthRoutes } from "./routes/health.js";
 
+// ── Fastify type augmentations ──────────────────────────────────────────
+declare module "@fastify/jwt" {
+  interface FastifyJWT {
+    payload: { sub: string; email: string };
+    user: { sub: string; email: string };
+  }
+}
+declare module "fastify" {
+  interface FastifyRequest {
+    _startTime?: number;
+  }
+}
+
 /** Truncate stack traces to avoid flooding log aggregators. */
 function safeStack(stack: string | undefined, maxLines = 15): string | undefined {
   if (!stack) return undefined;
@@ -53,7 +66,7 @@ export async function buildApp() {
 
   app.addHook("onRequest", (request, reply, done) => {
     // Attach request start time for response-time calculation
-    (request as unknown as { _startTime: number })._startTime = performance.now();
+    request._startTime = performance.now();
 
     // Echo request-id so clients can correlate
     void reply.header("X-Request-Id", request.id);
@@ -72,14 +85,14 @@ export async function buildApp() {
     // Skip /healthz
     if (request.url.startsWith("/healthz")) return done();
 
-    const startTime = (request as unknown as { _startTime?: number })._startTime;
+    const startTime = request._startTime;
     const responseTimeMs = startTime !== undefined && startTime !== null
       ? Math.round(performance.now() - startTime)
       : -1;
 
     // Extract route pattern (e.g. "/v1/auth/login") and userId if authenticated
     const route = request.routeOptions?.url ?? request.url;
-    const userId = (request as unknown as { user?: { sub?: string } }).user?.sub;
+    const userId = request.user?.sub;
 
     request.log.info(
       {

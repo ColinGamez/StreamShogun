@@ -10,7 +10,7 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
     "/",
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { sub } = request.user as { sub: string; email: string };
+      const { sub } = request.user;
 
       const user = await prisma.user.findUnique({
         where: { id: sub },

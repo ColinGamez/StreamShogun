@@ -1,10 +1,17 @@
 import { useMemo, useCallback, useEffect, useState, useRef } from "react";
-import type { Programme } from "@stream-shogun/core";
+import type { Channel, Programme } from "@stream-shogun/core";
 import { useAppStore } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import { HlsPlayer } from "../components/HlsPlayer";
 import { showToast } from "../components/Toast";
 import * as bridge from "../lib/bridge";
+
+// ── Constants ─────────────────────────────────────────────────────────
+
+const OSD_DISPLAY_MS = 3_000;
+const NUMERIC_TIMEOUT_MS = 1_500;
+
+// ── Types ─────────────────────────────────────────────────────────────
 
 interface PlayerPageProps {
   onNavigate: (page: "channels") => void;
@@ -22,8 +29,18 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
   const settings = useAppStore((s) => s.settings);
 
   const [copied, setCopied] = useState(false);
+
+  // ── OSD state ───────────────────────────────────────────────────────
+  const [osd, setOsd] = useState<{ num: number; name: string; logo?: string } | null>(null);
+  const osdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Numeric channel entry ───────────────────────────────────────────
+  const [numericInput, setNumericInput] = useState("");
+  const numericTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Watch history refs (BUG-3 fix: store full prev channel object) ─
   const watchStartRef = useRef<number>(Date.now());
-  const prevChannelRef = useRef<string | null>(null);
+  const prevChannelObjRef = useRef<Channel | null>(null);
 
   // Use PIP override if provided
   const effectiveChannel = useMemo(
@@ -34,25 +51,38 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
     [pipUrl, pipName, currentChannel],
   );
 
-  // ── Watch history tracking ──────────────────────────────────────────
+  // ── Show OSD banner ─────────────────────────────────────────────────
+  const showOsd = useCallback((channelIndex: number, ch: Channel) => {
+    if (osdTimer.current) clearTimeout(osdTimer.current);
+    setOsd({ num: channelIndex + 1, name: ch.name, logo: ch.tvgLogo || undefined });
+    osdTimer.current = setTimeout(() => setOsd(null), OSD_DISPLAY_MS);
+  }, []);
+
+  // ── Watch history tracking (BUG-3 FIXED) ───────────────────────────
   useEffect(() => {
     if (!effectiveChannel) return;
 
-    const prevUrl = prevChannelRef.current;
+    const prevObj = prevChannelObjRef.current;
     const startedAt = watchStartRef.current;
 
-    // If channel changed, save the previous watch session
-    if (prevUrl && prevUrl !== effectiveChannel.url) {
+    // If channel changed, save the previous watch session using the stored object
+    if (prevObj && prevObj.url !== effectiveChannel.url) {
       const stoppedAt = Date.now();
       const durationSec = Math.round((stoppedAt - startedAt) / 1000);
       if (durationSec >= 5) {
-        // Only save if watched for at least 5 seconds
-        saveWatch(prevUrl, prevChannelRef.current || "", "", "", startedAt, stoppedAt, durationSec)
-          .catch(() => { /* best-effort */ });
+        saveWatch(
+          prevObj.url,
+          prevObj.name,
+          prevObj.tvgLogo || "",
+          prevObj.groupTitle || "",
+          startedAt,
+          stoppedAt,
+          durationSec,
+        ).catch(() => { /* best-effort */ });
       }
     }
 
-    prevChannelRef.current = effectiveChannel.url;
+    prevChannelObjRef.current = effectiveChannel;
     watchStartRef.current = Date.now();
 
     // Save on unmount
@@ -97,9 +127,24 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
     (delta: number) => {
       if (channels.length === 0) return;
       const next = (currentIndex + delta + channels.length) % channels.length;
-      setCurrentChannel(channels[next]);
+      const ch = channels[next];
+      setCurrentChannel(ch);
+      showOsd(next, ch);
     },
-    [currentIndex, channels, setCurrentChannel],
+    [currentIndex, channels, setCurrentChannel, showOsd],
+  );
+
+  // ── Jump to channel by number ───────────────────────────────────────
+  const jumpToChannel = useCallback(
+    (num: number) => {
+      const idx = num - 1; // channels are 1-indexed for user
+      if (idx >= 0 && idx < channels.length) {
+        const ch = channels[idx];
+        setCurrentChannel(ch);
+        showOsd(idx, ch);
+      }
+    },
+    [channels, setCurrentChannel, showOsd],
   );
 
   // ── Now / Next ──────────────────────────────────────────────────────
@@ -120,9 +165,12 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
     return { nowProg, nextProg };
   }, [effectiveChannel, epgIndex]);
 
-  // ── Keyboard navigation ─────────────────────────────────────────────
+  // ── Keyboard navigation + numeric entry ─────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Don't capture if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
       switch (e.key) {
         case "ArrowUp":
         case "PageUp":
@@ -136,13 +184,40 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
           break;
         case "Escape":
           e.preventDefault();
-          onNavigate("channels");
+          if (numericInput) {
+            setNumericInput("");
+            if (numericTimer.current) clearTimeout(numericTimer.current);
+          } else {
+            onNavigate("channels");
+          }
+          break;
+        default:
+          // Numeric channel entry: type digits to jump to channel N
+          if (/^[0-9]$/.test(e.key)) {
+            e.preventDefault();
+            const newInput = numericInput + e.key;
+            setNumericInput(newInput);
+            if (numericTimer.current) clearTimeout(numericTimer.current);
+            numericTimer.current = setTimeout(() => {
+              const num = parseInt(newInput, 10);
+              if (num > 0) jumpToChannel(num);
+              setNumericInput("");
+            }, NUMERIC_TIMEOUT_MS);
+          }
           break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [zap, onNavigate]);
+  }, [zap, onNavigate, numericInput, jumpToChannel]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (osdTimer.current) clearTimeout(osdTimer.current);
+      if (numericTimer.current) clearTimeout(numericTimer.current);
+    };
+  }, []);
 
   // ── Copy stream URL ─────────────────────────────────────────────────
   const handleCopyUrl = useCallback(async () => {
@@ -179,6 +254,9 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
     }
   };
 
+  // Now-playing text line for the HLS overlay
+  const nowPlayingText = nowProg ? `${nowProg.titles[0] ?? ""}${nowProg.subtitle ? ` — ${nowProg.subtitle}` : ""}` : undefined;
+
   return (
     <div className="page page-player">
       {/* ── Video area (HLS-capable) ───────────────────── */}
@@ -187,8 +265,27 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
           src={effectiveChannel.url}
           channelName={effectiveChannel.name}
           channelLogo={effectiveChannel.tvgLogo || undefined}
+          nowPlaying={nowPlayingText}
           onFatalError={(msg) => showToast(msg, "error")}
         />
+
+        {/* ── Channel OSD (transient on-screen display) ── */}
+        {osd && (
+          <div className="player-osd">
+            {osd.logo && <img className="player-osd-logo" src={osd.logo} alt="" />}
+            <div className="player-osd-text">
+              <span className="player-osd-num">{osd.num}</span>
+              <span className="player-osd-name">{osd.name}</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Numeric entry indicator ──────────────────── */}
+        {numericInput && (
+          <div className="player-numeric-input">
+            <span>{numericInput}_</span>
+          </div>
+        )}
       </div>
 
       {/* ── Info bar ────────────────────────────────────── */}
@@ -269,8 +366,11 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
 
         {/* Keyboard hints */}
         <div className="player-hotkeys">
-          <kbd>↑</kbd>
-          <kbd>↓</kbd> zap &nbsp;
+          <kbd>↑</kbd><kbd>↓</kbd> zap &nbsp;
+          <kbd>0–9</kbd> go to channel &nbsp;
+          <kbd>F</kbd> fullscreen &nbsp;
+          <kbd>M</kbd> mute &nbsp;
+          <kbd>Space</kbd> pause &nbsp;
           <kbd>Esc</kbd> back
         </div>
       </div>

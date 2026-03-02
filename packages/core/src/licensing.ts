@@ -12,11 +12,15 @@ export enum Feature {
   /** Multi-EPG source merge. */
   MultiEpgMerge = "multi_epg_merge",
   /** Smart fuzzy channel ↔ EPG matching. */
-  FuzzyMatching = "fuzzy_matching",
+  SmartMatching = "smart_matching",
   /** Picture-in-Picture mini player window. */
   PipWindow = "pip_window",
   /** Automatic background playlist / EPG refresh. */
   AutoRefresh = "auto_refresh",
+  /** Cloud settings / favorites sync. */
+  CloudSync = "cloud_sync",
+  /** Unlimited playlist sources (FREE tier has a cap). */
+  UnlimitedPlaylists = "unlimited_playlists",
 }
 
 /** All gated features as a readonly array (for iteration). */
@@ -34,7 +38,7 @@ export const FEATURE_META: Readonly<Record<Feature, { label: string; icon: strin
     icon: "📡",
     description: "Combine multiple EPG sources into a unified programme guide.",
   },
-  [Feature.FuzzyMatching]: {
+  [Feature.SmartMatching]: {
     label: "Smart Matching",
     icon: "🔗",
     description: "Automatically match channels to EPG data using fuzzy name matching.",
@@ -48,6 +52,16 @@ export const FEATURE_META: Readonly<Record<Feature, { label: string; icon: strin
     label: "Auto Refresh",
     icon: "🔄",
     description: "Periodically refresh playlists and EPG sources in the background.",
+  },
+  [Feature.CloudSync]: {
+    label: "Cloud Sync",
+    icon: "☁️",
+    description: "Sync settings, favorites and watch history across devices.",
+  },
+  [Feature.UnlimitedPlaylists]: {
+    label: "Unlimited Playlists",
+    icon: "📋",
+    description: "Remove the free-tier limit on playlist sources.",
   },
 };
 
@@ -79,11 +93,14 @@ export const DEFAULT_LICENSE_STATUS: LicenseStatus = {
 
 /**
  * Check whether a specific feature is available given the current
- * license status.  All gated features require `isProEnabled === true`.
+ * license status.  Currently all gated features require
+ * `isProEnabled === true` — per-feature gating can be added here
+ * later without changing call sites.
  *
  * This is the **single checkpoint** — no scattered boolean logic.
  */
 export function isFeatureEnabled(_feature: Feature, status: LicenseStatus): boolean {
+  // Future: add per-feature override logic here
   return status.isProEnabled;
 }
 

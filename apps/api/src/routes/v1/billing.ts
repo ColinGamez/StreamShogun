@@ -126,7 +126,7 @@ export async function billingRoutes(app: FastifyInstance) {
       }
 
       const stripe = getStripe();
-      const { sub } = request.user as { sub: string };
+      const { sub } = request.user;
 
       const customerId = await getOrCreateStripeCustomer(sub);
 
@@ -174,7 +174,7 @@ export async function billingRoutes(app: FastifyInstance) {
       }
 
       const stripe = getStripe();
-      const { sub } = request.user as { sub: string };
+      const { sub } = request.user;
 
       const customerId = await getOrCreateStripeCustomer(sub);
 
@@ -329,7 +329,7 @@ export async function billingRoutes(app: FastifyInstance) {
               where: { id: webhookEventId },
               data: { status: "ignored", errorMessage: "unhandled_event_type", processedAt: new Date() },
             })
-            .catch(() => {});
+            .catch((err) => { request.log.warn({ err }, "webhook: failed to record ignored event"); });
       }
     } catch (err) {
       const sanitized = sanitizeError(err);
@@ -348,7 +348,7 @@ export async function billingRoutes(app: FastifyInstance) {
             processedAt: new Date(),
           },
         })
-        .catch(() => { /* swallow — don't mask the original error */ });
+        .catch((dbErr) => { request.log.warn({ err: dbErr }, "webhook: failed to record handler error"); });
       // Return 200 — failure is recorded; Stripe should not retry
       return reply.code(200).send({ received: true });
     }
@@ -422,7 +422,7 @@ async function recordAndReturn(
         processedAt: new Date(),
       },
     })
-    .catch(() => {});
+    .catch((err) => { console.warn("webhook: recordAndReturn update failed", err); });
   return result;
 }
 

@@ -10,7 +10,8 @@ export async function authenticate(
 ): Promise<void> {
   try {
     await request.jwtVerify();
-  } catch {
+  } catch (err) {
+    request.log.debug({ err: (err as Error).message }, "JWT verification failed");
     reply.code(401).send({ error: "Unauthorized", message: "Invalid or expired token" });
   }
 }

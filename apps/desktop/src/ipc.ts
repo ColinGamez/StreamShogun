@@ -722,7 +722,10 @@ export function registerIpcHandlers(): void {
         requireString(args.email, "email");
         requireString(args.password, "password");
         const result = await apiRegister(args.email, args.password, args.displayName);
-        if (!result.ok) return fail(new Error((result.data as unknown as { message?: string }).message ?? "Registration failed"));
+        if (!result.ok) {
+          const body = result.data as unknown as Record<string, unknown> | undefined;
+          return fail(new Error((body && typeof body.message === "string" ? body.message : null) ?? "Registration failed"));
+        }
         return ok(result.data);
       } catch (err) {
         return fail(err);
@@ -737,7 +740,10 @@ export function registerIpcHandlers(): void {
         requireString(args.email, "email");
         requireString(args.password, "password");
         const result = await apiLogin(args.email, args.password);
-        if (!result.ok) return fail(new Error((result.data as unknown as { message?: string }).message ?? "Login failed"));
+        if (!result.ok) {
+          const body = result.data as unknown as Record<string, unknown> | undefined;
+          return fail(new Error((body && typeof body.message === "string" ? body.message : null) ?? "Login failed"));
+        }
         return ok(result.data);
       } catch (err) {
         return fail(err);

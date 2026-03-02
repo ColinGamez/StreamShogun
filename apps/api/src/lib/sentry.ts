@@ -3,7 +3,7 @@
 // Safe to import unconditionally — all exports are no-ops without a DSN.
 
 import * as Sentry from "@sentry/node";
-import type { FastifyError, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyError, FastifyRequest } from "fastify";
 
 let _initialised = false;
 
@@ -46,23 +46,10 @@ export function captureError(
     if (request) {
       scope.setTag("method", request.method);
       scope.setTag("url", request.url);
-      scope.setUser({ id: (request as unknown as { user?: { sub?: string } }).user?.sub });
+      scope.setUser({ id: request.user?.sub });
     }
     Sentry.captureException(err);
   });
-}
-
-/**
- * Fastify error handler that reports to Sentry then delegates.
- * Wrap your existing error handler with this.
- */
-export function sentryErrorHandler(
-  originalHandler: (err: FastifyError, request: FastifyRequest, reply: FastifyReply) => void,
-) {
-  return (err: FastifyError, request: FastifyRequest, reply: FastifyReply): void => {
-    captureError(err, request);
-    originalHandler(err, request, reply);
-  };
 }
 
 /**

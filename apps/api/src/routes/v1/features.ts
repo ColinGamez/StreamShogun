@@ -2,12 +2,15 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { FLAG_KEYS, Plan, SubscriptionStatus, BillingInterval, type FeaturesResponse } from "@stream-shogun/shared";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { env } from "../../config/env.js";
 
 /**
  * Users created before this date are considered "founding members"
  * and may receive special badge / pricing treatment.
  */
-const FOUNDING_MEMBER_CUTOFF = new Date("2026-06-01T00:00:00Z");
+const FOUNDING_MEMBER_CUTOFF = new Date(
+  env.FOUNDING_MEMBER_CUTOFF ?? "2026-06-01T00:00:00Z",
+);
 
 export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /v1/features ──────────────────────────────────────────
@@ -16,13 +19,20 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     "/",
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const { sub } = request.user as { sub: string; email: string };
+      const { sub } = request.user;
 
-      const [user, subscription, overrides] = await Promise.all([
-        prisma.user.findUnique({ where: { id: sub }, select: { createdAt: true } }),
-        prisma.subscription.findUnique({ where: { userId: sub } }),
-        prisma.featureFlag.findMany({ where: { userId: sub } }),
-      ]);
+      // Single query with includes instead of 3 parallel round-trips
+      const user = await prisma.user.findUnique({
+        where: { id: sub },
+        select: {
+          createdAt: true,
+          subscription: true,
+          featureFlags: true,
+        },
+      });
+
+      const subscription = user?.subscription ?? null;
+      const overrides = user?.featureFlags ?? [];
 
       const plan = subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE;
       const isPro = plan === Plan.PRO;

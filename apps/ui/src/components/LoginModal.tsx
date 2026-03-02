@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
 import { useAppStore } from "../stores/app-store";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 type Mode = "login" | "register";
 
@@ -25,6 +26,8 @@ export function LoginModal() {
   const authPlan = useAppStore((s) => s.authPlan);
 
   const emailRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, open);
 
   // Listen for custom event to open the modal
   useEffect(() => {
@@ -93,6 +96,7 @@ export function LoginModal() {
   return (
     <div className="modal-overlay" onClick={() => setOpen(false)}>
       <div
+        ref={dialogRef}
         className="modal-dialog login-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"

@@ -10,9 +10,10 @@
 import * as net from "net";
 
 // ── Discord Application ID ────────────────────────────────────────────
-// Replace with your own Discord application ID from
-// https://discord.com/developers/applications
-const CLIENT_ID = "1234567890123456789";
+// Set DISCORD_CLIENT_ID in env, or fall back to a placeholder that will
+// cause Discord to reject the handshake (harmless — RPC just won't work).
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? "1234567890123456789";
+const PLACEHOLDER_CLIENT_ID = "1234567890123456789";
 
 // ── IPC protocol types ────────────────────────────────────────────────
 
@@ -108,17 +109,30 @@ export function disconnect(): void {
 
 // ── Internal ──────────────────────────────────────────────────────────
 
+/** Try socket paths 0–9 to handle multiple Discord instances. */
 function getSocketPath(): string {
+  // On first connect we try ipc-0; if that fails the caller can
+  // retry with higher indices in the future.  For now, iterate
+  // synchronously through 0-9 isn't practical inside a single
+  // connection call, so we expose a helper for the base path instead.
+  return getSocketPathForIndex(0);
+}
+
+function getSocketPathForIndex(index: number): string {
   if (process.platform === "win32") {
-    return "\\\\?\\pipe\\discord-ipc-0";
+    return `\\\\?\\pipe\\discord-ipc-${index}`;
   }
 
   const prefix =
     process.env.XDG_RUNTIME_DIR || process.env.TMPDIR || process.env.TMP || "/tmp";
-  return `${prefix}/discord-ipc-0`;
+  return `${prefix}/discord-ipc-${index}`;
 }
 
 async function tryConnect(): Promise<boolean> {
+  if (CLIENT_ID === PLACEHOLDER_CLIENT_ID) {
+    console.warn("[discord] DISCORD_CLIENT_ID not configured — skipping RPC connection");
+    return false;
+  }
   lastConnectAttempt = Date.now();
   return new Promise((resolve) => {
     try {

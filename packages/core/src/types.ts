@@ -1,32 +1,5 @@
 // ── Shared types for StreamShōgun ──
 
-/** Represents a stream event from any platform. */
-export interface StreamEvent {
-  id: string;
-  platform: Platform;
-  type: EventType;
-  timestamp: number;
-  payload: Record<string, unknown>;
-}
-
-export type Platform = "twitch" | "youtube" | "kick" | "custom";
-
-export type EventType = "chat_message" | "subscription" | "donation" | "follow" | "raid" | "custom";
-
-/** Application configuration stored on disk. */
-export interface AppConfig {
-  version: string;
-  theme: "light" | "dark" | "system";
-  locale: string;
-  connections: ConnectionConfig[];
-}
-
-export interface ConnectionConfig {
-  platform: Platform;
-  enabled: boolean;
-  credentials: Record<string, string>;
-}
-
 /** IPC channel names shared between main & renderer. */
 export const IpcChannels = {
   GET_APP_INFO: "app:get-info",

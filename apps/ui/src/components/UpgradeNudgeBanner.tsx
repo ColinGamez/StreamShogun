@@ -3,13 +3,14 @@
 // Shown when a FREE user has opened the app > 5 times.
 // Dismissible per session.  Never blocks playback.
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "../stores/app-store";
 import { logNudgeShown } from "../lib/analytics";
 import { YEARLY_SAVINGS_LABEL } from "../lib/pricing";
 
 export function UpgradeNudgeBanner() {
   const [dismissed, setDismissed] = useState(false);
+  const loggedRef = useRef(false);
 
   const authUser = useAppStore((s) => s.authUser);
   const authPlan = useAppStore((s) => s.authPlan);
@@ -18,10 +19,17 @@ export function UpgradeNudgeBanner() {
 
   // Only show for logged-in FREE users who have opened the app > 5 times
   const isPro = authPlan === "PRO" || license.isProEnabled;
-  if (isPro || dismissed || !authUser || appOpenCount <= 5) return null;
+  const shouldShow = !isPro && !dismissed && !!authUser && appOpenCount > 5;
 
-  // Fire analytics once via module-level guard
-  logNudgeShown("open_count_threshold");
+  // Fire analytics once when banner becomes visible (in useEffect, not render)
+  useEffect(() => {
+    if (shouldShow && !loggedRef.current) {
+      loggedRef.current = true;
+      logNudgeShown("open_count_threshold");
+    }
+  }, [shouldShow]);
+
+  if (!shouldShow) return null;
 
   return (
     <div className="nudge-banner" role="complementary">

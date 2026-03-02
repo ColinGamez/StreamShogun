@@ -140,7 +140,21 @@ export async function apiLogout(): Promise<void> {
   await clearTokens();
 }
 
+// ── Token refresh mutex (prevents double-rotation on concurrent 401s) ──
+let refreshPromise: Promise<boolean> | null = null;
+
 async function refreshTokens(): Promise<boolean> {
+  // If a refresh is already in-flight, piggy-back on it
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = doRefreshTokens().finally(() => {
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
+}
+
+async function doRefreshTokens(): Promise<boolean> {
   const tokens = await loadTokens();
   if (!tokens?.refreshToken) return false;
 

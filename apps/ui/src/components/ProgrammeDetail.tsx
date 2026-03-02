@@ -1,5 +1,6 @@
 // ── ProgrammeDetail – slide-out detail panel for a selected programme ─
 
+import { useEffect } from "react";
 import type { Channel, Programme } from "@stream-shogun/core";
 
 export interface ProgrammeDetailProps {
@@ -28,6 +29,15 @@ export function ProgrammeDetail({ programme, channel, onClose, onPlay }: Program
   const dur = durationMinutes(programme.start, programme.stop);
   const isLive =
     programme.start <= Date.now() && (programme.stop === 0 || programme.stop > Date.now());
+
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   return (
     <div className="prog-detail" role="dialog" aria-label="Programme details">

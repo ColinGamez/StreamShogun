@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StreamShōgun — The Desktop IPTV Player Built for Power Users</title>
+  <meta name="description" content="A premium desktop IPTV player with cloud sync, smart EPG matching, picture-in-picture, and more. Free to start, Pro to master." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    /* ── Design tokens ─────────────────────────────────────────────── */
+    :root {
+      --bg:           #09090b;
+      --bg-subtle:    #111114;
+      --surface:      #18181b;
+      --surface-2:    #1e1e23;
+      --border:       rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text:         #fafafa;
+      --text-muted:   #a1a1aa;
+      --text-dim:     #71717a;
+      --accent:       #7c5cfc;
+      --accent-hover: #9a7eff;
+      --accent-soft:  rgba(124,92,252,0.12);
+      --accent-glow:  rgba(124,92,252,0.25);
+      --success:      #22c55e;
+      --badge-bg:     rgba(34,197,94,0.12);
+      --badge-text:   #4ade80;
+      --radius:       12px;
+      --radius-lg:    20px;
+      --max-w:        1140px;
+      --transition:   0.2s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Utility ───────────────────────────────────────────────────── */
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    .section   { padding: 100px 0; }
+    .section-alt { background: var(--bg-subtle); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 100px;
+      background: var(--accent-soft); color: var(--accent);
+      font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+    }
+
+    .section-label {
+      display: inline-block;
+      margin-bottom: 16px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      margin-bottom: 16px;
+    }
+
+    .section-subtitle {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    .text-center { text-align: center; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+
+    /* ── Buttons ───────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 28px; border-radius: 10px;
+      font-family: inherit; font-size: 15px; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 24px 4px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border-hover);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .btn-lg { padding: 16px 36px; font-size: 16px; border-radius: 12px; }
+
+    /* ── Nav ───────────────────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(9,9,11,0.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: var(--max-w); margin: 0 auto; padding: 0 24px;
+      height: 64px;
+    }
+    .nav-brand {
+      font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--text); text-decoration: none;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500;
+      transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta { display: flex; gap: 12px; align-items: center; }
+    .nav-cta .btn { padding: 9px 20px; font-size: 14px; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────────── */
+    .hero {
+      padding-top: 160px;
+      padding-bottom: 120px;
+      text-align: center;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none; opacity: 0.4;
+    }
+    .hero-badge { margin-bottom: 28px; }
+    .hero-title {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      max-width: 780px;
+      margin: 0 auto 20px;
+    }
+    .hero-title .accent { color: var(--accent); }
+    .hero-sub {
+      font-size: clamp(17px, 2vw, 20px);
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .hero-meta {
+      margin-top: 48px;
+      display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;
+      color: var(--text-dim); font-size: 14px;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-meta svg { width: 16px; height: 16px; opacity: 0.6; }
+
+    /* ── Features ──────────────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 56px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      transition: all 0.25s ease;
+    }
+    .feature-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .feature-card h3 {
+      font-size: 18px; font-weight: 700; margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .feature-card p {
+      color: var(--text-muted); font-size: 15px; line-height: 1.65;
+    }
+
+    /* ── Social Proof ─────────────────────────────────────────────── */
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 56px;
+    }
+    .proof-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+    }
+    .proof-stars { color: #facc15; font-size: 16px; margin-bottom: 16px; letter-spacing: 2px; }
+    .proof-text {
+      font-size: 15px; line-height: 1.7; color: var(--text-muted);
+      margin-bottom: 20px; font-style: italic;
+    }
+    .proof-author { display: flex; align-items: center; gap: 12px; }
+    .proof-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; color: var(--accent);
+    }
+    .proof-name { font-size: 14px; font-weight: 600; }
+    .proof-role { font-size: 13px; color: var(--text-dim); }
+
+    .proof-stats {
+      display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+      margin-top: 56px; padding-top: 48px;
+      border-top: 1px solid var(--border);
+    }
+    .proof-stat { text-align: center; min-width: 160px; }
+    .proof-stat-value {
+      font-size: 36px; font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent), #e879f9);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .proof-stat-label { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── Pricing ───────────────────────────────────────────────────── */
+    .pricing-toggle {
+      display: flex; gap: 0; justify-content: center; margin-top: 32px;
+      background: var(--surface); border-radius: 10px; padding: 4px;
+      border: 1px solid var(--border);
+      display: inline-flex;
+    }
+    .pricing-toggle-wrap { text-align: center; }
+    .pricing-toggle button {
+      padding: 10px 24px; border-radius: 8px; border: none;
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all var(--transition);
+      background: transparent; color: var(--text-muted);
+    }
+    .pricing-toggle button.active {
+      background: var(--accent); color: #fff;
+    }
+    .pricing-toggle button:not(.active):hover {
+      color: var(--text);
+    }
+
+    .pricing-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      max-width: 780px;
+      margin: 48px auto 0;
+    }
+    .pricing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 36px;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+    .pricing-card:hover {
+      border-color: var(--border-hover);
+    }
+    .pricing-card.featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 40px -8px var(--accent-glow);
+    }
+    .pricing-card.featured::before {
+      content: '';
+      position: absolute; inset: -1px; border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--accent), #e879f9);
+      z-index: -1; opacity: 0.15;
+    }
+    .pricing-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff;
+      padding: 5px 18px; border-radius: 100px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .pricing-name {
+      font-size: 16px; font-weight: 600; color: var(--text-muted);
+      margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .pricing-price {
+      font-size: 48px; font-weight: 800; letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .pricing-price .currency { font-size: 24px; vertical-align: top; margin-right: 2px; }
+    .pricing-price .period { font-size: 16px; font-weight: 500; color: var(--text-dim); }
+    .pricing-savings {
+      margin-top: 8px;
+      padding: 4px 12px;
+      display: inline-block;
+      border-radius: 100px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .pricing-desc {
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 15px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pricing-features {
+      list-style: none; margin: 24px 0 32px;
+    }
+    .pricing-features li {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; font-size: 14px; color: var(--text-muted);
+    }
+    .pricing-features .check {
+      width: 18px; height: 18px; flex-shrink: 0;
+      border-radius: 50%; margin-top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+    .pricing-features .check.yes { background: var(--badge-bg); color: var(--success); }
+    .pricing-features .check.no  { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+    .pricing-cta { width: 100%; }
+
+    /* ── FAQ ───────────────────────────────────────────────────────── */
+    .faq-list {
+      max-width: 720px;
+      margin: 48px auto 0;
+    }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-question {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0; background: none; border: none;
+      font-family: inherit; font-size: 16px; font-weight: 600;
+      color: var(--text); cursor: pointer; text-align: left;
+      transition: color var(--transition);
+    }
+    .faq-question:hover { color: var(--accent); }
+    .faq-chevron {
+      width: 20px; height: 20px; flex-shrink: 0;
+      transition: transform 0.25s ease;
+      color: var(--text-dim);
+    }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .faq-item.open .faq-answer { max-height: 200px; }
+    .faq-answer p {
+      padding-bottom: 24px;
+      font-size: 15px; line-height: 1.7; color: var(--text-muted);
+    }
+
+    /* ── Trust ─────────────────────────────────────────────────────── */
+    .trust-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px; margin-top: 48px;
+    }
+    .trust-card {
+      text-align: center; padding: 32px 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .trust-icon {
+      width: 44px; height: 44px; margin: 0 auto 16px;
+      border-radius: 10px; background: var(--accent-soft);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .trust-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .trust-card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+
+    /* ── CTA Banner ────────────────────────────────────────────────── */
+    .cta-banner {
+      padding: 80px 0;
+      text-align: center;
+      position: relative;
+    }
+    .cta-banner::before {
+      content: '';
+      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none; opacity: 0.3;
+    }
+    .cta-banner h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    .cta-banner p {
+      color: var(--text-muted); font-size: 17px; max-width: 480px;
+      margin: 0 auto 36px; line-height: 1.7;
+    }
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    .footer {
+      padding: 48px 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+    }
+    .footer-brand { font-weight: 700; font-size: 15px; color: var(--text-muted); }
+    .footer-brand span { color: var(--accent); }
+    .footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+    .footer-links a {
+      color: var(--text-dim); text-decoration: none;
+      transition: color var(--transition);
+    }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { color: var(--text-dim); }
+
+    /* ── Focus-visible ─────────────────────────────────────────────── */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .section { padding: 64px 0; }
+      .hero { padding-top: 120px; padding-bottom: 80px; }
+      .pricing-cards { grid-template-columns: 1fr; max-width: 420px; }
+      .pricing-card { padding: 32px 28px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr; }
+      .trust-grid { grid-template-columns: 1fr 1fr; }
+      .nav-cta .btn-outline { display: none; }
+      .hero-meta { gap: 20px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     NAV
+     ═══════════════════════════════════════════════════════════════════ -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">Stream<span>Shōgun</span></a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="#pricing" class="btn btn-outline">View Plans</a>
+      <a href="#download" class="btn btn-primary">Download Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Now in Public Beta
+      </span>
+    </div>
+    <h1 class="hero-title">
+      The IPTV player<br><span class="accent">built for power users</span>
+    </h1>
+    <p class="hero-sub">
+      A fast, private desktop player with smart EPG matching, cloud sync, and a clean interface. Free to use. Pro when you're ready.
+    </p>
+    <div class="hero-cta">
+      <a href="#download" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Free
+      </a>
+      <a href="#pricing" class="btn btn-outline btn-lg">
+        See Pro Features
+      </a>
+    </div>
+    <div class="hero-meta">
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        Windows &amp; macOS
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Local playback &mdash; your data stays yours
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        No ads, ever
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     FEATURES
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="features">
+  <div class="container">
+    <div class="text-center">
+      <span class="section-label">Features</span>
+      <h2 class="section-title">Everything you need,<br>nothing you don't</h2>
+      <p class="section-subtitle mx-auto">
+        StreamShōgun is designed around what IPTV power users actually want &mdash; fast playback, smart guides, and zero bloat.
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">☁️</div>
+        <h3>Cloud Sync</h3>
+        <p>Your settings, favorites, and watch history follow you across devices. Seamless and encrypted.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>Picture-in-Picture</h3>
+        <p>Pop out a mini player that stays on top of your other windows. Watch while you work.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3>Smart EPG Matching</h3>
+        <p>Automatically matches your channels to programme data using intelligent fuzzy matching. No manual mapping.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>Auto Refresh</h3>
+        <p>Playlists and EPG sources refresh automatically in the background. Always up-to-date, zero effort.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <h3>Multi-EPG Merge</h3>
+        <p>Combine multiple EPG sources into a single unified programme guide with smart conflict resolution.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <h3>Discord Rich Presence</h3>
+        <p>Show what you're watching as your Discord status. Because your server needs to know.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SOCIAL PROOF
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="proof">
+  <div class="container">
+    <div class="text-center">
+      <span class="section-label">Testimonials</span>
+      <h2 class="section-title">Loved by IPTV enthusiasts</h2>
+      <p class="section-subtitle mx-auto">
+        Power users, cord-cutters, and tinkerers who switched and never looked back.
+      </p>
+    </div>
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-stars">★★★★★</div>
+        <p class="proof-text">"Finally an IPTV player that doesn't look like it was built in 2008. The EPG matching alone saved me hours of setup."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">M</div>
+          <div>
+            <div class="proof-name">Marcus T.</div>
+            <div class="proof-role">Cord-cutter since 2019</div>
+          </div>
+        </div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-stars">★★★★★</div>
+        <p class="proof-text">"Cloud sync between my desktop and laptop is flawless. And the PiP mode is something I didn't know I needed."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">S</div>
+          <div>
+            <div class="proof-name">Sarah K.</div>
+            <div class="proof-role">StreamShōgun Pro user</div>
+          </div>
+        </div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-stars">★★★★★</div>
+        <p class="proof-text">"I've tried every IPTV player on desktop. This is the first one I'm happy to pay for. Clean, fast, and actually private."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">J</div>
+          <div>
+            <div class="proof-name">James L.</div>
+            <div class="proof-role">Self-hosted enthusiast</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="proof-stats">
+      <div class="proof-stat">
+        <div class="proof-stat-value">2,400+</div>
+        <div class="proof-stat-label">Downloads</div>
+      </div>
+      <div class="proof-stat">
+        <div class="proof-stat-value">4.8</div>
+        <div class="proof-stat-label">Average rating</div>
+      </div>
+      <div class="proof-stat">
+        <div class="proof-stat-value">12</div>
+        <div class="proof-stat-label">Countries</div>
+      </div>
+      <div class="proof-stat">
+        <div class="proof-stat-value">99.9%</div>
+        <div class="proof-stat-label">Uptime (Cloud API)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PRICING
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="pricing">
+  <div class="container">
+    <div class="text-center">
+      <span class="section-label">Pricing</span>
+      <h2 class="section-title">Simple, transparent pricing</h2>
+      <p class="section-subtitle mx-auto">
+        Free forever for casual use. Upgrade to Pro when you're ready for the full experience.
+      </p>
+      <div class="pricing-toggle-wrap">
+        <div class="pricing-toggle">
+          <button class="active" data-interval="monthly" type="button">Monthly</button>
+          <button data-interval="yearly" type="button">Yearly</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pricing-cards">
+      <!-- FREE -->
+      <div class="pricing-card">
+        <div class="pricing-name">Free</div>
+        <div class="pricing-price">
+          <span class="currency">$</span>0<span class="period"> /month</span>
+        </div>
+        <p class="pricing-desc">Get started with the essentials. No credit card required.</p>
+        <ul class="pricing-features">
+          <li><span class="check yes">✓</span> 1 playlist source</li>
+          <li><span class="check yes">✓</span> Full HLS playback</li>
+          <li><span class="check yes">✓</span> Basic EPG guide</li>
+          <li><span class="check yes">✓</span> Watch history</li>
+          <li><span class="check yes">✓</span> Favorites</li>
+          <li><span class="check yes">✓</span> Dark &amp; light themes</li>
+          <li><span class="check no">—</span> <span style="color:var(--text-dim)">Cloud sync</span></li>
+          <li><span class="check no">—</span> <span style="color:var(--text-dim)">Smart EPG matching</span></li>
+          <li><span class="check no">—</span> <span style="color:var(--text-dim)">Picture-in-Picture</span></li>
+        </ul>
+        <a href="#download" class="btn btn-outline pricing-cta">Download Free</a>
+      </div>
+      <!-- PRO -->
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Most Popular</div>
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price" id="pro-price">
+          <span class="currency">$</span>6<span class="cents">.99</span><span class="period"> /month</span>
+        </div>
+        <div class="pricing-savings" id="pro-savings" style="display:none">
+          Save $13.89/year
+        </div>
+        <p class="pricing-desc">Unlock every feature. 7-day free trial included.</p>
+        <ul class="pricing-features">
+          <li><span class="check yes">✓</span> <strong>Unlimited</strong> playlist sources</li>
+          <li><span class="check yes">✓</span> Full HLS playback</li>
+          <li><span class="check yes">✓</span> Advanced EPG guide</li>
+          <li><span class="check yes">✓</span> Watch history</li>
+          <li><span class="check yes">✓</span> Favorites</li>
+          <li><span class="check yes">✓</span> Dark &amp; light themes</li>
+          <li><span class="check yes">✓</span> Cloud sync across devices</li>
+          <li><span class="check yes">✓</span> Smart EPG matching</li>
+          <li><span class="check yes">✓</span> Picture-in-Picture</li>
+          <li><span class="check yes">✓</span> Multi-EPG merge</li>
+          <li><span class="check yes">✓</span> Auto refresh</li>
+          <li><span class="check yes">✓</span> Discord Rich Presence</li>
+        </ul>
+        <a href="#download" class="btn btn-primary pricing-cta">Start 7-Day Free Trial</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     FAQ
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="section" id="faq">
+  <div class="container">
+    <div class="text-center">
+      <span class="section-label">FAQ</span>
+      <h2 class="section-title">Frequently asked questions</h2>
+      <p class="section-subtitle mx-auto">
+        Everything you need to know before getting started.
+      </p>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          Is StreamShōgun legal to use?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><p>Yes. StreamShōgun is a media player &mdash; like VLC or any other video player. It plays streams from URLs you provide. We do not host, distribute, or link to any content. You are responsible for the legality of the content you access.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          Do you host or provide IPTV content?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><p>No. StreamShōgun is a player only. We do not host, aggregate, or provide any streams, playlists, or EPG data. You bring your own M3U playlists and XMLTV sources.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          Can I cancel my Pro subscription anytime?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><p>Absolutely. You can cancel anytime from your account settings or the Stripe customer portal. Your Pro features remain active until the end of your current billing period. No lock-in, no hidden fees.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          Does it work with my playlist / provider?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><p>StreamShōgun supports standard M3U / M3U8 playlists and XMLTV EPG sources. If your provider gives you an M3U URL or file, it will work. We support HLS streams out of the box.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          Is my data private?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><p>All playback happens locally on your machine &mdash; streams are never routed through our servers. Cloud Sync data (settings, favorites) is encrypted in transit and at rest. We never see or store what you watch.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          What platforms are supported?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><p>StreamShōgun is available as a native desktop application for Windows and macOS. Built with Electron for a fast, native-feeling experience on both platforms.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TRUST SIGNALS
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="trust">
+  <div class="container">
+    <div class="text-center">
+      <span class="section-label">Why Trust Us</span>
+      <h2 class="section-title">Built with privacy and quality in mind</h2>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-icon">🔒</div>
+        <h4>Secure Authentication</h4>
+        <p>Industry-standard auth with encrypted tokens and secure session management.</p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">💳</div>
+        <h4>Stripe Billing</h4>
+        <p>Payments handled by Stripe. We never see or store your card details.</p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">🖥️</div>
+        <h4>Local Playback</h4>
+        <p>Streams play directly on your machine. Nothing is routed through us.</p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">🚫</div>
+        <h4>No Ads, Ever</h4>
+        <p>No ads, no tracking pixels, no data selling. Your experience stays clean.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     BOTTOM CTA
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="cta-banner" id="download">
+  <div class="container" style="position:relative">
+    <h2>Ready to upgrade your<br>IPTV experience?</h2>
+    <p>Download StreamShōgun free and see why power users are switching.</p>
+    <div class="cta-buttons">
+      <a href="#" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for Windows
+      </a>
+      <a href="#" class="btn btn-outline btn-lg">Download for macOS</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">Stream<span>Shōgun</span></div>
+      <ul class="footer-links">
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="https://github.com/streamshogun" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+      <div class="footer-copy">&copy; 2026 StreamShōgun &middot; v1.0.0</div>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     JS — Minimal interactivity
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+  // ── FAQ accordion ─────────────────────────────────────────────────
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+      });
+
+      // Toggle current
+      if (!isOpen) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  // ── Pricing toggle ────────────────────────────────────────────────
+  const PRICING = {
+    MONTHLY: 6.99,
+    YEARLY: 69.99,
+    YEARLY_MONTHLY_EQUIVALENT: 5.83,
+    YEARLY_SAVINGS: 13.89,
+  };
+
+  document.querySelectorAll('.pricing-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pricing-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const isYearly = btn.dataset.interval === 'yearly';
+      const priceEl = document.getElementById('pro-price');
+      const savingsEl = document.getElementById('pro-savings');
+
+      if (isYearly) {
+        priceEl.innerHTML =
+          '<span class="currency">$</span>' +
+          Math.floor(PRICING.YEARLY_MONTHLY_EQUIVALENT) +
+          '<span class="cents">.' + String(PRICING.YEARLY_MONTHLY_EQUIVALENT).split('.')[1] + '</span>' +
+          '<span class="period"> /month</span>';
+        savingsEl.style.display = 'inline-block';
+      } else {
+        priceEl.innerHTML =
+          '<span class="currency">$</span>6<span class="cents">.99</span>' +
+          '<span class="period"> /month</span>';
+        savingsEl.style.display = 'none';
+      }
+    });
+  });
+
+  // ── Smooth nav background on scroll ───────────────────────────────
+  const nav = document.querySelector('.nav');
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        nav.style.background = window.scrollY > 20
+          ? 'rgba(9,9,11,0.92)'
+          : 'rgba(9,9,11,0.8)';
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+</script>
+
+</body>
+</html>
