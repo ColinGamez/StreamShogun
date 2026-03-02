@@ -4,8 +4,20 @@ import { prisma } from "../../lib/prisma.js";
 import { getStripe } from "../../lib/stripe.js";
 import { env } from "../../config/env.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import {
+  mapStripeStatus,
+  derivePlan,
+  getInvoiceSubscriptionId,
+  extractPeriodEnd,
+  resolveStripeId,
+} from "../../lib/billing-helpers.js";
 
 // ── Helpers ─────────────────────────────────────────────────────
+
+/** Return URL base: prefer APP_PUBLIC_URL, fall back to CORS_ORIGIN */
+function returnUrlBase(): string {
+  return env.APP_PUBLIC_URL ?? env.CORS_ORIGIN.split(",")[0].trim();
+}
 
 /**
  * Resolve or create a Stripe customer for the given user.
@@ -40,34 +52,26 @@ async function getOrCreateStripeCustomer(userId: string): Promise<string> {
   return customer.id;
 }
 
-/**
- * Map a Stripe subscription status string to our enum.
- */
-function mapStripeStatus(
-  status: string,
-): "ACTIVE" | "PAST_DUE" | "CANCELED" {
-  switch (status) {
-    case "active":
-    case "trialing":
-      return "ACTIVE";
-    case "past_due":
-    case "unpaid":
-      return "PAST_DUE";
-    default:
-      return "CANCELED";
-  }
-}
-
 // ── Plugin ──────────────────────────────────────────────────────
 
 export async function billingRoutes(app: FastifyInstance) {
+  // Rate-limit checkout and portal (not webhooks)
+  const billingRateLimit = {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "1 minute",
+      },
+    },
+  };
+
   // ── POST /checkout ──────────────────────────────────────────
 
   app.post(
     "/checkout",
-    { preHandler: [authenticate] },
+    { preHandler: [authenticate], ...billingRateLimit },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) {
+      if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID_PRO) {
         return reply
           .code(501)
           .send({ error: "NotImplemented", message: "Billing is not configured" });
@@ -78,12 +82,13 @@ export async function billingRoutes(app: FastifyInstance) {
 
       const customerId = await getOrCreateStripeCustomer(sub);
 
+      const base = returnUrlBase();
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         mode: "subscription",
-        line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
-        success_url: `${env.CORS_ORIGIN}/billing?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.CORS_ORIGIN}/billing?canceled=1`,
+        line_items: [{ price: env.STRIPE_PRICE_ID_PRO, quantity: 1 }],
+        success_url: `${base}/billing?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${base}/billing?canceled=1`,
         subscription_data: { metadata: { userId: sub } },
         metadata: { userId: sub },
       });
@@ -96,7 +101,7 @@ export async function billingRoutes(app: FastifyInstance) {
 
   app.post(
     "/portal",
-    { preHandler: [authenticate] },
+    { preHandler: [authenticate], ...billingRateLimit },
     async (request: FastifyRequest, reply: FastifyReply) => {
       if (!env.STRIPE_SECRET_KEY) {
         return reply
@@ -111,7 +116,7 @@ export async function billingRoutes(app: FastifyInstance) {
 
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
-        return_url: `${env.CORS_ORIGIN}/billing`,
+        return_url: `${returnUrlBase()}/billing`,
       });
 
       return reply.send({ url: portalSession.url });
@@ -221,17 +226,10 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  const stripeSubscriptionId =
-    typeof session.subscription === "string"
-      ? session.subscription
-      : session.subscription?.id;
-
+  const stripeSubscriptionId = resolveStripeId(session.subscription);
   if (!stripeSubscriptionId) return;
 
-  const customerId =
-    typeof session.customer === "string"
-      ? session.customer
-      : session.customer?.id;
+  const customerId = resolveStripeId(session.customer);
 
   await prisma.subscription.update({
     where: { userId },
@@ -250,6 +248,10 @@ async function handleSubscriptionUpsert(
   sub: Stripe.Subscription,
   request: FastifyRequest,
 ) {
+  const mappedStatus = mapStripeStatus(sub.status);
+  const plan = derivePlan(mappedStatus);
+  const periodEnd = extractPeriodEnd(sub);
+
   const subscription = await prisma.subscription.findUnique({
     where: { stripeSubscriptionId: sub.id },
   });
@@ -264,30 +266,27 @@ async function handleSubscriptionUpsert(
     await prisma.subscription.update({
       where: { userId },
       data: {
-        plan: "PRO",
-        status: mapStripeStatus(sub.status),
+        plan,
+        status: mappedStatus,
         stripeSubscriptionId: sub.id,
-        currentPeriodEnd: sub.items.data[0]?.current_period_end
-          ? new Date(sub.items.data[0].current_period_end * 1000)
-          : null,
+        currentPeriodEnd: periodEnd,
       },
     });
-    request.log.info({ userId, status: sub.status }, "Subscription upserted via metadata");
+    request.log.info({ userId, status: sub.status, plan }, "Subscription upserted via metadata");
     return;
   }
 
   await prisma.subscription.update({
     where: { id: subscription.id },
     data: {
-      status: mapStripeStatus(sub.status),
-      currentPeriodEnd: sub.items.data[0]?.current_period_end
-        ? new Date(sub.items.data[0].current_period_end * 1000)
-        : null,
+      plan,
+      status: mappedStatus,
+      currentPeriodEnd: periodEnd,
     },
   });
 
   request.log.info(
-    { subId: subscription.id, status: sub.status },
+    { subId: subscription.id, status: sub.status, plan },
     "Subscription updated",
   );
 }
@@ -316,16 +315,6 @@ async function handleSubscriptionDeleted(
   });
 
   request.log.info({ subId: subscription.id }, "Subscription deleted → FREE");
-}
-
-/**
- * Extract the Stripe subscription ID from an invoice.
- * In API 2026-02-25.clover, subscription moved to parent.subscription_details.
- */
-function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
-  const subRef = invoice.parent?.subscription_details?.subscription;
-  if (!subRef) return null;
-  return typeof subRef === "string" ? subRef : subRef.id;
 }
 
 async function handleInvoicePaid(

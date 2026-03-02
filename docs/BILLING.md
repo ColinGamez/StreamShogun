@@ -1,6 +1,6 @@
 # Billing (Stripe Subscriptions)
 
-> **Status:** Opt-in. Set the three `STRIPE_*` env vars to enable.
+> **Status:** Opt-in. Set the four `STRIPE_*` / `APP_PUBLIC_URL` env vars to enable.
 
 ## Architecture
 
@@ -12,6 +12,8 @@ User ──POST /v1/billing/checkout──► API ──► Stripe Checkout
                                             │
                                             ▼
 Stripe ──POST /v1/billing/webhook──► API ──► Update Subscription table
+
+User ──POST /v1/billing/portal───► API ──► Stripe Customer Portal
 ```
 
 - **Server is source of truth.** The client never decides the plan.
@@ -26,9 +28,10 @@ Stripe ──POST /v1/billing/webhook──► API ──► Update Subscription
 | --- | --- | --- | --- |
 | `STRIPE_SECRET_KEY` | Yes (to enable) | `sk_test_51...` | Stripe API secret key |
 | `STRIPE_WEBHOOK_SECRET` | Yes (for webhooks) | `whsec_...` | Stripe webhook signing secret |
-| `STRIPE_PRICE_ID` | Yes (for checkout) | `price_1...` | Stripe Price ID for the PRO plan |
+| `STRIPE_PRICE_ID_PRO` | Yes (for checkout) | `price_1...` | Stripe recurring Price ID for PRO |
+| `APP_PUBLIC_URL` | No | `https://app.streamshogun.com` | Return URL base (falls back to `CORS_ORIGIN`) |
 
-If any are missing, the billing endpoints return `501 Not Implemented`.
+If `STRIPE_SECRET_KEY` or `STRIPE_PRICE_ID_PRO` are missing, billing endpoints return `501 Not Implemented`.
 
 ---
 
@@ -40,7 +43,8 @@ All prefixed with `/v1/billing`.
 
 Creates a Stripe Checkout session for PRO subscription upgrade.
 
-**Auth:** JWT (Bearer token)
+- **Auth:** JWT (Bearer token)
+- **Rate limit:** 10 req / min
 
 **Response:**
 
@@ -60,7 +64,8 @@ The client should redirect the user to this URL.
 
 Creates a Stripe Customer Portal session for managing subscription / invoices.
 
-**Auth:** JWT (Bearer token)
+- **Auth:** JWT (Bearer token)
+- **Rate limit:** 10 req / min
 
 **Response:**
 
@@ -83,17 +88,27 @@ Receives Stripe webhook events. **No auth header** — uses `stripe-signature` h
 | Event | Action |
 | --- | --- |
 | `checkout.session.completed` | Set plan → PRO, status → ACTIVE, store Stripe IDs |
-| `customer.subscription.created` | Upsert subscription status + period end |
-| `customer.subscription.updated` | Upsert subscription status + period end |
+| `customer.subscription.created` | Upsert plan/status + period end |
+| `customer.subscription.updated` | Upsert plan/status + period end |
 | `customer.subscription.deleted` | Revert to FREE, status → CANCELED, clear Stripe IDs |
 | `invoice.paid` | Set status → ACTIVE |
 | `invoice.payment_failed` | Set status → PAST_DUE |
+
+### Status Mapping
+
+| Stripe Status | Our Status | Plan |
+| --- | --- | --- |
+| `active`, `trialing` | ACTIVE | PRO |
+| `past_due`, `unpaid` | PAST_DUE | FREE |
+| `canceled`, `incomplete_expired`, others | CANCELED | FREE |
+
+Plan = PRO **only** when status = ACTIVE. All other statuses fall back to FREE.
 
 ---
 
 ## Feature Flags & Plan Status
 
-`GET /v1/features` now includes subscription status:
+`GET /v1/features` returns subscription status:
 
 ```json
 {
@@ -113,55 +128,136 @@ Receives Stripe webhook events. **No auth header** — uses `stripe-signature` h
 
 ---
 
-## Database Changes
+## Database Models
 
-### Subscription table (updated)
+### Subscription (existing, updated)
 
-- `stripe_customer_id` — now `UNIQUE` index
-- `stripe_subscription_id` — now `UNIQUE` index
+```prisma
+model Subscription {
+  plan               Plan               @default(FREE)
+  status             SubscriptionStatus  @default(ACTIVE)
+  stripeCustomerId   String?            @unique
+  stripeSubscriptionId String?          @unique
+  currentPeriodEnd   DateTime?
+}
+```
 
-### ProcessedEvent table (new)
+### ProcessedEvent (idempotency)
 
-| Column | Type | Description |
-| --- | --- | --- |
-| `id` | String (PK) | Stripe event ID (`evt_...`) |
-| `processed_at` | DateTime | When the event was processed |
+```prisma
+model ProcessedEvent {
+  id          String   @id    // Stripe event ID (evt_…)
+  processedAt DateTime @default(now())
+}
+```
 
 ---
 
-## Stripe Dashboard Setup
+## Local Development with Stripe CLI
 
-1. **Create a Product** in Stripe Dashboard → Products
-2. **Create a Price** (recurring, monthly) → copy the `price_...` ID
-3. **Create a Webhook** endpoint → `https://your-domain.com/v1/billing/webhook`
-4. **Select events:**
+### 1. Install Stripe CLI
+
+```bash
+# macOS/Linux
+brew install stripe/stripe-cli/stripe
+
+# Windows (scoop)
+scoop install stripe
+
+# Or download: https://github.com/stripe/stripe-cli/releases
+```
+
+### 2. Login & forward webhooks
+
+```bash
+stripe login
+
+# Forward webhooks to your local server
+stripe listen --forward-to localhost:8787/v1/billing/webhook
+```
+
+Copy the `whsec_…` secret from the output → set as `STRIPE_WEBHOOK_SECRET` in `.env`.
+
+### 3. Set up test environment
+
+```env
+STRIPE_SECRET_KEY=sk_test_…
+STRIPE_WEBHOOK_SECRET=whsec_… (from stripe listen output)
+STRIPE_PRICE_ID_PRO=price_… (create a recurring price in Stripe Dashboard)
+```
+
+### 4. Trigger test events
+
+```bash
+# Full checkout flow
+stripe trigger checkout.session.completed
+
+# Individual events
+stripe trigger customer.subscription.updated
+stripe trigger customer.subscription.deleted
+stripe trigger invoice.paid
+stripe trigger invoice.payment_failed
+```
+
+### 5. End-to-end test
+
+```bash
+# Register a user
+curl -X POST http://localhost:8787/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@example.com","password":"testpassword123"}'
+
+# Use the accessToken from the response
+TOKEN="ey…"
+
+# Create checkout session
+curl -X POST http://localhost:8787/v1/billing/checkout \
+  -H "Authorization: Bearer $TOKEN"
+# → Open the returned URL → use test card 4242 4242 4242 4242
+
+# Check features after subscription activates
+curl http://localhost:8787/v1/features \
+  -H "Authorization: Bearer $TOKEN"
+# → plan: "PRO", flags: all true
+
+# Open billing portal
+curl -X POST http://localhost:8787/v1/billing/portal \
+  -H "Authorization: Bearer $TOKEN"
+# → Open URL to manage/cancel subscription
+```
+
+---
+
+## Railway Deployment
+
+Required env vars in Railway Variables tab:
+
+1. **`STRIPE_SECRET_KEY`** — Live key for production, test key for staging
+2. **`STRIPE_WEBHOOK_SECRET`** — From Stripe Dashboard webhook endpoint
+3. **`STRIPE_PRICE_ID_PRO`** — Recurring price ID for PRO plan
+4. **`APP_PUBLIC_URL`** — Your frontend URL (for checkout return redirects)
+
+### Stripe Dashboard Webhook Setup
+
+1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
+2. Click **Add endpoint**
+3. URL: `https://streamshogun-production.up.railway.app/v1/billing/webhook`
+4. Select events:
    - `checkout.session.completed`
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
    - `invoice.paid`
    - `invoice.payment_failed`
-5. Copy the webhook signing secret (`whsec_...`)
-
-### Local Development with Stripe CLI
-
-```bash
-# Install Stripe CLI, then:
-stripe login
-stripe listen --forward-to localhost:8787/v1/billing/webhook
-
-# In another terminal, trigger a test event:
-stripe trigger checkout.session.completed
-```
-
-The CLI will print the webhook signing secret — use it as `STRIPE_WEBHOOK_SECRET`.
+5. Copy the signing secret → set as `STRIPE_WEBHOOK_SECRET` in Railway
 
 ---
 
-## Security Notes
+## Security
 
-- **No client trust.** Plan is determined server-side from Stripe webhooks only.
-- **Idempotent processing.** `processed_events` table prevents double-processing.
-- **Signature verification.** Raw body + `stripe-signature` header verified before processing.
-- **Rate-limited.** Webhook endpoint inherits global rate limit. Stripe retries with backoff.
-- **Stripe customer lazy-created.** On first checkout/portal request, a Stripe customer is created and linked.
+- **No client trust.** Plan determined server-side via webhooks only.
+- **Idempotent.** `processed_events` table prevents double-processing.
+- **Signature verified.** Raw body + `stripe-signature` header checked before any processing.
+- **Rate-limited.** Checkout and portal limited to 10 req/min per IP.
+- **Secrets redacted.** `stripe-signature`, `Authorization` headers, and Stripe keys never logged.
+- **Lazy customer creation.** Stripe customer created on first checkout/portal request, linked by userId.

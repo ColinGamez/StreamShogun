@@ -21,10 +21,13 @@ const envSchema = z.object({
   // Optional — Admin API key (set to enable admin endpoints)
   ADMIN_KEY: z.string().min(16).optional(),
 
+  // Public URL (used for Stripe return URLs, etc.)
+  APP_PUBLIC_URL: z.string().url().optional(),
+
   // Stripe billing (optional — enables /v1/billing endpoints)
   STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
-  STRIPE_PRICE_ID: z.string().startsWith("price_").optional(),
+  STRIPE_PRICE_ID_PRO: z.string().startsWith("price_").optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
