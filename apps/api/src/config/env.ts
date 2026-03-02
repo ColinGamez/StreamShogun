@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "staging", "production"]).default("development"),
+
   PORT: z.coerce.number().default(8787),
   HOST: z.string().default("0.0.0.0"),
 
@@ -27,7 +29,11 @@ const envSchema = z.object({
   // Stripe billing (optional — enables /v1/billing endpoints)
   STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
-  STRIPE_PRICE_ID_PRO: z.string().startsWith("price_").optional(),
+  STRIPE_PRICE_ID_PRO_MONTHLY: z.string().startsWith("price_").optional(),
+  STRIPE_PRICE_ID_PRO_YEARLY: z.string().startsWith("price_").optional(),
+
+  // Portal return URL (defaults to APP_PUBLIC_URL)
+  STRIPE_PORTAL_RETURN_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

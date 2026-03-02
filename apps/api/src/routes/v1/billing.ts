@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type Stripe from "stripe";
+import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { getStripe } from "../../lib/stripe.js";
 import { env } from "../../config/env.js";
@@ -9,14 +10,31 @@ import {
   derivePlan,
   getInvoiceSubscriptionId,
   extractPeriodEnd,
+  extractBillingInterval,
   resolveStripeId,
 } from "../../lib/billing-helpers.js";
+
+// ── Request schemas ─────────────────────────────────────────────
+
+const checkoutBody = z.object({
+  interval: z.enum(["monthly", "yearly"]),
+});
 
 // ── Helpers ─────────────────────────────────────────────────────
 
 /** Return URL base: prefer APP_PUBLIC_URL, fall back to CORS_ORIGIN */
 function returnUrlBase(): string {
   return env.APP_PUBLIC_URL ?? env.CORS_ORIGIN.split(",")[0].trim();
+}
+
+/**
+ * Resolve the price ID for the requested billing interval.
+ * Returns null if the required env var is not set.
+ */
+function priceIdForInterval(interval: "monthly" | "yearly"): string | null {
+  return interval === "monthly"
+    ? env.STRIPE_PRICE_ID_PRO_MONTHLY ?? null
+    : env.STRIPE_PRICE_ID_PRO_YEARLY ?? null;
 }
 
 /**
@@ -71,10 +89,29 @@ export async function billingRoutes(app: FastifyInstance) {
     "/checkout",
     { preHandler: [authenticate], ...billingRateLimit },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID_PRO) {
+      if (!env.STRIPE_SECRET_KEY) {
         return reply
           .code(501)
           .send({ error: "NotImplemented", message: "Billing is not configured" });
+      }
+
+      // Validate body
+      const parsed = checkoutBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "BadRequest",
+          message: "Body must include interval: 'monthly' | 'yearly'",
+          details: parsed.error.flatten().fieldErrors,
+        });
+      }
+
+      const { interval } = parsed.data;
+      const priceId = priceIdForInterval(interval);
+
+      if (!priceId) {
+        return reply
+          .code(501)
+          .send({ error: "NotImplemented", message: `Price not configured for ${interval} interval` });
       }
 
       const stripe = getStripe();
@@ -86,9 +123,10 @@ export async function billingRoutes(app: FastifyInstance) {
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         mode: "subscription",
-        line_items: [{ price: env.STRIPE_PRICE_ID_PRO, quantity: 1 }],
-        success_url: `${base}/billing?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${base}/billing?canceled=1`,
+        line_items: [{ price: priceId, quantity: 1 }],
+        allow_promotion_codes: true,
+        success_url: `${base}/billing/success`,
+        cancel_url: `${base}/billing/cancel`,
         subscription_data: { metadata: { userId: sub } },
         metadata: { userId: sub },
       });
@@ -114,9 +152,10 @@ export async function billingRoutes(app: FastifyInstance) {
 
       const customerId = await getOrCreateStripeCustomer(sub);
 
+      const returnUrl = env.STRIPE_PORTAL_RETURN_URL ?? returnUrlBase();
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
-        return_url: `${returnUrlBase()}/billing`,
+        return_url: returnUrl,
       });
 
       return reply.send({ url: portalSession.url });
@@ -132,7 +171,6 @@ export async function billingRoutes(app: FastifyInstance) {
     "application/json",
     { parseAs: "buffer" },
     (_req, body, done) => {
-      // Attach raw buffer for webhook signature verification
       done(null, body);
     },
   );
@@ -166,14 +204,19 @@ export async function billingRoutes(app: FastifyInstance) {
     // Structured context attached to every log line for this event
     const wCtx = { eventId: event.id, eventType: event.type };
 
-    // ── Idempotency: claim the event via unique constraint ──
-    // Using INSERT with conflict catch instead of SELECT-then-INSERT
-    // to eliminate the race window between two parallel deliveries.
+    // ── Idempotency: claim via unique constraint on stripeEventId ──
 
+    let webhookEventId: string;
     try {
-      await prisma.processedEvent.create({ data: { id: event.id } });
+      const row = await prisma.webhookEvent.create({
+        data: {
+          stripeEventId: event.id,
+          type: event.type,
+          status: "processed",
+        },
+      });
+      webhookEventId = row.id;
     } catch (err) {
-      // Unique constraint violation → already processed
       if (isPrismaUniqueViolation(err)) {
         request.log.info({ ...wCtx, outcome: "duplicate_skipped" }, "webhook.duplicate");
         return reply.code(200).send({ received: true });
@@ -208,18 +251,36 @@ export async function billingRoutes(app: FastifyInstance) {
           break;
 
         default:
-          outcome = "ignored_unhandled";
+          outcome = "ignored";
           request.log.debug({ ...wCtx, outcome }, "webhook.unhandled");
       }
     } catch (err) {
-      outcome = "handler_error";
+      outcome = "failed";
+      const sanitized = sanitizeError(err);
       request.log.error(
-        { ...wCtx, outcome, err: sanitizeError(err) },
+        { ...wCtx, outcome, err: sanitized },
         "webhook.handler_error",
       );
-      // Event is already marked processed — prevents infinite retries
-      // on deterministic failures (bad data, missing rows, etc.).
-      // Return 200 so Stripe doesn't keep retrying a doomed event.
+
+      // Record failure on the WebhookEvent row
+      await prisma.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: {
+          status: "failed",
+          errorMessage: sanitized.message.slice(0, 500),
+        },
+      }).catch(() => { /* swallow — don't mask the original error */ });
+    }
+
+    // Mark final state
+    if (outcome !== "failed") {
+      await prisma.webhookEvent.update({
+        where: { id: webhookEventId },
+        data: {
+          status: outcome as "processed" | "ignored",
+          processedAt: new Date(),
+        },
+      }).catch(() => { /* swallow */ });
     }
 
     // Metrics-friendly summary line — one per event, always emitted
@@ -260,12 +321,11 @@ async function findSubscriptionByStripeSubId(stripeSubscriptionId: string) {
 }
 
 // ── Webhook context type ──────────────────────────────────────────
-type WebhookCtx = { eventId: string; eventType: string };
+interface WebhookCtx { eventId: string; eventType: string }
 
 /**
  * Stripe statuses that represent incomplete/pending subscriptions.
- * We must NOT flip a user to PRO based on these — they indicate
- * the subscription hasn't successfully activated yet.
+ * We must NOT flip a user to PRO based on these.
  */
 const INCOMPLETE_STATUSES = new Set(["incomplete", "incomplete_expired", "paused"]);
 
@@ -306,18 +366,29 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  // Retrieve the Stripe subscription to extract billing interval
+  let billingInterval: "MONTHLY" | "YEARLY" | null = null;
+  try {
+    const stripe = getStripe();
+    const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    billingInterval = extractBillingInterval(stripeSub);
+  } catch {
+    request.log.warn({ ...wCtx }, "webhook.checkout: could not retrieve subscription for interval");
+  }
+
   await prisma.subscription.update({
     where: { userId },
     data: {
       plan: "PRO",
       status: "ACTIVE",
+      billingInterval,
       stripeCustomerId: customerId ?? undefined,
       stripeSubscriptionId,
     },
   });
 
   request.log.info(
-    { ...wCtx, outcome: "activated", plan: "PRO" },
+    { ...wCtx, outcome: "activated", plan: "PRO", billingInterval },
     "webhook.checkout: completed",
   );
 }
@@ -339,6 +410,7 @@ async function handleSubscriptionUpsert(
   const mappedStatus = mapStripeStatus(sub.status);
   const plan = derivePlan(mappedStatus);
   const periodEnd = extractPeriodEnd(sub);
+  const billingInterval = extractBillingInterval(sub);
 
   // Primary lookup: by Stripe subscription ID
   let subscription = await findSubscriptionByStripeSubId(sub.id);
@@ -354,7 +426,6 @@ async function handleSubscriptionUpsert(
       return;
     }
 
-    // Verify user exists before updating
     const byUser = await prisma.subscription.findUnique({ where: { userId } });
     if (!byUser) {
       request.log.warn(
@@ -386,13 +457,14 @@ async function handleSubscriptionUpsert(
     data: {
       plan,
       status: mappedStatus,
+      billingInterval,
       stripeSubscriptionId: sub.id,
       currentPeriodEnd: periodEnd,
     },
   });
 
   request.log.info(
-    { ...wCtx, outcome: "updated", plan, status: mappedStatus },
+    { ...wCtx, outcome: "updated", plan, status: mappedStatus, billingInterval },
     "webhook.subscription_upsert: completed",
   );
 }
@@ -431,6 +503,7 @@ async function handleSubscriptionDeleted(
     data: {
       plan: "FREE",
       status: "CANCELED",
+      billingInterval: null,
       stripeSubscriptionId: null,
       currentPeriodEnd: null,
     },

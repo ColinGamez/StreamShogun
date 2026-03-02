@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { FLAG_KEYS, Plan, SubscriptionStatus, type FeaturesResponse } from "@stream-shogun/shared";
+import { FLAG_KEYS, Plan, SubscriptionStatus, BillingInterval, type FeaturesResponse } from "@stream-shogun/shared";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 
@@ -36,13 +36,18 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         }
       }
 
+      const billingInterval =
+        subscription?.billingInterval === "MONTHLY"
+          ? BillingInterval.MONTHLY
+          : subscription?.billingInterval === "YEARLY"
+            ? BillingInterval.YEARLY
+            : null;
+
       const response: FeaturesResponse = {
         plan,
+        subscriptionStatus: (subscription?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
+        billingInterval,
         flags,
-        subscription: {
-          status: (subscription?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
-          currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() ?? null,
-        },
       };
       return reply.code(200).send(response);
     }

@@ -22,6 +22,13 @@ export const SubscriptionStatus = {
 export type SubscriptionStatus =
   (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
 
+export const BillingInterval = {
+  MONTHLY: "MONTHLY",
+  YEARLY: "YEARLY",
+} as const;
+export type BillingInterval =
+  (typeof BillingInterval)[keyof typeof BillingInterval];
+
 // ═══════════════════════════════════════════════════════════════════════
 //  Feature flag keys (keep in sync with desktop Feature enum values)
 // ═══════════════════════════════════════════════════════════════════════
@@ -107,6 +114,7 @@ export interface UserDTO {
 export interface SubscriptionDTO {
   plan: Plan;
   status: SubscriptionStatus;
+  billingInterval: BillingInterval | null;
   currentPeriodEnd: string | null;
 }
 
@@ -129,11 +137,9 @@ export interface MeResponse {
 
 export interface FeaturesResponse {
   plan: Plan;
+  subscriptionStatus: SubscriptionStatus;
+  billingInterval: BillingInterval | null;
   flags: Record<string, boolean>;
-  subscription: {
-    status: SubscriptionStatus;
-    currentPeriodEnd: string | null;
-  };
 }
 
 export interface CloudSettingsResponse {

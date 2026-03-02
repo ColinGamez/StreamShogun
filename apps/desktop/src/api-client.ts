@@ -175,11 +175,13 @@ export async function apiRefreshTokens(): Promise<boolean> {
 
 interface MeResponse {
   user: { id: string; email: string; displayName?: string; createdAt: string };
-  subscription: { plan: string; status: string; currentPeriodEnd?: string };
+  subscription: { plan: string; status: string; billingInterval: string | null; currentPeriodEnd?: string };
 }
 
 interface FeaturesResponse {
   plan: string;
+  subscriptionStatus: string;
+  billingInterval: string | null;
   flags: Record<string, boolean>;
 }
 
@@ -197,6 +199,28 @@ export async function apiGetFeatures(): Promise<{
   data: FeaturesResponse;
 }> {
   return apiFetchWithRefresh<FeaturesResponse>("/v1/features");
+}
+
+// ── Billing ───────────────────────────────────────────────────────────
+
+export async function apiBillingCheckout(): Promise<{
+  ok: boolean;
+  status: number;
+  data: { url: string };
+}> {
+  return apiFetchWithRefresh<{ url: string }>("/v1/billing/checkout", {
+    method: "POST",
+  });
+}
+
+export async function apiBillingPortal(): Promise<{
+  ok: boolean;
+  status: number;
+  data: { url: string };
+}> {
+  return apiFetchWithRefresh<{ url: string }>("/v1/billing/portal", {
+    method: "POST",
+  });
 }
 
 // ── Cloud Sync v1 ─────────────────────────────────────────────────────

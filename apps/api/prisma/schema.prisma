@@ -58,16 +58,22 @@ enum SubscriptionStatus {
   PAST_DUE
 }
 
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
 model Subscription {
-  id                 String             @id @default(cuid())
-  userId             String             @unique @map("user_id")
-  plan               Plan               @default(FREE)
-  status             SubscriptionStatus @default(ACTIVE)
-  stripeCustomerId   String?            @unique @map("stripe_customer_id")
-  stripeSubscriptionId String?          @unique @map("stripe_subscription_id")
-  currentPeriodEnd   DateTime?          @map("current_period_end")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
+  id                   String              @id @default(cuid())
+  userId               String              @unique @map("user_id")
+  plan                 Plan                @default(FREE)
+  status               SubscriptionStatus  @default(ACTIVE)
+  billingInterval      BillingInterval?    @map("billing_interval")
+  stripeCustomerId     String?             @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?             @unique @map("stripe_subscription_id")
+  currentPeriodEnd     DateTime?           @map("current_period_end")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -103,13 +109,18 @@ model AppSettingsCloud {
   @@map("app_settings_cloud")
 }
 
-// ── Processed Stripe Events (webhook idempotency) ─────────────────
+// ── Webhook Event (idempotency + audit) ───────────────────────────
 
-model ProcessedEvent {
-  id          String   @id                     // Stripe event id (evt_...)
-  processedAt DateTime @default(now()) @map("processed_at")
+model WebhookEvent {
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique @map("stripe_event_id")
+  type          String
+  status        String    @default("processed")   // "processed" | "ignored" | "failed"
+  errorMessage  String?   @map("error_message")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  processedAt   DateTime? @map("processed_at")
 
-  @@map("processed_events")
+  @@map("webhook_events")
 }
 
 // ── Audit Log (admin actions) ─────────────────────────────────────

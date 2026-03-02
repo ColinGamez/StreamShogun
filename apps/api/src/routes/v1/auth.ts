@@ -81,6 +81,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         subscription: {
           plan: Plan.FREE,
           status: SubscriptionStatus.ACTIVE,
+          billingInterval: null,
           currentPeriodEnd: null,
         },
         accessToken,
@@ -135,6 +136,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         subscription: {
           plan: sub?.plan === "PRO" ? Plan.PRO : Plan.FREE,
           status: (sub?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
+          billingInterval: (sub?.billingInterval as "MONTHLY" | "YEARLY") ?? null,
           currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() ?? null,
         },
         accessToken,

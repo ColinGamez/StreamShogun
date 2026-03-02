@@ -33,6 +33,7 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
         subscription: {
           plan: sub_?.plan === "PRO" ? Plan.PRO : Plan.FREE,
           status: (sub_?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
+          billingInterval: (sub_?.billingInterval as "MONTHLY" | "YEARLY") ?? null,
           currentPeriodEnd: sub_?.currentPeriodEnd?.toISOString() ?? null,
         },
       };

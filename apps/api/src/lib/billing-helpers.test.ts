@@ -5,6 +5,7 @@ import {
   getInvoiceSubscriptionId,
   extractPeriodEnd,
   resolveStripeId,
+  extractBillingInterval,
 } from "./billing-helpers.js";
 
 // ── mapStripeStatus ──────────────────────────────────────────────
@@ -144,5 +145,50 @@ describe("resolveStripeId", () => {
   it("returns null for empty string", () => {
     // empty string is falsy, should return null
     expect(resolveStripeId("")).toBeNull();
+  });
+});
+
+// ── extractBillingInterval ───────────────────────────────────────
+
+describe("extractBillingInterval", () => {
+  it("returns MONTHLY for 'month' interval", () => {
+    const sub = {
+      items: { data: [{ price: { recurring: { interval: "month" } } }] },
+    } as any;
+    expect(extractBillingInterval(sub)).toBe("MONTHLY");
+  });
+
+  it("returns YEARLY for 'year' interval", () => {
+    const sub = {
+      items: { data: [{ price: { recurring: { interval: "year" } } }] },
+    } as any;
+    expect(extractBillingInterval(sub)).toBe("YEARLY");
+  });
+
+  it("returns null for 'week' interval", () => {
+    const sub = {
+      items: { data: [{ price: { recurring: { interval: "week" } } }] },
+    } as any;
+    expect(extractBillingInterval(sub)).toBeNull();
+  });
+
+  it("returns null when items is missing", () => {
+    const sub = {} as any;
+    expect(extractBillingInterval(sub)).toBeNull();
+  });
+
+  it("returns null when items.data is empty", () => {
+    const sub = { items: { data: [] } } as any;
+    expect(extractBillingInterval(sub)).toBeNull();
+  });
+
+  it("returns null when price is missing", () => {
+    const sub = { items: { data: [{}] } } as any;
+    expect(extractBillingInterval(sub)).toBeNull();
+  });
+
+  it("returns null when recurring is missing", () => {
+    const sub = { items: { data: [{ price: {} }] } } as any;
+    expect(extractBillingInterval(sub)).toBeNull();
   });
 });

@@ -65,3 +65,17 @@ export function resolveStripeId(
   if (!ref) return null;
   return typeof ref === "string" ? ref : ref.id;
 }
+
+/**
+ * Determine billing interval from Stripe subscription line items.
+ * Returns "MONTHLY" | "YEARLY" based on the first price's recurring interval.
+ * Falls back to null if the interval cannot be resolved.
+ */
+export function extractBillingInterval(
+  sub: Stripe.Subscription,
+): "MONTHLY" | "YEARLY" | null {
+  const interval = sub.items?.data?.[0]?.price?.recurring?.interval;
+  if (interval === "month") return "MONTHLY";
+  if (interval === "year") return "YEARLY";
+  return null;
+}
