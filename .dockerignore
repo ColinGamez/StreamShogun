@@ -1,0 +1,28 @@
+# ── Repo-root .dockerignore for Railway builds ────────────────────
+# Railway uses repo root as Docker context; keep the image lean.
+
+# Heavy dirs not needed by apps/api
+apps/desktop
+apps/backend
+apps/ui
+assets
+scripts
+.github
+.git
+.githooks
+
+# Build artifacts & caches
+**/node_modules
+**/dist
+**/generated
+**/.eslintcache
+**/*.tsbuildinfo
+
+# Environment & data
+**/.env
+**/.env.local
+*.xml.gz
+
+# OS
+.DS_Store
+Thumbs.db

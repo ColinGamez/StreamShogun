@@ -1,5 +1,4 @@
 export * from "./types.js";
-export * from "./parsers.js";
 export * from "./iptv-types.js";
 export * from "./m3u-parser.js";
 export * from "./xmltv-types.js";
@@ -7,3 +6,7 @@ export * from "./xmltv-parser.js";
 export * from "./epg-index.js";
 export * from "./fuzzy-match.js";
 export * from "./epg-merge.js";
+export * from "./licensing.js";
+export * from "./support-types.js";
+export * from "./support-parser.js";
+export * from "./support-search.js";

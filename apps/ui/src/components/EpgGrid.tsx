@@ -2,12 +2,14 @@
 //
 // Features:
 // • Left channel column with logos/names, scroll-synced with grid
-// • 30-min block timeline header (sticky)
+// • 30-min block timeline header (sticky, **horizontal scroll–synced**)
 // • Programme blocks with proportional widths
+// • Progress bar on currently-airing programmes
 // • Current-time red marker, auto-updated every minute
 // • Row virtualisation for large channel lists
 // • Only renders programmes within a visible time window (now-1h … now+5h)
 // • Click programme → detail callback; click channel label → play callback
+// • EPG search filter
 //
 // No heavy UI framework — pure CSS positioning + useVirtualRows hook.
 
@@ -44,6 +46,8 @@ export interface EpgGridProps {
   onSelectProgramme?: (prog: Programme, channel: Channel) => void;
   /** Called when the user clicks a channel label. */
   onPlayChannel?: (channel: Channel) => void;
+  /** Optional search / filter string from parent. */
+  search?: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -68,7 +72,7 @@ function msToPixels(ms: number): number {
 
 // ── Component ─────────────────────────────────────────────────────────
 
-export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }: EpgGridProps) {
+export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel, search }: EpgGridProps) {
   // ── Time window ─────────────────────────────────────────────────────
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -80,17 +84,28 @@ export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }
   const windowEnd = windowStart + TOTAL_HOURS * 3_600_000;
   const totalTimelinePx = TOTAL_HOURS * PX_PER_HOUR;
 
-  // ── Channels with EPG data (preserve order, include those without too) ──
+  // ── Channels with EPG data (with optional search filter) ────────────
   const guideChannels = useMemo(() => {
+    const needle = (search ?? "").trim().toLowerCase();
     return channels.filter((ch) => {
       const progs = epgIndex[ch.tvgId];
-      return progs && progs.length > 0;
+      if (!progs || progs.length === 0) return false;
+      if (!needle) return true;
+      // Match channel name or any programme title in visible window
+      if (ch.name.toLowerCase().includes(needle)) return true;
+      if (ch.tvgId.toLowerCase().includes(needle)) return true;
+      return progs.some((p) => {
+        const stop = p.stop || p.start + DEFAULT_DUR_MS;
+        if (stop <= windowStart || p.start >= windowEnd) return false;
+        return p.titles.some((t) => t.toLowerCase().includes(needle));
+      });
     });
-  }, [channels, epgIndex]);
+  }, [channels, epgIndex, search, windowStart, windowEnd]);
 
   // ── Refs ────────────────────────────────────────────────────────────
   const channelColRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
 
   // ── Virtualisation ──────────────────────────────────────────────────
   const { start, end, offsetY, totalHeight } = useVirtualRows(
@@ -100,29 +115,35 @@ export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }
   );
   const visibleChannels = guideChannels.slice(start, end);
 
-  // ── Scroll sync: vertical ───────────────────────────────────────────
-  const handleVerticalScroll = useCallback(() => {
+  // ── Scroll sync: vertical + horizontal ──────────────────────────────
+  const handleScroll = useCallback(() => {
     const sc = scrollContainerRef.current;
     const col = channelColRef.current;
-    if (sc && col) {
-      col.scrollTop = sc.scrollTop;
-    }
+    const header = headerScrollRef.current;
+    if (!sc) return;
+    // Vertical sync: channel column follows grid
+    if (col) col.scrollTop = sc.scrollTop;
+    // Horizontal sync: timeline header follows grid (BUG-5 FIX)
+    if (header) header.scrollLeft = sc.scrollLeft;
   }, []);
 
   useEffect(() => {
     const sc = scrollContainerRef.current;
     if (!sc) return;
-    sc.addEventListener("scroll", handleVerticalScroll, { passive: true });
-    return () => sc.removeEventListener("scroll", handleVerticalScroll);
-  }, [handleVerticalScroll]);
+    sc.addEventListener("scroll", handleScroll, { passive: true });
+    return () => sc.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   // ── Auto-scroll to "now" on mount ───────────────────────────────────
   useEffect(() => {
     const sc = scrollContainerRef.current;
+    const header = headerScrollRef.current;
     if (!sc) return;
     const nowOffset = msToPixels(now - windowStart);
     // Center the now marker in view
-    sc.scrollLeft = Math.max(0, nowOffset - sc.clientWidth / 3);
+    const scrollPos = Math.max(0, nowOffset - sc.clientWidth / 3);
+    sc.scrollLeft = scrollPos;
+    if (header) header.scrollLeft = scrollPos;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -170,6 +191,17 @@ export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }
     [windowStart, windowEnd],
   );
 
+  /** Progress percentage (0–1) for a currently-airing programme. */
+  const progressPct = useCallback(
+    (prog: Programme): number => {
+      const stop = prog.stop || prog.start + DEFAULT_DUR_MS;
+      const total = stop - prog.start;
+      if (total <= 0) return 0;
+      return Math.min(1, Math.max(0, (now - prog.start) / total));
+    },
+    [now],
+  );
+
   // ── Render ──────────────────────────────────────────────────────────
   return (
     <div className="epg-grid">
@@ -178,7 +210,7 @@ export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }
         <div className="epg-corner" style={{ width: CHAN_COL_W }}>
           {guideChannels.length} ch
         </div>
-        <div className="epg-timeline-header-scroll">
+        <div ref={headerScrollRef} className="epg-timeline-header-scroll">
           <div className="epg-timeline-header" style={{ width: totalTimelinePx }}>
             {timeSlots.map((slot) => (
               <div
@@ -238,7 +270,7 @@ export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }
         </div>
 
         {/* Scrollable timeline grid */}
-        <div ref={scrollContainerRef} className="epg-scroll-area" onScroll={handleVerticalScroll}>
+        <div ref={scrollContainerRef} className="epg-scroll-area" onScroll={handleScroll}>
           <div className="epg-grid-canvas" style={{ width: totalTimelinePx, height: totalHeight }}>
             {/* Now marker (full-height red line) */}
             {showNowMarker && <div className="epg-now-line" style={{ left: nowPx }} />}
@@ -260,14 +292,22 @@ export function EpgGrid({ channels, epgIndex, onSelectProgramme, onPlayChannel }
                       const style = blockStyle(prog);
                       const isNow =
                         prog.start <= now && (prog.stop || prog.start + DEFAULT_DUR_MS) > now;
+                      const pct = isNow ? progressPct(prog) : 0;
                       return (
                         <button
                           key={`${prog.channelId}-${prog.start}-${i}`}
                           className={`epg-block${isNow ? " epg-block-now" : ""}`}
                           style={style}
                           onClick={() => onSelectProgramme?.(prog, ch)}
-                          title={prog.titles[0] ?? ""}
+                          title={`${prog.titles[0] ?? ""}\n${formatTime(prog.start)} – ${formatTime(prog.stop || prog.start + DEFAULT_DUR_MS)}`}
                         >
+                          {/* Progress bar for currently-airing */}
+                          {isNow && (
+                            <div
+                              className="epg-block-progress"
+                              style={{ width: `${(pct * 100).toFixed(1)}%` }}
+                            />
+                          )}
                           <span className="epg-block-title">{prog.titles[0] ?? ""}</span>
                           {(style.width as number) > 90 && prog.subtitle && (
                             <span className="epg-block-sub">{prog.subtitle}</span>

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Playlist, Programme, XmltvChannel } from "@stream-shogun/core";
+import type { Playlist, Programme, XmltvChannel, LicenseStatus } from "@stream-shogun/core";
 
 // ── IPC response wrapper (mirrors desktop/ipc.ts) ─────────────────────
 export interface IpcOk<T> {
@@ -167,6 +167,44 @@ export interface ShogunAPI {
     startTimestamp?: number;
   }) => Promise<IpcResponse<null>>;
   discordClearActivity: () => Promise<IpcResponse<null>>;
+
+  // License / Pro (Monetization)
+  licenseGetStatus: () => Promise<IpcResponse<LicenseStatus>>;
+  licenseSetKey: (args: { key: string }) => Promise<IpcResponse<LicenseStatus>>;
+  licenseSetProEnabled: (args: { enabled: boolean }) => Promise<IpcResponse<LicenseStatus>>;
+
+  // Auth / SaaS
+  authRegister: (args: { email: string; password: string; displayName?: string }) => Promise<IpcResponse<{
+    user: { id: string; email: string; displayName?: string; createdAt: string };
+    subscription: { plan: string; status: string; currentPeriodEnd?: string };
+    accessToken: string;
+    refreshToken: string;
+  }>>;
+  authLogin: (args: { email: string; password: string }) => Promise<IpcResponse<{
+    user: { id: string; email: string; displayName?: string; createdAt: string };
+    subscription: { plan: string; status: string; currentPeriodEnd?: string };
+    accessToken: string;
+    refreshToken: string;
+  }>>;
+  authLogout: () => Promise<IpcResponse<null>>;
+  authRefresh: () => Promise<IpcResponse<{ hasTokens: boolean }>>;
+  featuresFetch: () => Promise<IpcResponse<{ plan: string; subscriptionStatus: string; billingInterval: string | null; flags: Record<string, boolean>; currentPeriodEnd: string | null; trialEndsAt: string | null; isFoundingMember: boolean }>>;
+
+  // Billing
+  billingCheckout: (args?: { interval?: string }) => Promise<IpcResponse<{ url: string }>>;
+  billingPortal: () => Promise<IpcResponse<{ url: string }>>;
+
+  // Cloud Sync v1
+  cloudSyncPull: () => Promise<IpcResponse<import("@stream-shogun/shared").CloudSyncPayload>>;
+  cloudSyncPush: (args: {
+    settings?: Record<string, string>;
+    favorites?: string[];
+    history?: Array<{ channelUrl: string; channelName: string; channelLogo?: string; groupTitle?: string; watchedAt: number }>;
+    localUpdatedAt: string;
+  }) => Promise<IpcResponse<import("@stream-shogun/shared").CloudSyncPayload & { conflict: boolean }>>;
+
+  // File save (Support Bundle)
+  saveFile: (args: { defaultName: string; content: string; title?: string }) => Promise<IpcResponse<{ filePath: string | null }>>;
 }
 
 // Legacy

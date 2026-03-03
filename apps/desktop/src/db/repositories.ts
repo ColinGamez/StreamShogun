@@ -4,7 +4,8 @@
 // returns plain-object DTOs that survive Electron's structured-clone IPC.
 
 import { getDb } from "./database";
-import type { Channel, Programme } from "@stream-shogun/core";
+import type { Channel, Programme, LicenseStatus, LicenseValidationState } from "@stream-shogun/core";
+import { validateLicenseKeyFormat, DEFAULT_LICENSE_STATUS } from "@stream-shogun/core";
 import * as crypto from "crypto";
 
 // ── Row types (DB rows → plain objects) ───────────────────────────────
@@ -411,7 +412,10 @@ export function setSetting(key: string, value: string): void {
 //  Watch History (F4)
 // ═══════════════════════════════════════════════════════════════════════
 
-/** Record a watch session. */
+/** Maximum rows to keep in watch_history. */
+const MAX_WATCH_HISTORY_ROWS = 500;
+
+/** Record a watch session and prune old rows beyond the limit. */
 export function saveWatchSession(
   channelUrl: string,
   channelName: string,
@@ -422,27 +426,39 @@ export function saveWatchSession(
   durationSec: number,
 ): WatchHistoryRow {
   const db = getDb();
-  const info = db
-    .prepare(
-      `INSERT INTO watch_history
-         (channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(channelUrl, startedAt) DO UPDATE SET
-         stoppedAt   = excluded.stoppedAt,
-         durationSec = excluded.durationSec`,
-    )
-    .run(channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec);
 
-  return {
-    id: Number(info.lastInsertRowid),
-    channelUrl,
-    channelName,
-    channelLogo,
-    groupTitle,
-    startedAt,
-    stoppedAt,
-    durationSec,
-  };
+  const row = db.transaction(() => {
+    const info = db
+      .prepare(
+        `INSERT INTO watch_history
+           (channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(channelUrl, startedAt) DO UPDATE SET
+           stoppedAt   = excluded.stoppedAt,
+           durationSec = excluded.durationSec`,
+      )
+      .run(channelUrl, channelName, channelLogo, groupTitle, startedAt, stoppedAt, durationSec);
+
+    // Prune old rows beyond the limit
+    db.prepare(
+      `DELETE FROM watch_history WHERE id NOT IN (
+         SELECT id FROM watch_history ORDER BY startedAt DESC LIMIT ?
+       )`,
+    ).run(MAX_WATCH_HISTORY_ROWS);
+
+    return {
+      id: Number(info.lastInsertRowid),
+      channelUrl,
+      channelName,
+      channelLogo,
+      groupTitle,
+      startedAt,
+      stoppedAt,
+      durationSec,
+    };
+  })();
+
+  return row;
 }
 
 /** List recent watch sessions. */
@@ -464,4 +480,57 @@ export function getLastWatched(): WatchHistoryRow | null {
 /** Clear all watch history. */
 export function clearWatchHistory(): void {
   getDb().prepare("DELETE FROM watch_history").run();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  License / Pro (Monetization)
+// ═══════════════════════════════════════════════════════════════════════
+
+/** Retrieve the current license status from settings. */
+export function getLicenseStatus(): LicenseStatus {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT key, value FROM settings WHERE key IN ('isProEnabled', 'licenseKey', 'licenseValidationState')")
+    .all() as { key: string; value: string }[];
+
+  const map: Record<string, string> = {};
+  for (const r of rows) map[r.key] = r.value;
+
+  return {
+    isProEnabled: map.isProEnabled === "true",
+    licenseKey: map.licenseKey ?? DEFAULT_LICENSE_STATUS.licenseKey,
+    validationState: (map.licenseValidationState as LicenseValidationState) ?? DEFAULT_LICENSE_STATUS.validationState,
+  };
+}
+
+/** Store a license key and run offline format validation. */
+export function setLicenseKey(key: string): LicenseStatus {
+  const db = getDb();
+  const trimmed = key.trim();
+
+  const validationState: LicenseValidationState =
+    trimmed === "" ? "none" : validateLicenseKeyFormat(trimmed) ? "valid" : "invalid";
+
+  const isProEnabled = validationState === "valid";
+
+  db.transaction(() => {
+    const upsert = db.prepare(
+      "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    );
+    upsert.run("licenseKey", trimmed);
+    upsert.run("licenseValidationState", validationState);
+    upsert.run("isProEnabled", String(isProEnabled));
+  })();
+
+  return { isProEnabled, licenseKey: trimmed, validationState };
+}
+
+/** Manually toggle Pro mode (for dev / testing). */
+export function setProEnabled(enabled: boolean): LicenseStatus {
+  const db = getDb();
+  db.prepare(
+    "INSERT INTO settings (key, value) VALUES ('isProEnabled', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+  ).run(String(enabled));
+
+  return getLicenseStatus();
 }

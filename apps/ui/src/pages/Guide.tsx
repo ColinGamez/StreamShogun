@@ -19,6 +19,8 @@ export function GuidePage({ onPlay }: GuidePageProps) {
     channel: Channel;
   } | null>(null);
 
+  const [epgSearch, setEpgSearch] = useState("");
+
   // Only show channels that have EPG entries
   const guideChannels = useMemo(() => {
     return channels.filter((ch) => {
@@ -34,9 +36,19 @@ export function GuidePage({ onPlay }: GuidePageProps) {
       <div className="page-guide-top">
         <h1 className="page-title">{t("nav.guide", locale)}</h1>
         {hasData && (
-          <span className="guide-channel-count">
-            {guideChannels.length} {t("guide.channelsWithEpg", locale)}
-          </span>
+          <>
+            <input
+              className="guide-search"
+              type="text"
+              placeholder={t("guide.searchPlaceholder", locale) || "Search channels or programmes…"}
+              value={epgSearch}
+              onChange={(e) => setEpgSearch(e.target.value)}
+              aria-label="Search EPG"
+            />
+            <span className="guide-channel-count">
+              {guideChannels.length} {t("guide.channelsWithEpg", locale)}
+            </span>
+          </>
         )}
       </div>
 
@@ -51,6 +63,7 @@ export function GuidePage({ onPlay }: GuidePageProps) {
             <EpgGrid
               channels={guideChannels}
               epgIndex={epgIndex}
+              search={epgSearch}
               onSelectProgramme={(prog, ch) => setSelectedProg({ prog, channel: ch })}
               onPlayChannel={onPlay}
             />

@@ -4,7 +4,7 @@
 // The renderer never touches `fs` or `fetch` directly — it calls these
 // handlers through the narrow preload bridge.
 
-import { ipcMain, app } from "electron";
+import { ipcMain, app, shell, dialog } from "electron";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { gunzip } from "zlib";
@@ -31,6 +31,9 @@ import {
   listWatchHistory,
   getLastWatched,
   clearWatchHistory,
+  getLicenseStatus,
+  setLicenseKey,
+  setProEnabled,
 } from "./db";
 import {
   initScheduler,
@@ -44,6 +47,18 @@ import {
   setActivity as discordSetActivity,
   clearActivity as discordClearActivity,
 } from "./discord";
+import {
+  apiRegister,
+  apiLogin,
+  apiLogout,
+  apiGetFeatures,
+  apiRefreshTokens,
+  apiCloudSyncGet,
+  apiCloudSyncPut,
+  apiBillingCheckout,
+  apiBillingPortal,
+} from "./api-client";
+import { loadTokens } from "./token-store";
 
 // ── Security constants ────────────────────────────────────────────────
 
@@ -160,11 +175,6 @@ async function secureFetchRaw(url: URL): Promise<Buffer> {
   }
 }
 
-async function secureFetch(url: URL): Promise<string> {
-  const raw = await secureFetchRaw(url);
-  return new TextDecoder("utf-8").decode(raw);
-}
-
 /** Fetch a URL and decompress if gzip. */
 async function secureFetchText(url: URL): Promise<string> {
   const raw = await secureFetchRaw(url);
@@ -225,6 +235,22 @@ function fail(err: unknown): IpcError {
   return { ok: false, error: message };
 }
 
+/** Validate that a value is a non-empty string. */
+function requireString(val: unknown, label: string): string {
+  if (typeof val !== "string" || val.trim() === "") {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return val;
+}
+
+/** Validate that a value is a finite non-negative number. */
+function requireFiniteNumber(val: unknown, label: string): number {
+  if (typeof val !== "number" || !Number.isFinite(val) || val < 0) {
+    throw new Error(`${label} must be a finite non-negative number`);
+  }
+  return val;
+}
+
 // ── Register all IPC handlers ─────────────────────────────────────────
 
 export function registerIpcHandlers(): void {
@@ -256,7 +282,7 @@ export function registerIpcHandlers(): void {
     async (_event, rawUrl: unknown): Promise<IpcResponse<Playlist>> => {
       try {
         const url = validateUrl(rawUrl);
-        const text = await secureFetch(url);
+        const text = await secureFetchText(url);
         return ok(parseM3U(text));
       } catch (err) {
         return fail(err);
@@ -462,6 +488,8 @@ export function registerIpcHandlers(): void {
     IpcChannels.DB_SET_SETTING,
     (_event, args: { key: string; value: string }) => {
       try {
+        requireString(args.key, "settings key");
+        if (typeof args.value !== "string") throw new Error("settings value must be a string");
         setSetting(args.key, args.value);
         // Side-effects for certain settings
         if (args.key === "discordRpcEnabled") {
@@ -493,11 +521,16 @@ export function registerIpcHandlers(): void {
       },
     ) => {
       try {
+        requireString(args.channelUrl, "channelUrl");
+        requireString(args.channelName, "channelName");
+        requireFiniteNumber(args.startedAt, "startedAt");
+        requireFiniteNumber(args.stoppedAt, "stoppedAt");
+        requireFiniteNumber(args.durationSec, "durationSec");
         const row = saveWatchSession(
           args.channelUrl,
           args.channelName,
-          args.channelLogo,
-          args.groupTitle,
+          args.channelLogo || "",
+          args.groupTitle || "",
           args.startedAt,
           args.stoppedAt,
           args.durationSec,
@@ -642,6 +675,204 @@ export function registerIpcHandlers(): void {
       return fail(err);
     }
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  License / Pro (Monetization)
+  // ═══════════════════════════════════════════════════════════════════
+
+  ipcMain.handle(IpcChannels.LICENSE_GET_STATUS, () => {
+    try {
+      return ok(getLicenseStatus());
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(
+    IpcChannels.LICENSE_SET_KEY,
+    (_event, args: { key: string }) => {
+      try {
+        requireString(args.key, "license key");
+        return ok(setLicenseKey(args.key));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.LICENSE_SET_PRO_ENABLED,
+    (_event, args: { enabled: boolean }) => {
+      try {
+        return ok(setProEnabled(args.enabled));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Auth / SaaS
+  // ═══════════════════════════════════════════════════════════════════
+
+  ipcMain.handle(
+    IpcChannels.AUTH_REGISTER,
+    async (_event, args: { email: string; password: string; displayName?: string }) => {
+      try {
+        requireString(args.email, "email");
+        requireString(args.password, "password");
+        const result = await apiRegister(args.email, args.password, args.displayName);
+        if (!result.ok) {
+          const body = result.data as unknown as Record<string, unknown> | undefined;
+          return fail(new Error((body && typeof body.message === "string" ? body.message : null) ?? "Registration failed"));
+        }
+        return ok(result.data);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.AUTH_LOGIN,
+    async (_event, args: { email: string; password: string }) => {
+      try {
+        requireString(args.email, "email");
+        requireString(args.password, "password");
+        const result = await apiLogin(args.email, args.password);
+        if (!result.ok) {
+          const body = result.data as unknown as Record<string, unknown> | undefined;
+          return fail(new Error((body && typeof body.message === "string" ? body.message : null) ?? "Login failed"));
+        }
+        return ok(result.data);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  ipcMain.handle(IpcChannels.AUTH_LOGOUT, async () => {
+    try {
+      await apiLogout();
+      return ok(null);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.AUTH_REFRESH, async () => {
+    try {
+      const tokens = await loadTokens();
+      if (!tokens?.refreshToken) return fail(new Error("No refresh token"));
+      // Actually attempt a token refresh against the API
+      const refreshed = await apiRefreshTokens();
+      if (!refreshed) return fail(new Error("Token refresh failed"));
+      return ok({ hasTokens: true });
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.FEATURES_FETCH, async () => {
+    try {
+      const result = await apiGetFeatures();
+      if (!result.ok) return fail(new Error("Failed to fetch features"));
+      return ok(result.data);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Billing (opens Stripe in system browser)
+  // ═══════════════════════════════════════════════════════════════
+
+  ipcMain.handle(IpcChannels.BILLING_CHECKOUT, async (_event, args?: { interval?: string }) => {
+    try {
+      const interval = args?.interval === "yearly" ? "yearly" : "monthly";
+      const result = await apiBillingCheckout(interval);
+      if (!result.ok) return fail(new Error("Failed to create checkout session"));
+      await shell.openExternal(result.data.url);
+      return ok({ url: result.data.url });
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.BILLING_PORTAL, async () => {
+    try {
+      const result = await apiBillingPortal();
+      if (!result.ok) return fail(new Error("Failed to create portal session"));
+      await shell.openExternal(result.data.url);
+      return ok({ url: result.data.url });
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Cloud Sync v1
+  // ═══════════════════════════════════════════════════════════════
+
+  ipcMain.handle(IpcChannels.CLOUD_SYNC_PULL, async () => {
+    try {
+      const result = await apiCloudSyncGet();
+      if (!result.ok) return fail(new Error("Failed to pull cloud sync"));
+      return ok(result.data);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(
+    IpcChannels.CLOUD_SYNC_PUSH,
+    async (_event, args: {
+      settings?: Record<string, string>;
+      favorites?: string[];
+      history?: Array<{ channelUrl: string; channelName: string; channelLogo?: string; groupTitle?: string; watchedAt: number }>;
+      localUpdatedAt: string;
+    }) => {
+      try {
+        const result = await apiCloudSyncPut(args);
+        // 409 = conflict; still return the payload so the client can merge
+        if (!result.ok && result.status !== 409) {
+          return fail(new Error("Cloud sync push failed"));
+        }
+        return ok({ ...result.data, conflict: result.status === 409 });
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  //  File save (Support Bundle)
+  // ═══════════════════════════════════════════════════════════════
+
+  ipcMain.handle(
+    IpcChannels.SAVE_FILE,
+    async (
+      _event,
+      args: { defaultName: string; content: string; title?: string },
+    ): Promise<IpcResponse<{ filePath: string | null }>> => {
+      try {
+        requireString(args.defaultName, "defaultName");
+        if (typeof args.content !== "string") throw new Error("content must be a string");
+        const result = await dialog.showSaveDialog({
+          title: args.title ?? "Save file",
+          defaultPath: args.defaultName,
+          filters: [{ name: "JSON", extensions: ["json"] }],
+        });
+        if (result.canceled || !result.filePath) {
+          return ok({ filePath: null });
+        }
+        await fs.writeFile(result.filePath, args.content, "utf-8");
+        return ok({ filePath: result.filePath });
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
 
   // Initialise scheduler after all handlers are registered
   initScheduler();

@@ -12,9 +12,9 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 
-// 1. Compile TypeScript
-console.log("[desktop] Compiling TypeScript…");
-execSync("npx tsc -p tsconfig.json", { cwd: root, stdio: "inherit" });
+// 1. Bundle with esbuild (ESM workspace packages → CJS for Electron)
+console.log("[desktop] Building with esbuild…");
+execSync("node scripts/build.mjs", { cwd: root, stdio: "inherit" });
 
 // 2. Give Vite a moment to start (when launched via concurrently)
 console.log("[desktop] Waiting for Vite dev server…");

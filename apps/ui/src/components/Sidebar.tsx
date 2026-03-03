@@ -1,7 +1,7 @@
 import { useAppStore } from "../stores/app-store";
 import { t } from "../lib/i18n";
 
-export type Page = "library" | "channels" | "guide" | "player" | "settings" | "history";
+export type Page = "library" | "channels" | "guide" | "player" | "settings" | "history" | "support";
 
 interface SidebarProps {
   current: Page;
@@ -14,6 +14,7 @@ const NAV: { page: Page; icon: string; labelKey: string }[] = [
   { page: "guide", icon: "📅", labelKey: "nav.guide" },
   { page: "player", icon: "▶️", labelKey: "nav.player" },
   { page: "history", icon: "🕒", labelKey: "nav.history" },
+  { page: "support", icon: "🎌", labelKey: "nav.support" },
   { page: "settings", icon: "⚙️", labelKey: "nav.settings" },
 ];
 

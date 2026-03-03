@@ -29,14 +29,22 @@
     "dev": "pnpm --filter @stream-shogun/ui dev:electron",
     "dev:ui": "pnpm --filter @stream-shogun/ui dev",
     "dev:electron": "pnpm --filter @stream-shogun/desktop dev",
-    "build": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build",
+    "dev:api": "pnpm --filter @stream-shogun/api dev",
+    "db:up": "docker compose -f docker/docker-compose.yml up -d",
+    "db:down": "docker compose -f docker/docker-compose.yml down",
+    "db:migrate": "pnpm --filter @stream-shogun/api exec prisma migrate dev",
+    "db:push": "pnpm --filter @stream-shogun/api exec prisma db push",
+    "db:studio": "pnpm --filter @stream-shogun/api exec prisma studio",
+    "db:seed": "pnpm --filter @stream-shogun/api db:seed",
+    "build": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/api build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build",
     "build:win": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:win",
     "build:mac": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:mac",
     "build:linux": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:linux",
     "build:ui": "pnpm --filter @stream-shogun/ui build",
     "build:desktop": "pnpm --filter @stream-shogun/desktop build",
-    "test": "pnpm --filter @stream-shogun/core test",
-    "typecheck": "pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui exec tsc --noEmit && pnpm --filter @stream-shogun/desktop exec tsc --noEmit",
+    "test": "pnpm --filter @stream-shogun/core test && pnpm --filter @stream-shogun/api test",
+    "prisma:generate": "pnpm --filter @stream-shogun/api exec prisma generate",
+    "typecheck": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm prisma:generate && pnpm --filter @stream-shogun/ui exec tsc --noEmit && pnpm --filter @stream-shogun/desktop exec tsc --noEmit && pnpm --filter @stream-shogun/api exec tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --cache",
     "lint:fix": "eslint . --ext .ts,.tsx --cache --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md,yaml,yml,css}\"",
@@ -46,12 +54,16 @@
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=22.0.0",
     "pnpm": ">=9.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "better-sqlite3"
+      "better-sqlite3",
+      "@prisma/client",
+      "@prisma/engines",
+      "bcrypt",
+      "prisma"
     ]
   },
   "devDependencies": {

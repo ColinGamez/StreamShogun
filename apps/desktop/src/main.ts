@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, session } from "electron";
 import * as path from "path";
 import { registerIpcHandlers } from "./ipc";
 import { initDatabase, closeDatabase } from "./db";
@@ -44,8 +44,43 @@ function createMainWindow(): BrowserWindow {
   return win;
 }
 
+// ── Content Security Policy ───────────────────────────────────────────
+function installCSP(): void {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const csp = [
+      "default-src 'self'",
+      // In dev, allow Vite's HMR websocket + inline styles/scripts
+      isDev
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : "script-src 'self'",
+      isDev
+        ? "style-src 'self' 'unsafe-inline'"
+        : "style-src 'self' 'unsafe-inline'", // CSS-in-JS / inline SVG needs unsafe-inline
+      "img-src 'self' data: https: http:",
+      "media-src 'self' https: http: blob:",
+      // connect-src needs https: because the app fetches from arbitrary
+      // user-provided M3U, XMLTV, and HLS stream URLs on any domain.
+      isDev
+        ? "connect-src 'self' https: http: ws: wss:"
+        : "connect-src 'self' https: blob:",
+      "font-src 'self' data:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ");
+
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [csp],
+      },
+    });
+  });
+}
+
 // ── App lifecycle ─────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  installCSP();
   initDatabase();
   registerIpcHandlers();
   createMainWindow();

@@ -20,12 +20,18 @@ const DEV_SERVER_URL = "http://localhost:5173";
 
 /** Open the PIP window for a given channel URL. */
 export function openPipWindow(channelUrl: string, channelName: string): void {
+  if (!channelUrl || typeof channelUrl !== "string") {
+    throw new Error("PIP channelUrl must be a non-empty string");
+  }
+
   if (pipWindow && !pipWindow.isDestroyed()) {
     // Already open — just update the channel
     pipWindow.webContents.send("pip:channel-update", { channelUrl, channelName });
     pipWindow.focus();
     return;
   }
+
+  const safeName = channelName || "PIP";
 
   const alwaysOnTop = getSetting("pipAlwaysOnTop") !== "false";
 
@@ -49,7 +55,7 @@ export function openPipWindow(channelUrl: string, channelName: string): void {
     alwaysOnTop,
     skipTaskbar: true,
     resizable: true,
-    title: `PIP — ${channelName}`,
+    title: `PIP — ${safeName}`,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -79,7 +85,7 @@ export function openPipWindow(channelUrl: string, channelName: string): void {
 export function closePipWindow(): void {
   if (pipWindow && !pipWindow.isDestroyed()) {
     pipWindow.close();
-    pipWindow = null;
+    // `pipWindow = null` is handled by the 'closed' event listener
   }
 }
 

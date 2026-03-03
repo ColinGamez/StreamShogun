@@ -71,7 +71,14 @@ export function HistoryPage({ onPlay }: HistoryPageProps) {
       {lastWatched && (
         <section className="history-continue">
           <h3>{t("history.continueWatching", locale)}</h3>
-          <div className="history-continue-card" onClick={() => handleContinue(lastWatched)}>
+          <div
+            className="history-continue-card"
+            onClick={() => handleContinue(lastWatched)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleContinue(lastWatched); } }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Continue watching ${lastWatched.channelName}`}
+          >
             {lastWatched.channelLogo && (
               <img
                 className="history-logo"
@@ -103,7 +110,15 @@ export function HistoryPage({ onPlay }: HistoryPageProps) {
       ) : (
         <div className="history-list">
           {watchHistory.map((row) => (
-            <div key={row.id} className="history-row" onClick={() => handleContinue(row)}>
+            <div
+              key={row.id}
+              className="history-row"
+              onClick={() => handleContinue(row)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleContinue(row); } }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Play ${row.channelName}`}
+            >
               <div className="history-row-logo-wrap">
                 {row.channelLogo ? (
                   <img

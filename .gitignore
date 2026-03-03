@@ -7,6 +7,7 @@ dist-tsc/
 dist-node/
 out/
 release/
+generated/
 *.tsbuildinfo
 
 # ── EPG data files ─────────────────────────────────────────────────────

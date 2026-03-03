@@ -14,7 +14,7 @@ import type {
   DbWatchHistoryRow,
   RefreshStatus,
 } from "../vite-env";
-import type { Playlist, Channel, Programme } from "@stream-shogun/core";
+import type { Playlist, Channel, Programme, LicenseStatus } from "@stream-shogun/core";
 
 function hasBridge(): boolean {
   return typeof window !== "undefined" && !!window.shogun;
@@ -249,4 +249,131 @@ export async function discordSetActivity(
 export async function discordClearActivity(): Promise<IpcResponse<null>> {
   if (hasBridge()) return window.shogun!.discordClearActivity();
   return NO_BRIDGE;
+}
+
+// ── License / Pro (Monetization) ─────────────────────────────────────
+
+export async function licenseGetStatus(): Promise<IpcResponse<LicenseStatus>> {
+  if (hasBridge()) return window.shogun!.licenseGetStatus();
+  return NO_BRIDGE;
+}
+
+export async function licenseSetKey(key: string): Promise<IpcResponse<LicenseStatus>> {
+  if (hasBridge()) return window.shogun!.licenseSetKey({ key });
+  return NO_BRIDGE;
+}
+
+export async function licenseSetProEnabled(enabled: boolean): Promise<IpcResponse<LicenseStatus>> {
+  if (hasBridge()) return window.shogun!.licenseSetProEnabled({ enabled });
+  return NO_BRIDGE;
+}
+
+// ── Auth / SaaS ──────────────────────────────────────────────────────
+
+export interface AuthResponseData {
+  user: { id: string; email: string; displayName?: string; createdAt: string };
+  subscription: { plan: string; status: string; currentPeriodEnd?: string };
+  accessToken: string;
+  refreshToken: string;
+}
+
+export async function authRegister(
+  email: string,
+  password: string,
+  displayName?: string
+): Promise<IpcResponse<AuthResponseData>> {
+  if (hasBridge()) return window.shogun!.authRegister({ email, password, displayName });
+  return NO_BRIDGE;
+}
+
+export async function authLogin(
+  email: string,
+  password: string
+): Promise<IpcResponse<AuthResponseData>> {
+  if (hasBridge()) return window.shogun!.authLogin({ email, password });
+  return NO_BRIDGE;
+}
+
+export async function authLogout(): Promise<IpcResponse<null>> {
+  if (hasBridge()) return window.shogun!.authLogout();
+  return NO_BRIDGE;
+}
+
+export async function authRefresh(): Promise<IpcResponse<{ hasTokens: boolean }>> {
+  if (hasBridge()) return window.shogun!.authRefresh();
+  return NO_BRIDGE;
+}
+
+export async function featuresFetch(): Promise<IpcResponse<{
+  plan: string;
+  subscriptionStatus: string;
+  billingInterval: string | null;
+  flags: Record<string, boolean>;
+  currentPeriodEnd: string | null;
+  trialEndsAt: string | null;
+  isFoundingMember: boolean;
+}>> {
+  if (hasBridge()) return window.shogun!.featuresFetch();
+  return NO_BRIDGE;
+}
+
+// ── Billing ──────────────────────────────────────────────────────────
+
+export async function billingCheckout(interval?: "monthly" | "yearly"): Promise<IpcResponse<{ url: string }>> {
+  if (hasBridge()) return window.shogun!.billingCheckout({ interval });
+  return NO_BRIDGE;
+}
+
+export async function billingPortal(): Promise<IpcResponse<{ url: string }>> {
+  if (hasBridge()) return window.shogun!.billingPortal();
+  return NO_BRIDGE;
+}
+
+// ── Cloud Sync v1 ────────────────────────────────────────────────────
+
+import type { CloudSyncPayload, CloudHistoryItem } from "@stream-shogun/shared";
+
+export async function cloudSyncPull(): Promise<IpcResponse<CloudSyncPayload>> {
+  if (hasBridge()) return window.shogun!.cloudSyncPull();
+  return NO_BRIDGE;
+}
+
+export type CloudSyncPushResult = CloudSyncPayload & { conflict: boolean };
+
+export async function cloudSyncPush(args: {
+  settings?: Record<string, string>;
+  favorites?: string[];
+  history?: CloudHistoryItem[];
+  localUpdatedAt: string;
+}): Promise<IpcResponse<CloudSyncPushResult>> {
+  if (hasBridge()) return window.shogun!.cloudSyncPush(args);
+  return NO_BRIDGE;
+}
+
+// ── File save (Support Bundle) ────────────────────────────────────────
+
+export async function saveFile(
+  defaultName: string,
+  content: string,
+  title?: string,
+): Promise<IpcResponse<{ filePath: string | null }>> {
+  if (hasBridge()) return window.shogun!.saveFile({ defaultName, content, title });
+
+  // Web fallback: trigger browser download via Blob
+  try {
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = defaultName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    return { ok: true, data: { filePath: defaultName } };
+  } catch {
+    return { ok: false, error: "Failed to save file" };
+  }
 }

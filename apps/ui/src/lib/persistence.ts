@@ -34,7 +34,11 @@ export const localStorageAdapter: PersistenceAdapter = {
   },
 };
 
-/** Load a JSON value from the adapter, with a fallback default. */
+/** Load a JSON value from the adapter, with a fallback default.
+ *  Note: the `as T` cast is intentionally unchecked — localStorage values
+ *  are written by our own `saveJson` and schema drift is non-critical.
+ *  If stricter validation is needed, pass a Zod schema as a 4th parameter.
+ */
 export function loadJson<T>(adapter: PersistenceAdapter, key: string, fallback: T): T {
   const raw = adapter.getItem(key);
   if (raw === null) return fallback;
