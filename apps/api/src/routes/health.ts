@@ -3,6 +3,7 @@ import type { HealthResponse } from "@stream-shogun/shared";
 import { prisma } from "../lib/prisma.js";
 import { isSentryEnabled } from "../lib/sentry.js";
 import { env } from "../config/env.js";
+import { adminAuth } from "../middleware/admin-auth.js";
 
 const startedAt = Date.now();
 
@@ -42,6 +43,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     "/healthz/details",
+    { preHandler: [adminAuth] },
     async (_request: FastifyRequest, reply: FastifyReply) => {
       let dbOk = false;
       let dbLatencyMs = -1;

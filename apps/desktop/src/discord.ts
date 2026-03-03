@@ -10,10 +10,9 @@
 import * as net from "net";
 
 // ── Discord Application ID ────────────────────────────────────────────
-// Set DISCORD_CLIENT_ID in env, or fall back to a placeholder that will
-// cause Discord to reject the handshake (harmless — RPC just won't work).
-const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? "1234567890123456789";
-const PLACEHOLDER_CLIENT_ID = "1234567890123456789";
+// Set DISCORD_CLIENT_ID in env.  If missing, RPC is disabled (fail-closed).
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? "";
+const PLACEHOLDER_CLIENT_ID = "YOUR_DISCORD_CLIENT_ID";
 
 // ── IPC protocol types ────────────────────────────────────────────────
 

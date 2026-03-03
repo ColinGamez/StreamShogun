@@ -83,6 +83,11 @@ export function HlsPlayer({
   const videoEl = externalRef ?? internalRef;
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Auto-focus container so keyboard shortcuts work immediately
+  useEffect(() => {
+    containerRef.current?.focus({ preventScroll: true });
+  }, []);
+
   // ── State ───────────────────────────────────────────────────────────
   const [buffering, setBuffering] = useState(false);
   const [resolution, setResolution] = useState<string>("");
@@ -181,8 +186,11 @@ export function HlsPlayer({
     }
   }, [videoEl]);
 
-  // ── Keyboard shortcuts ──────────────────────────────────────────────
+  // ── Keyboard shortcuts (scoped to player container) ──────────────
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
     const handler = (e: KeyboardEvent) => {
       // Don't capture if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -202,8 +210,8 @@ export function HlsPlayer({
           break;
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    container.addEventListener("keydown", handler);
+    return () => container.removeEventListener("keydown", handler);
   }, [toggleFullscreen, togglePlay]);
 
   // ── Core attach / cleanup ───────────────────────────────────────────
@@ -431,6 +439,7 @@ export function HlsPlayer({
     <div
       ref={containerRef}
       className={`hls-player${isFullscreen ? " hls-fullscreen" : ""}`}
+      tabIndex={-1}
       onMouseMove={handleMouseMove}
       onDoubleClick={toggleFullscreen}
     >

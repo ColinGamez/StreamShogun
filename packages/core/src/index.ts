@@ -7,3 +7,6 @@ export * from "./epg-index.js";
 export * from "./fuzzy-match.js";
 export * from "./epg-merge.js";
 export * from "./licensing.js";
+export * from "./support-types.js";
+export * from "./support-parser.js";
+export * from "./support-search.js";

@@ -3,6 +3,7 @@ import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
 import { initSentry, flushSentry, isSentryEnabled } from "./lib/sentry.js";
+import { startSessionCleanup, stopSessionCleanup } from "./lib/session-cleanup.js";
 
 async function main() {
   // Initialise Sentry before anything else (no-ops if SENTRY_DSN not set)
@@ -15,6 +16,7 @@ async function main() {
   for (const signal of signals) {
     process.on(signal, async () => {
       app.log.info(`Received ${signal}, shutting down …`);
+      stopSessionCleanup();
       await app.close();
       await flushSentry();
       await prisma.$disconnect();
@@ -24,6 +26,7 @@ async function main() {
 
   try {
     await app.listen({ port: env.PORT, host: env.HOST });
+    startSessionCleanup(app.log);
     app.log.info(
       { port: env.PORT, host: env.HOST, sentry: isSentryEnabled() },
       `🚀 StreamShōgun API listening on http://${env.HOST}:${env.PORT}`,

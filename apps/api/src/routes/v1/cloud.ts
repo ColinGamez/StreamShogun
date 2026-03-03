@@ -9,6 +9,7 @@ import {
 } from "@stream-shogun/shared";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { requirePro } from "../../middleware/require-pro.js";
 import { validateBody } from "../../middleware/validate.js";
 
 export async function cloudRoutes(app: FastifyInstance): Promise<void> {
@@ -16,7 +17,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     "/settings",
-    { preHandler: [authenticate] },
+    { preHandler: [authenticate, requirePro("cloud_sync")] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { sub } = request.user;
 
@@ -42,7 +43,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
   app.put(
     "/settings",
     {
-      preHandler: [authenticate],
+      preHandler: [authenticate, requirePro("cloud_sync")],
       preValidation: [validateBody(cloudSettingsSchema)],
     },
     async (
@@ -80,7 +81,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     "/sync",
-    { preHandler: [authenticate] },
+    { preHandler: [authenticate, requirePro("cloud_sync")] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { sub } = request.user;
 
@@ -114,7 +115,7 @@ export async function cloudRoutes(app: FastifyInstance): Promise<void> {
   app.put(
     "/sync",
     {
-      preHandler: [authenticate],
+      preHandler: [authenticate, requirePro("cloud_sync")],
       preValidation: [validateBody(cloudSyncPutSchema)],
     },
     async (request: FastifyRequest, reply: FastifyReply) => {

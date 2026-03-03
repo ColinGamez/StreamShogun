@@ -4,7 +4,7 @@
 // The renderer never touches `fs` or `fetch` directly — it calls these
 // handlers through the narrow preload bridge.
 
-import { ipcMain, app, shell } from "electron";
+import { ipcMain, app, shell, dialog } from "electron";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { gunzip } from "zlib";
@@ -839,6 +839,35 @@ export function registerIpcHandlers(): void {
           return fail(new Error("Cloud sync push failed"));
         }
         return ok({ ...result.data, conflict: result.status === 409 });
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  //  File save (Support Bundle)
+  // ═══════════════════════════════════════════════════════════════
+
+  ipcMain.handle(
+    IpcChannels.SAVE_FILE,
+    async (
+      _event,
+      args: { defaultName: string; content: string; title?: string },
+    ): Promise<IpcResponse<{ filePath: string | null }>> => {
+      try {
+        requireString(args.defaultName, "defaultName");
+        if (typeof args.content !== "string") throw new Error("content must be a string");
+        const result = await dialog.showSaveDialog({
+          title: args.title ?? "Save file",
+          defaultPath: args.defaultName,
+          filters: [{ name: "JSON", extensions: ["json"] }],
+        });
+        if (result.canceled || !result.filePath) {
+          return ok({ filePath: null });
+        }
+        await fs.writeFile(result.filePath, args.content, "utf-8");
+        return ok({ filePath: result.filePath });
       } catch (err) {
         return fail(err);
       }

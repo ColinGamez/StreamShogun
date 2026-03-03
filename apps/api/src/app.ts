@@ -13,6 +13,7 @@ import { featuresRoutes } from "./routes/v1/features.js";
 import { cloudRoutes } from "./routes/v1/cloud.js";
 import { adminRoutes } from "./routes/v1/admin.js";
 import { billingRoutes } from "./routes/v1/billing.js";
+import { supportRoutes } from "./routes/v1/support.js";
 import { healthRoutes } from "./routes/health.js";
 
 // ── Fastify type augmentations ──────────────────────────────────────────
@@ -121,6 +122,7 @@ export async function buildApp() {
   await app.register(cloudRoutes, { prefix: "/v1/cloud" });
   await app.register(adminRoutes, { prefix: "/v1/admin" });
   await app.register(billingRoutes, { prefix: "/v1/billing" });
+  await app.register(supportRoutes, { prefix: "/v1/support" });
 
   // ── Global error handler ──────────────────────────────────────
 

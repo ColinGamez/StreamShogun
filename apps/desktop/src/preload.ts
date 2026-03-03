@@ -180,6 +180,10 @@ contextBridge.exposeInMainWorld("shogun", {
     localUpdatedAt: string;
   }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PUSH, args),
+
+  // ── File save (Support Bundle) ──────────────────────────────────
+  saveFile: (args: { defaultName: string; content: string; title?: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.SAVE_FILE, args),
 });
 
 // Keep the legacy "electronAPI" alias for backward-compat with the UI

@@ -3,6 +3,9 @@ import { PrismaClient, Plan, SubscriptionStatus } from "../generated/prisma/inde
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed a production database.");
+  }
   console.log("🌱 Seeding database …");
 
   // Create a demo user (password: "demo1234")

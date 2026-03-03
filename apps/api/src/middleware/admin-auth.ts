@@ -8,13 +8,11 @@ import { env } from "../config/env.js";
  *
  * - In production: ADMIN_KEY is **required**. If not configured, the
  *   server refuses to start (enforced via env validation), but as a
- *   defence-in-depth we still return 501 if it's somehow empty.
+ *   defence-in-depth we still return 501 if it’s somehow empty.
  * - If header is missing or does not match → 401 Unauthorized
  *
- * Timing-safe comparison is intentionally omitted because the key is
- * a static opaque secret (not HMAC); we rely on rate-limiting + TLS
- * instead.  If you want constant-time comparison, swap to
- * `crypto.timingSafeEqual` here.
+ * Uses constant-time `crypto.timingSafeEqual` via the `safeEqual`
+ * helper to prevent timing side-channel attacks.
  */
 export async function adminAuth(
   request: FastifyRequest,
@@ -37,6 +35,7 @@ export async function adminAuth(
     reply
       .code(401)
       .send({ error: "Unauthorized", message: "Invalid or missing admin key" });
+    return;
   }
 }
 

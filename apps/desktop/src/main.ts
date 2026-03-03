@@ -58,9 +58,11 @@ function installCSP(): void {
         : "style-src 'self' 'unsafe-inline'", // CSS-in-JS / inline SVG needs unsafe-inline
       "img-src 'self' data: https: http:",
       "media-src 'self' https: http: blob:",
+      // connect-src needs https: because the app fetches from arbitrary
+      // user-provided M3U, XMLTV, and HLS stream URLs on any domain.
       isDev
         ? "connect-src 'self' https: http: ws: wss:"
-        : "connect-src 'self' https://api.streamshogun.com https://*.streamshogun.com https: blob:",
+        : "connect-src 'self' https: blob:",
       "font-src 'self' data:",
       "object-src 'none'",
       "base-uri 'self'",

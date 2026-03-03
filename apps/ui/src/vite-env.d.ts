@@ -202,6 +202,9 @@ export interface ShogunAPI {
     history?: Array<{ channelUrl: string; channelName: string; channelLogo?: string; groupTitle?: string; watchedAt: number }>;
     localUpdatedAt: string;
   }) => Promise<IpcResponse<import("@stream-shogun/shared").CloudSyncPayload & { conflict: boolean }>>;
+
+  // File save (Support Bundle)
+  saveFile: (args: { defaultName: string; content: string; title?: string }) => Promise<IpcResponse<{ filePath: string | null }>>;
 }
 
 // Legacy

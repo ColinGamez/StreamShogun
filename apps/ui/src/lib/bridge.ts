@@ -349,3 +349,31 @@ export async function cloudSyncPush(args: {
   if (hasBridge()) return window.shogun!.cloudSyncPush(args);
   return NO_BRIDGE;
 }
+
+// ── File save (Support Bundle) ────────────────────────────────────────
+
+export async function saveFile(
+  defaultName: string,
+  content: string,
+  title?: string,
+): Promise<IpcResponse<{ filePath: string | null }>> {
+  if (hasBridge()) return window.shogun!.saveFile({ defaultName, content, title });
+
+  // Web fallback: trigger browser download via Blob
+  try {
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = defaultName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    return { ok: true, data: { filePath: defaultName } };
+  } catch {
+    return { ok: false, error: "Failed to save file" };
+  }
+}

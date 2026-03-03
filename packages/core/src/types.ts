@@ -69,6 +69,9 @@ export const IpcChannels = {
   // ── Cloud Sync (v1) ──────────────────────────────────────────
   CLOUD_SYNC_PULL: "cloud:sync-pull",
   CLOUD_SYNC_PUSH: "cloud:sync-push",
+
+  // ── File save (Support Bundle) ────────────────────────────────
+  SAVE_FILE: "file:save",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

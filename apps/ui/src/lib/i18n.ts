@@ -65,6 +65,7 @@ const translations: Record<string, Record<string, string>> = {
     // ── Settings (F8) ─────────────────────────────────────────────
     "nav.settings": "Settings",
     "nav.history": "History",
+    "nav.support": "Support",
     "settings.title": "Settings",
     "settings.theme": "Theme",
     "settings.themeDark": "Dark",
@@ -180,6 +181,7 @@ const translations: Record<string, Record<string, string>> = {
     "welcome.hint": "También puedes pulsar Alt+1 para ir a la Biblioteca.",
     "nav.settings": "Ajustes",
     "nav.history": "Historial",
+    "nav.support": "Soporte",
     "settings.title": "Ajustes",
     "settings.theme": "Tema",
     "settings.themeDark": "Oscuro",
@@ -290,6 +292,7 @@ const translations: Record<string, Record<string, string>> = {
     "welcome.hint": "Alt+1でいつでもライブラリに移動できます。",
     "nav.settings": "設定",
     "nav.history": "履歴",
+    "nav.support": "サポート",
     "settings.title": "設定",
     "settings.theme": "テーマ",
     "settings.themeDark": "ダーク",
