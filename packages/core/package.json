@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/node": "^25.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^5.4.0"
+    "typescript": "^6.0.2"
   },
   "dependencies": {
     "fast-xml-parser": "^5.4.1"
