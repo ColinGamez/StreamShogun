@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     MainScene.xml — Root scene with tab navigation (Library, Guide, Settings)
+     ========================================================================== -->
+<component name="MainScene" extends="Scene" initialFocus="tabGroup">
+
+  <interface>
+    <field id="deepLink" type="assocarray" />
+  </interface>
+
+  <children>
+    <!-- ── Background ─────────────────────────────────────────── -->
+    <Rectangle id="bg" width="1920" height="1080" color="#0c0c0e" />
+
+    <!-- ── Header bar ─────────────────────────────────────────── -->
+    <Rectangle id="headerBg" width="1920" height="72" color="#111114"
+               translation="[0, 0]" />
+    <Label id="headerTitle" text="StreamShōgun"
+           font="font:MediumBoldSystemFont"
+           color="#7c5cfc"
+           translation="[60, 18]" />
+    <Label id="headerSub" text="Personal Playlist Player"
+           font="font:SmallestSystemFont"
+           color="#71717a"
+           translation="[260, 26]" />
+
+    <!-- ── Tab buttons ────────────────────────────────────────── -->
+    <LayoutGroup id="tabRow" layoutDirection="horiz"
+                 itemSpacings="[2]"
+                 translation="[60, 80]">
+      <ButtonGroup id="tabGroup"
+                   buttons="[ &quot;Library&quot;, &quot;Guide&quot;, &quot;Settings&quot; ]"
+                   focusedColor="#7c5cfc"
+                   color="#a1a1aa"
+                   focusedFont="font:SmallBoldSystemFont"
+                   font="font:SmallSystemFont"
+                   minWidth="180"
+                   textHorizAlign="center" />
+    </LayoutGroup>
+
+    <!-- ── Content area (swapped by tab selection) ────────────── -->
+    <Group id="contentArea" translation="[0, 140]">
+      <LibraryScene id="libraryScene" visible="true"
+                     translation="[0, 0]" />
+      <GuideScene id="guideScene" visible="false"
+                   translation="[0, 0]" />
+      <SettingsScene id="settingsScene" visible="false"
+                      translation="[0, 0]" />
+    </Group>
+
+    <!-- ── App status banner ──────────────────────────────────── -->
+    <Group id="statusBanner" visible="false" translation="[0, 0]">
+      <Rectangle width="1920" height="64" color="#18181b"
+                 opacity="0.96" translation="[0, 1016]" />
+      <Label id="statusText" text=""
+             font="font:SmallBoldSystemFont"
+             color="#f4f4f5"
+             horizAlign="center"
+             width="1920"
+             translation="[0, 1034]" />
+    </Group>
+
+    <!-- ── Overlay screens (shown/hidden) ─────────────────────── -->
+    <AddPlaylistScene id="addPlaylistScene" visible="false" />
+    <AddEpgScene id="addEpgScene" visible="false" />
+    <AccountScene id="accountScene" visible="false" />
+    <RokuPayScene id="rokuPayScene" visible="false" />
+    <ManagePlaylistsScene id="managePlaylistsScene" visible="false" />
+    <PlayerScene id="playerScene" visible="false" />
+  </children>
+
+  <script type="text/brightscript" uri="MainScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+</component>

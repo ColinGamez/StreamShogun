@@ -7,6 +7,7 @@ dist-tsc/
 dist-node/
 out/
 release/
+generated/
 *.tsbuildinfo
 
 # ── EPG data files ─────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ release/
 .env
 .env.local
 .env.*.local
+docker/.env.production
 
 # ── OS ─────────────────────────────────────────────────────────────────
 .DS_Store
@@ -39,6 +41,7 @@ ehthumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json.example
+.claude/
 .idea/
 *.swp
 *.swo

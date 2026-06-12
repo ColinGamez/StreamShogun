@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAppStore, type PlaylistEntry, type EpgEntry } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import {
@@ -10,10 +10,38 @@ import {
 import { showToast } from "../components/Toast";
 import { EPG_PRESETS } from "../lib/epg-presets";
 
+/** Open a native file dialog (Electron) or an HTML <input type="file"> fallback. */
+function pickFilePath(accept: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    // Electron exposes a file dialog via IPC – prefer it when available
+    if (
+      typeof window !== "undefined" &&
+      (window as unknown as Record<string, unknown>).__electron_bridge
+    ) {
+      // bridge.openFileDialog already returns the path; caller handles it
+    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = accept;
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return resolve(null);
+      // webkitRelativePath is empty for single picks; use .name as fallback
+      const path = (file as unknown as { path?: string }).path || file.name;
+      resolve(path);
+    };
+    // User cancelled the dialog
+    input.addEventListener("cancel", () => resolve(null));
+    input.click();
+  });
+}
+
 export function LibraryPage() {
   const locale = useAppStore((s) => s.locale);
   const playlistEntries = useAppStore((s) => s.playlistEntries);
   const epgEntries = useAppStore((s) => s.epgEntries);
+  const channels = useAppStore((s) => s.channels);
+  const favorites = useAppStore((s) => s.favorites);
   const addPlaylist = useAppStore((s) => s.addPlaylist);
   const removePlaylist = useAppStore((s) => s.removePlaylist);
   const addEpg = useAppStore((s) => s.addEpg);
@@ -22,6 +50,19 @@ export function LibraryPage() {
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [epgUrl, setEpgUrl] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+
+  // ── Computed stats ──────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const groups = new Set(channels.map((ch) => ch.groupTitle).filter(Boolean));
+    const totalProgrammes = epgEntries.reduce((sum, e) => sum + (e.programmeCount || 0), 0);
+    return {
+      channelCount: channels.length,
+      groupCount: groups.size,
+      favoriteCount: favorites.size,
+      epgSourceCount: epgEntries.length,
+      programmeCount: totalProgrammes,
+    };
+  }, [channels, favorites, epgEntries]);
 
   // ── Playlist loading ────────────────────────────────────────────────
   const handleAddPlaylistUrl = async () => {
@@ -57,8 +98,8 @@ export function LibraryPage() {
   const handleAddPlaylistFile = async () => {
     setLoading("playlist-file");
     try {
-      // In Electron, we'd open a file dialog. For now, prompt for path.
-      const path = prompt(t("library.enterFilePath", locale));
+      // Use a file picker input for cross-platform compatibility
+      const path = await pickFilePath(".m3u,.m3u8,.txt");
       if (!path) {
         setLoading(null);
         return;
@@ -106,7 +147,7 @@ export function LibraryPage() {
         };
         addEpg(entry, res.data.programmes, res.data.index);
         showToast(
-          `${t("library.epgAdded", locale)} (${res.data.programmes.length} programmes)`,
+          `${t("library.epgAdded", locale)} (${res.data.programmes.length} ${t("library.programmes_count", locale)})`,
           "success",
         );
         setEpgUrl("");
@@ -123,7 +164,7 @@ export function LibraryPage() {
   const handleAddEpgFile = async () => {
     setLoading("epg-file");
     try {
-      const path = prompt(t("library.enterFilePath", locale));
+      const path = await pickFilePath(".xml,.xmltv,.gz");
       if (!path) {
         setLoading(null);
         return;
@@ -141,7 +182,7 @@ export function LibraryPage() {
         };
         addEpg(entry, res.data.programmes, res.data.index);
         showToast(
-          `${t("library.epgAdded", locale)} (${res.data.programmes.length} programmes)`,
+          `${t("library.epgAdded", locale)} (${res.data.programmes.length} ${t("library.programmes_count", locale)})`,
           "success",
         );
       } else {
@@ -159,7 +200,7 @@ export function LibraryPage() {
     if (!preset) return;
     // Don't re-add if already loaded
     if (epgEntries.some((e) => e.location === preset.url)) {
-      showToast(`${preset.name} is already loaded`, "error");
+      showToast(t("library.alreadyLoaded", locale, { name: preset.name }), "error");
       return;
     }
     setLoading(`preset-${presetId}`);
@@ -194,6 +235,32 @@ export function LibraryPage() {
     <div className="page page-library">
       <h1 className="page-title">{t("nav.library", locale)}</h1>
 
+      {/* ── Library Stats Dashboard ──────────────────────── */}
+      {(stats.channelCount > 0 || stats.epgSourceCount > 0) && (
+        <section className="library-stats">
+          <div className="library-stat-card">
+            <span className="library-stat-icon">📡</span>
+            <span className="library-stat-value">{stats.channelCount}</span>
+            <span className="library-stat-label">{t("nav.channels", locale)}</span>
+          </div>
+          <div className="library-stat-card">
+            <span className="library-stat-icon">📂</span>
+            <span className="library-stat-value">{stats.groupCount}</span>
+            <span className="library-stat-label">{t("library.groups", locale)}</span>
+          </div>
+          <div className="library-stat-card">
+            <span className="library-stat-icon">★</span>
+            <span className="library-stat-value">{stats.favoriteCount}</span>
+            <span className="library-stat-label">{t("channels.favorites", locale)}</span>
+          </div>
+          <div className="library-stat-card">
+            <span className="library-stat-icon">📅</span>
+            <span className="library-stat-value">{stats.programmeCount.toLocaleString()}</span>
+            <span className="library-stat-label">{t("library.programmes", locale)}</span>
+          </div>
+        </section>
+      )}
+
       {/* ── Add Playlist ─────────────────────────────────── */}
       <section className="card">
         <h2>{t("library.addPlaylist", locale)}</h2>
@@ -201,6 +268,7 @@ export function LibraryPage() {
           <input
             className="text-input"
             placeholder={t("library.playlistUrl", locale)}
+            aria-label={t("library.playlistUrl", locale)}
             value={playlistUrl}
             onChange={(e) => setPlaylistUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddPlaylistUrl()}
@@ -229,7 +297,12 @@ export function LibraryPage() {
                     {new Date(p.addedAt).toLocaleDateString()}
                   </span>
                 </div>
-                <button className="btn-danger btn-sm" onClick={() => removePlaylist(p.id)}>
+                <button
+                  className="btn-danger btn-sm"
+                  onClick={() => {
+                    if (window.confirm(t("library.confirmRemove", locale))) removePlaylist(p.id);
+                  }}
+                >
                   {t("common.remove", locale)}
                 </button>
               </li>
@@ -275,6 +348,7 @@ export function LibraryPage() {
           <input
             className="text-input"
             placeholder={t("library.epgUrl", locale)}
+            aria-label={t("library.epgUrl", locale)}
             value={epgUrl}
             onChange={(e) => setEpgUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddEpgUrl()}
@@ -303,7 +377,12 @@ export function LibraryPage() {
                     {new Date(e.addedAt).toLocaleDateString()}
                   </span>
                 </div>
-                <button className="btn-danger btn-sm" onClick={() => removeEpg(e.id)}>
+                <button
+                  className="btn-danger btn-sm"
+                  onClick={() => {
+                    if (window.confirm(t("library.confirmRemove", locale))) removeEpg(e.id);
+                  }}
+                >
                   {t("common.remove", locale)}
                 </button>
               </li>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component name="ResolveDeepLinkTask" extends="Task">
+  <interface>
+    <field id="contentId" type="string" />
+    <field id="mediaType" type="string" />
+    <field id="channel" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "resolveDeepLink"
+    end sub
+
+    sub resolveDeepLink()
+      m.top.state = "loading"
+
+      contentId = TrimString(m.top.contentId)
+      if contentId = ""
+        m.top.error = "No contentId provided"
+        m.top.state = "error"
+        return
+      end if
+
+      playlists = LoadPlaylists()
+      if playlists.Count() = 0
+        m.top.error = "No playlists are saved"
+        m.top.state = "error"
+        return
+      end if
+
+      target = LCase(contentId)
+      normalizedTarget = NormalizeName(contentId)
+
+      for pIdx = 0 to playlists.Count() - 1
+        playlist = playlists[pIdx]
+        result = HttpGet(playlist.url, "deeplink_pl_" + playlist.id, 3600)
+        if result.ok
+          channels = ParseM3U(result.body)
+          AnnotateChannels(channels, playlist, pIdx)
+          for cIdx = 0 to channels.Count() - 1
+            ch = channels[cIdx]
+            if ChannelMatchesDeepLink(ch, target, normalizedTarget, pIdx, cIdx)
+              m.top.channel = BuildDeepLinkPayload(ch, cIdx, channels)
+              m.top.state = "done"
+              return
+            end if
+          end for
+        end if
+      end for
+
+      m.top.error = "Content not found"
+      m.top.state = "error"
+    end sub
+
+    sub AnnotateChannels(channels as Object, playlist as Object, playlistIndex as Integer)
+      for cIdx = 0 to channels.Count() - 1
+        ch = channels[cIdx]
+        ch.playlistId = IIF(playlist.id <> invalid, playlist.id, "")
+        ch.playlistName = IIF(playlist.name <> invalid, playlist.name, "Playlist")
+        ch.playlistIndex = playlistIndex
+        ch.channelIndex = cIdx
+        ch.libraryId = ch.playlistId + ":" + Str(cIdx).Trim()
+      end for
+    end sub
+
+    function ChannelMatchesDeepLink(channel as Object, target as String, normalizedTarget as String, playlistIndex as Integer, channelIndex as Integer) as Boolean
+      if channel.tvgId <> invalid and LCase(channel.tvgId) = target then return true
+      if channel.tvgName <> invalid and NormalizeName(channel.tvgName) = normalizedTarget and normalizedTarget <> "" then return true
+      if channel.name <> invalid and NormalizeName(channel.name) = normalizedTarget and normalizedTarget <> "" then return true
+      if channel.url <> invalid and LCase(channel.url) = target then return true
+
+      stableId = "ssg:" + Str(playlistIndex).Trim() + ":" + Str(channelIndex).Trim()
+      if target = stableId then return true
+
+      if channel.playlistId <> invalid and channel.playlistId <> ""
+        idBased = "ssg:" + LCase(channel.playlistId) + ":" + Str(channelIndex).Trim()
+        if target = idBased then return true
+      end if
+
+      if channel.libraryId <> invalid and LCase(channel.libraryId) = target then return true
+
+      compactId = Str(playlistIndex).Trim() + ":" + Str(channelIndex).Trim()
+      if target = compactId then return true
+
+      return false
+    end function
+
+    function BuildDeepLinkPayload(channel as Object, index as Integer, channels as Object) as Object
+      playable = []
+      for each ch in channels
+        playable.Push({
+          name: IIF(ch.name <> invalid, ch.name, "Unknown Channel"),
+          url: IIF(ch.url <> invalid, ch.url, ""),
+          logo: IIF(ch.logo <> invalid, ch.logo, ""),
+          group: IIF(ch.group <> invalid, ch.group, ""),
+          tvgId: IIF(ch.tvgId <> invalid, ch.tvgId, ""),
+          playlistId: IIF(ch.playlistId <> invalid, ch.playlistId, ""),
+          playlistName: IIF(ch.playlistName <> invalid, ch.playlistName, ""),
+          playlistIndex: IIF(ch.playlistIndex <> invalid, ch.playlistIndex, -1),
+          channelIndex: IIF(ch.channelIndex <> invalid, ch.channelIndex, -1)
+        })
+      end for
+
+      return {
+        name: IIF(channel.name <> invalid, channel.name, "Unknown Channel"),
+        url: IIF(channel.url <> invalid, channel.url, ""),
+        logo: IIF(channel.logo <> invalid, channel.logo, ""),
+        group: IIF(channel.group <> invalid, channel.group, ""),
+        tvgId: IIF(channel.tvgId <> invalid, channel.tvgId, ""),
+        playlistId: IIF(channel.playlistId <> invalid, channel.playlistId, ""),
+        playlistName: IIF(channel.playlistName <> invalid, channel.playlistName, ""),
+        playlistIndex: IIF(channel.playlistIndex <> invalid, channel.playlistIndex, -1),
+        channelIndex: IIF(channel.channelIndex <> invalid, channel.channelIndex, -1),
+        index: index,
+        channels: playable
+      }
+    end function
+  ]]>
+  </script>
+</component>

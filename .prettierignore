@@ -3,5 +3,6 @@ dist
 dist-tsc
 release
 out
+generated
 pnpm-lock.yaml
 CHANGELOG.md

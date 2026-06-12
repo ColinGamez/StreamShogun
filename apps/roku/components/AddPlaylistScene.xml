@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     AddPlaylistScene.xml — Form to add an M3U playlist URL
+     ========================================================================== -->
+<component name="AddPlaylistScene" extends="Group">
+
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <field id="showRokuPay" type="boolean" alwaysNotify="true" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <!-- ── Overlay background ─────────────────────────────────── -->
+    <Rectangle width="1920" height="1080" color="#0c0c0e" opacity="0.95" />
+
+    <Group translation="[400, 160]">
+      <Label text="Add Playlist"
+             font="font:LargeBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 0]" />
+      <Label text="Enter an M3U/M3U8 playlist URL from your provider."
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 60]" />
+
+      <!-- ── Playlist name ─────────────────────────────────────── -->
+      <Label text="Playlist Name:"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 130]" />
+      <TextEditBox id="nameInput"
+                   hintText="e.g., My Playlist"
+                   translation="[0, 162]"
+                   width="700"
+                   maxTextLength="100"
+                   cursorColor="#7c5cfc"
+                   textColor="#f4f4f5"
+                   hintTextColor="#71717a"
+                   backgroundUri=""
+                   active="true" />
+
+      <!-- ── URL ───────────────────────────────────────────────── -->
+      <Label text="Playlist URL (http:// or https://):"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 230]" />
+      <TextEditBox id="urlInput"
+                   hintText="https://example.com/playlist.m3u"
+                   translation="[0, 262]"
+                   width="700"
+                   maxTextLength="2000"
+                   cursorColor="#7c5cfc"
+                   textColor="#f4f4f5"
+                   hintTextColor="#71717a"
+                   backgroundUri=""
+                   active="true" />
+
+      <!-- ── Buttons ───────────────────────────────────────────── -->
+      <LayoutGroup layoutDirection="horiz"
+                   itemSpacings="[16]"
+                   translation="[0, 360]">
+        <Button id="saveBtn" text="Save Playlist"
+                focusedColor="#7c5cfc"
+                minWidth="220" />
+        <Button id="upgradeBtn" text="Upgrade"
+                focusedColor="#7c5cfc"
+                minWidth="170" />
+        <Button id="cancelBtn" text="Cancel"
+                focusedColor="#a1a1aa"
+                minWidth="160" />
+      </LayoutGroup>
+
+      <!-- ── Validation message ────────────────────────────────── -->
+      <Label id="validationMsg" text=""
+             font="font:SmallSystemFont"
+             color="#ff6b6b"
+             translation="[0, 430]"
+             wrap="true"
+             width="700" />
+      <BusySpinner id="validationSpinner"
+                   visible="false"
+                   translation="[720, 422]" />
+
+      <!-- ── Info ──────────────────────────────────────────────── -->
+      <Label text="Your playlist URL is stored locally on this device only."
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 500]" />
+      <Label text="StreamShōgun does not host or provide any content."
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 522]" />
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="AddPlaylistScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

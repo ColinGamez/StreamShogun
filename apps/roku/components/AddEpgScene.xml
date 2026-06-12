@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     AddEpgScene.xml — Form to add/edit an XMLTV EPG source URL
+     ========================================================================== -->
+<component name="AddEpgScene" extends="Group">
+
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <field id="showRokuPay" type="boolean" alwaysNotify="true" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <!-- ── Overlay background ─────────────────────────────────── -->
+    <Rectangle width="1920" height="1080" color="#0c0c0e" opacity="0.95" />
+
+    <Group translation="[400, 140]">
+      <Label text="EPG Source"
+             font="font:LargeBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 0]" />
+      <Label text="Enter an XMLTV (.xml or .xml.gz) URL for programme guide data."
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 60]" />
+
+      <!-- ── URL ───────────────────────────────────────────────── -->
+      <Label text="XMLTV URL (http:// or https://):"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 130]" />
+      <TextEditBox id="urlInput"
+                   hintText="https://example.com/epg.xml"
+                   translation="[0, 162]"
+                   width="700"
+                   maxTextLength="2000"
+                   cursorColor="#7c5cfc"
+                   textColor="#f4f4f5"
+                   hintTextColor="#71717a"
+                   backgroundUri=""
+                   active="true" />
+
+      <!-- ── TTL selector ──────────────────────────────────────── -->
+      <Label text="Refresh interval (hours):"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 240]" />
+      <LayoutGroup layoutDirection="horiz"
+                   itemSpacings="[8]"
+                   translation="[0, 270]">
+        <ButtonGroup id="ttlSelector"
+                     buttons="[ &quot;3h&quot;, &quot;6h&quot;, &quot;12h&quot;, &quot;24h&quot; ]"
+                     focusedColor="#7c5cfc"
+                     color="#a1a1aa"
+                     font="font:SmallSystemFont"
+                     focusedFont="font:SmallBoldSystemFont"
+                     minWidth="90"
+                     textHorizAlign="center" />
+      </LayoutGroup>
+
+      <!-- ── Buttons ───────────────────────────────────────────── -->
+      <LayoutGroup layoutDirection="horiz"
+                   itemSpacings="[16]"
+                   translation="[0, 360]">
+        <Button id="saveBtn" text="Save EPG Source"
+                focusedColor="#7c5cfc"
+                minWidth="205" />
+        <Button id="removeBtn" text="Remove EPG"
+                focusedColor="#ff6b6b"
+                minWidth="165" />
+        <Button id="upgradeBtn" text="Upgrade"
+                focusedColor="#7c5cfc"
+                minWidth="170" />
+        <Button id="cancelBtn" text="Cancel"
+                focusedColor="#a1a1aa"
+                minWidth="150" />
+      </LayoutGroup>
+
+      <!-- ── Validation message ────────────────────────────────── -->
+      <Label id="validationMsg" text=""
+             font="font:SmallSystemFont"
+             color="#ff6b6b"
+             translation="[0, 430]"
+             wrap="true"
+             width="700" />
+      <BusySpinner id="validationSpinner"
+                   visible="false"
+                   translation="[720, 422]" />
+
+      <!-- ── Info ──────────────────────────────────────────────── -->
+      <Label text="EPG data is cached locally on this device. Large XMLTV files may take time to parse."
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 490]"
+             wrap="true"
+             width="700" />
+      <Label text="Note: .xml.gz files require a decompression proxy if Roku cannot natively decompress them."
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 530]"
+             wrap="true"
+             width="700" />
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="AddEpgScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

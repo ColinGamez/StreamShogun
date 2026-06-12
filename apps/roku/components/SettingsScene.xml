@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     SettingsScene.xml — App settings, data management, about/legal
+     ========================================================================== -->
+<component name="SettingsScene" extends="Group">
+
+  <interface>
+    <field id="showAddEpg" type="boolean" alwaysNotify="true" />
+    <field id="showAccount" type="boolean" alwaysNotify="true" />
+    <field id="showRokuPay" type="boolean" alwaysNotify="true" />
+    <field id="showManagePlaylists" type="boolean" alwaysNotify="true" />
+    <function name="focusDefault" />
+    <function name="refreshInfo" />
+  </interface>
+
+  <children>
+    <Group translation="[60, 40]">
+      <Label text="Settings"
+             font="font:MediumBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 0]" />
+
+      <!-- ── Settings menu ─────────────────────────────────────── -->
+      <LabelList id="settingsMenu"
+                 translation="[0, 60]"
+                 itemSize="[600, 56]"
+                 numItems="14"
+                 color="#f4f4f5"
+                 focusedColor="#7c5cfc"
+                 font="font:SmallSystemFont"
+                 focusedFont="font:SmallBoldSystemFont"
+                 drawFocusFeedback="true"
+                 focusBitmapBlendColor="#7c5cfc" />
+
+      <!-- ── Info panel (right side) ──────────────────────────── -->
+      <Group translation="[700, 60]">
+        <Rectangle width="1100" height="800" color="#111114"
+                   opacity="0.4" />
+        <Label id="infoTitle" text=""
+               font="font:MediumBoldSystemFont"
+               color="#f4f4f5"
+               translation="[24, 16]" />
+        <Label id="infoBody" text=""
+               font="font:SmallSystemFont"
+               color="#a1a1aa"
+               translation="[24, 60]"
+               wrap="true"
+               width="1060"
+               maxLines="20" />
+      </Group>
+    </Group>
+
+    <!-- ── Confirmation dialog (for destructive actions) ──────── -->
+    <StandardDialog id="confirmDialog" visible="false" />
+  </children>
+
+  <script type="text/brightscript" uri="SettingsScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

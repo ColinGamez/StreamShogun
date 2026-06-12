@@ -1,0 +1,57 @@
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: streamshogun-caddy
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../site:/srv/site:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    container_name: streamshogun-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./.env.production
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 8787
+      DATABASE_URL: postgresql://streamshogun:${POSTGRES_PASSWORD}@postgres:5432/streamshogun?schema=public
+    expose:
+      - "8787"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: streamshogun-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: streamshogun
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: streamshogun
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U streamshogun -d streamshogun"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

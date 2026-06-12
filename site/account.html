@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#7c5cfc" />
+  <title>Account — StreamShōgun</title>
+  <meta name="description" content="Manage your StreamShōgun account, subscription, and billing." />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://streamshogun.com/account" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Account — StreamShōgun" />
+  <meta property="og:description" content="Manage your StreamShōgun account, subscription, and billing." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://streamshogun.com/account" />
+  <meta property="og:site_name" content="StreamShōgun" />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    :root {
+      --bg:           #09090b;
+      --bg-subtle:    #111114;
+      --surface:      #18181b;
+      --surface-2:    #1e1e23;
+      --border:       rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text:         #fafafa;
+      --text-muted:   #a1a1aa;
+      --text-dim:     #71717a;
+      --accent:       #7c5cfc;
+      --accent-hover: #9a7eff;
+      --accent-soft:  rgba(124,92,252,0.12);
+      --accent-glow:  rgba(124,92,252,0.25);
+      --success:      #22c55e;
+      --error:        #ef4444;
+      --radius:       12px;
+      --transition:   0.2s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,9,11,0.8); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      font-size: 18px; font-weight: 800; color: var(--text);
+      text-decoration: none; letter-spacing: -0.02em;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a[aria-current="page"] { color: var(--accent); }
+
+    .btn-sm {
+      padding: 8px 18px; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: all var(--transition);
+      text-decoration: none; border: none; font-family: inherit;
+    }
+    .btn-ghost {
+      background: transparent; color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* ── Main layout ─────────────────────────────────────────────── */
+    .account-wrapper {
+      flex: 1; max-width: 720px; margin: 0 auto; width: 100%;
+      padding: 100px 24px 60px;
+    }
+
+    .account-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 40px;
+    }
+    .account-header h1 {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+    }
+
+    /* ── Cards ────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 600; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    .card-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0;
+    }
+    .card-row + .card-row { border-top: 1px solid var(--border); }
+    .card-label { font-size: 14px; color: var(--text-muted); }
+    .card-value { font-size: 14px; font-weight: 600; }
+
+    .plan-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .plan-free { background: var(--accent-soft); color: var(--accent); }
+    .plan-pro { background: rgba(34,197,94,0.12); color: #4ade80; }
+
+    .status-badge {
+      display: inline-flex; padding: 3px 10px; border-radius: 100px;
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+    }
+    .status-active { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .status-other { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+    /* ── Action buttons ──────────────────────────────────────────── */
+    .actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+
+    .btn-primary {
+      padding: 12px 24px; background: var(--accent); color: #fff;
+      border: none; border-radius: 10px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: all var(--transition);
+      font-family: inherit; text-decoration: none;
+    }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-danger {
+      padding: 12px 24px; background: transparent; color: var(--error);
+      border: 1px solid rgba(239,68,68,0.3); border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all var(--transition); font-family: inherit;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.08); }
+
+    /* ── Loading state ───────────────────────────────────────────── */
+    .loading {
+      text-align: center; padding: 80px 0; color: var(--text-muted);
+    }
+    .loading-spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Skeleton shimmer ────────────────────────────────────────── */
+    @keyframes shimmer {
+      0% { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.5s infinite ease-in-out;
+      border-radius: 8px;
+    }
+    .skeleton-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+    }
+    .skeleton-title {
+      height: 12px; width: 100px; margin-bottom: 20px;
+    }
+    .skeleton-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0;
+    }
+    .skeleton-row + .skeleton-row { border-top: 1px solid var(--border); }
+    .skeleton-label { height: 14px; width: 80px; }
+    .skeleton-value { height: 14px; width: 140px; }
+    .skeleton-btn {
+      height: 44px; width: 160px; border-radius: 10px;
+    }
+    .skeleton-actions { display: flex; gap: 12px; margin-top: 24px; }
+
+    .error-banner {
+      background: rgba(239,68,68,0.1); color: var(--error);
+      border: 1px solid rgba(239,68,68,0.2); border-radius: 10px;
+      padding: 14px 18px; font-size: 14px; margin-bottom: 20px;
+      display: none;
+    }
+    .error-banner.visible { display: block; }
+
+    .page-footer {
+      text-align: center; padding: 24px;
+      color: var(--text-dim); font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    .page-footer a { color: var(--text-muted); text-decoration: none; }
+    .page-footer a:hover { color: var(--text); }
+
+    .hidden { display: none; }
+
+    /* ── Inline form ──────────────────────────────────────────────── */
+    .card-form .form-group {
+      margin-bottom: 16px;
+    }
+    .card-form label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .card-form input {
+      width: 100%; padding: 10px 14px; font-size: 14px;
+      background: var(--surface-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      outline: none; font-family: inherit;
+      transition: border-color var(--transition);
+    }
+    .card-form input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,92,252,0.12);
+    }
+    .card-form input::placeholder { color: var(--text-dim); }
+    .card-form .btn-sm {
+      margin-top: 4px;
+    }
+    .success-msg {
+      background: rgba(34,197,94,0.1); color: var(--success);
+      border: 1px solid rgba(34,197,94,0.2); border-radius: 8px;
+      padding: 10px 14px; font-size: 13px; font-weight: 600;
+      display: none; margin-top: 12px;
+    }
+    .success-msg.visible { display: block; }
+    .inline-error {
+      color: var(--error); font-size: 13px; margin-top: 6px;
+      display: none;
+    }
+    .inline-error.visible { display: block; }
+
+    /* ── Danger zone ─────────────────────────────────────────── */
+    .danger-zone {
+      border-color: rgba(239,68,68,0.2);
+    }
+    .danger-zone .card-title { color: var(--error); }
+    .danger-zone p {
+      font-size: 14px; color: var(--text-muted); line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .danger-zone .danger-actions {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .btn-outline-danger {
+      padding: 10px 20px; background: transparent; color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all var(--transition); font-family: inherit;
+    }
+    .btn-outline-danger:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-outline-danger svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 6px; }
+
+    /* ── Delete confirmation modal ────────────────────────────── */
+    .delete-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    .delete-overlay.active { display: flex; }
+    .delete-dialog {
+      background: var(--surface); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 16px; padding: 32px 28px; max-width: 400px;
+      width: 90%; text-align: center;
+    }
+    .delete-dialog h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--error); }
+    .delete-dialog p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+    .delete-dialog .form-group { text-align: left; margin-bottom: 20px; }
+    .delete-dialog .form-group label {
+      display: block; font-size: 12px; font-weight: 600; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;
+    }
+    .delete-dialog .form-group input {
+      width: 100%; padding: 10px 14px; font-size: 14px;
+      background: var(--surface-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      outline: none; font-family: inherit; transition: border-color var(--transition);
+    }
+    .delete-dialog .form-group input:focus {
+      border-color: var(--error); box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+    .delete-dialog .confirm-actions { display: flex; gap: 10px; }
+    .delete-dialog .confirm-actions button { flex: 1; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all var(--transition); }
+    .btn-confirm-delete { background: var(--error); color: #fff; border: none; }
+    .btn-confirm-delete:hover { background: #dc2626; }
+    .btn-confirm-delete:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Logout confirmation modal ────────────────────────────── */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    .confirm-overlay.active { display: flex; }
+    .confirm-dialog {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px 28px; max-width: 360px;
+      width: 90%; text-align: center;
+    }
+    .confirm-dialog h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .confirm-dialog p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .confirm-actions button { flex: 1; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all var(--transition); }
+    .btn-confirm-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-confirm-cancel:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-confirm-logout { background: var(--error); color: #fff; border: none; }
+    .btn-confirm-logout:hover { background: #dc2626; }
+
+    /* ── Skip Link ───────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100px; left: 16px;
+      background: var(--accent); color: #fff;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      text-decoration: none; z-index: 999;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 12px; }
+
+    /* ── Hamburger ────────────────────────────────────────────────── */
+    .nav-burger {
+      display: none; background: none; border: none; cursor: pointer;
+      padding: 6px; color: var(--text); position: relative;
+      width: 36px; height: 36px;
+    }
+    .nav-burger span {
+      display: block; width: 20px; height: 2px;
+      background: currentColor; border-radius: 2px;
+      transition: all 0.25s ease;
+      position: absolute; left: 8px;
+    }
+    .nav-burger span:nth-child(1) { top: 10px; }
+    .nav-burger span:nth-child(2) { top: 17px; }
+    .nav-burger span:nth-child(3) { top: 24px; }
+    .nav-burger.open span:nth-child(1) { top: 17px; transform: rotate(45deg); }
+    .nav-burger.open span:nth-child(2) { opacity: 0; }
+    .nav-burger.open span:nth-child(3) { top: 17px; transform: rotate(-45deg); }
+
+    .mobile-menu {
+      display: none; position: fixed; top: 60px; left: 0; right: 0;
+      background: rgba(9,9,11,0.98); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px 24px; z-index: 99;
+      transform: translateY(-10px); opacity: 0;
+      transition: all 0.25s ease;
+    }
+    .mobile-menu.open { display: flex; flex-direction: column; gap: 8px; transform: translateY(0); opacity: 1; }
+    .mobile-menu a, .mobile-menu button {
+      display: block; padding: 12px 16px; border-radius: 10px;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 15px; font-weight: 500; transition: all 0.15s ease;
+      background: none; border: none; cursor: pointer; text-align: left;
+      font-family: inherit;
+    }
+    .mobile-menu a:hover, .mobile-menu button:hover { background: var(--surface); color: var(--text); }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-burger { display: block; }
+    }
+
+    .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+
+    /* Page entrance */
+    body { animation: pageEntrance 0.6s ease both; }
+    @keyframes pageEntrance { from { opacity: 0; } to { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand" aria-label="StreamShōgun Home">Stream<span>Shōgun</span></a>
+    <div class="nav-links">
+      <a href="/#screenshots">App</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/community">Community</a>
+      <a href="/u">Profile</a>
+      <button class="btn-sm btn-ghost" id="nav-logout-btn">Log Out</button>
+    </div>
+    <button class="nav-burger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu" role="menu">
+  <a href="/#screenshots">App</a>
+  <a href="/#pricing">Pricing</a>
+  <a href="/community">Community</a>
+  <a href="/u">Profile</a>
+  <button id="mobile-logout-btn">Log Out</button>
+</div>
+
+<div class="sr-only" aria-live="assertive" id="sr-announce"></div>
+<main id="main" class="account-wrapper">
+  <!-- Loading skeleton -->
+  <div id="loading">
+    <div class="account-header">
+      <div class="skeleton" style="height:28px;width:200px;margin-bottom:0;"></div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton-row">
+        <div class="skeleton skeleton-label"></div>
+        <div class="skeleton skeleton-value"></div>
+      </div>
+      <div class="skeleton-row">
+        <div class="skeleton skeleton-label" style="width:100px"></div>
+        <div class="skeleton skeleton-value" style="width:110px"></div>
+      </div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-title" style="width:120px"></div>
+      <div class="skeleton-row">
+        <div class="skeleton skeleton-label" style="width:50px"></div>
+        <div class="skeleton skeleton-value" style="width:70px"></div>
+      </div>
+      <div class="skeleton-row">
+        <div class="skeleton skeleton-label" style="width:60px"></div>
+        <div class="skeleton skeleton-value" style="width:80px"></div>
+      </div>
+    </div>
+    <div class="skeleton-actions">
+      <div class="skeleton skeleton-btn"></div>
+      <div class="skeleton skeleton-btn" style="width:100px"></div>
+    </div>
+  </div>
+
+  <!-- Account content (hidden until loaded) -->
+  <div id="account-content" class="hidden">
+    <div class="account-header">
+      <h1>Your Account</h1>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Account details card -->
+    <div class="card">
+      <div class="card-title">Account Details</div>
+      <div class="card-row">
+        <span class="card-label">Email</span>
+        <span class="card-value" id="user-email">—</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Member since</span>
+        <span class="card-value" id="user-since">—</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Sign-in methods</span>
+        <span class="card-value" id="auth-methods">—</span>
+      </div>
+      <div class="card-row" id="profile-link-row" style="display:none;">
+        <span class="card-label">Profile page</span>
+        <span class="card-value"><a id="profile-link" href="/u" style="color:var(--accent);text-decoration:none;font-weight:600;transition:color 0.15s;">Open profile</a></span>
+      </div>
+    </div>
+
+    <!-- Subscription card -->
+    <div class="card">
+      <div class="card-title">Subscription</div>
+      <div class="card-row">
+        <span class="card-label">Plan</span>
+        <span class="card-value" id="plan-badge">—</span>
+      </div>
+      <div class="card-row">
+        <span class="card-label">Status</span>
+        <span class="card-value" id="sub-status">—</span>
+      </div>
+      <div class="card-row" id="billing-row" style="display:none;">
+        <span class="card-label">Billing</span>
+        <span class="card-value" id="billing-interval">—</span>
+      </div>
+      <div class="card-row" id="period-row" style="display:none;">
+        <span class="card-label">Current period ends</span>
+        <span class="card-value" id="period-end">—</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-primary" id="upgrade-btn">Upgrade to Pro</button>
+      <button class="btn-primary hidden" id="manage-btn">Manage Subscription</button>
+      <button class="btn-danger" id="logout-btn">Log Out</button>
+    </div>
+
+    <!-- Change password card -->
+    <div class="card" id="change-password-card" style="margin-top: 24px;">
+      <div class="card-title">Change Password</div>
+      <form class="card-form" id="change-pw-form" novalidate>
+        <div class="form-group">
+          <label for="current-pw">Current Password</label>
+          <input type="password" id="current-pw" placeholder="Enter current password" required autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label for="new-pw">New Password</label>
+          <input type="password" id="new-pw" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="confirm-pw">Confirm New Password</label>
+          <input type="password" id="confirm-pw" placeholder="Repeat new password" required autocomplete="new-password" />
+        </div>
+        <div class="inline-error" id="pw-error"></div>
+        <div class="success-msg" id="pw-success">Password updated successfully.</div>
+        <button type="submit" class="btn-primary btn-sm" id="pw-submit-btn" style="width:auto;">Update Password</button>
+      </form>
+    </div>
+
+    <div class="card hidden" id="set-password-card" style="margin-top: 24px;">
+      <div class="card-title">Add Password Login</div>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">
+        Your account currently signs in with Google. Add a password here if you want a fallback login for the desktop app later.
+      </p>
+      <form class="card-form" id="set-pw-form" novalidate>
+        <div class="form-group">
+          <label for="set-new-pw">New Password</label>
+          <input type="password" id="set-new-pw" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="set-confirm-pw">Confirm New Password</label>
+          <input type="password" id="set-confirm-pw" placeholder="Repeat new password" required autocomplete="new-password" />
+        </div>
+        <div class="inline-error" id="set-pw-error"></div>
+        <div class="success-msg" id="set-pw-success">Password login is now enabled.</div>
+        <button type="submit" class="btn-primary btn-sm" id="set-pw-submit-btn" style="width:auto;">Enable Password Login</button>
+      </form>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="card danger-zone" style="margin-top: 24px;">
+      <div class="card-title">Danger Zone</div>
+      <p>Once you delete your account, all of your data will be permanently removed. If you still have an active Pro subscription, cancel it in billing first. This action cannot be undone.</p>
+      <div class="danger-actions">
+        <button class="btn-outline-danger" id="export-data-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export My Data
+        </button>
+        <button class="btn-danger" id="delete-account-btn">Delete Account</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="page-footer">
+  &copy; <span id="c-year"></span> StreamShōgun &mdash;
+  <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
+  <a href="/changelog">Changelog</a> &middot; <a href="/community">Community</a>
+</footer>
+
+<!-- Logout confirmation modal -->
+<div class="confirm-overlay" id="logout-confirm" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title">
+  <div class="confirm-dialog">
+    <h3 id="logout-confirm-title">Log out?</h3>
+    <p>You'll need to sign in again to access your account.</p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-cancel" id="logout-cancel">Cancel</button>
+      <button class="btn-confirm-logout" id="logout-confirm-btn">Log Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete account confirmation modal -->
+<div class="delete-overlay" id="delete-confirm" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+  <div class="delete-dialog">
+    <h3 id="delete-confirm-title">Delete your account?</h3>
+    <p>This will permanently delete your account, profile details, and synced data. If you still have an active Pro subscription, cancel it in billing first. Type your email address to confirm.</p>
+    <div class="form-group">
+      <label for="delete-email-input">Confirm your email</label>
+      <input type="email" id="delete-email-input" placeholder="you@example.com" autocomplete="off" />
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-confirm-cancel" id="delete-cancel">Cancel</button>
+      <button class="btn-confirm-delete" id="delete-confirm-btn" disabled>Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function resolveApiBase() {
+    var host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return window.location.origin + '/api';
+    }
+    return 'https://api.streamshogun.com';
+  }
+
+  var API_BASE = resolveApiBase();
+
+  var loadingEl = document.getElementById('loading');
+  var contentEl = document.getElementById('account-content');
+  var errorBanner = document.getElementById('error-banner');
+
+  // ── CSRF helper ─────────────────────────────────────────────────
+  function getCsrfToken() {
+    var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
+  function authHeaders(extra) {
+    var headers = {
+      'Content-Type': 'application/json',
+      'x-client': 'web',
+      'X-CSRF-Token': getCsrfToken(),
+    };
+    if (extra) {
+      for (var k in extra) headers[k] = extra[k];
+    }
+    return headers;
+  }
+
+  // ── Load account data ───────────────────────────────────────────
+  loadAccount();
+
+  function loadAccount() {
+    fetch(API_BASE + '/v1/me', {
+      credentials: 'include',
+      headers: { 'x-client': 'web' },
+    })
+      .then(function(res) {
+        if (!res.ok) {
+          // Try refreshing the session first
+          if (res.status === 401) return refreshAndRetry();
+          throw new Error('Failed to load account');
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        if (!data || !data.user) return;
+        renderAccount(data);
+      })
+      .catch(function(err) {
+        // Not authenticated — redirect to login
+        window.location.href = '/login';
+      });
+  }
+
+  function refreshAndRetry() {
+    return fetch(API_BASE + '/v1/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'x-client': 'web' },
+    })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Session expired');
+        // Retry /me with new cookies
+        return fetch(API_BASE + '/v1/me', {
+          credentials: 'include',
+          headers: { 'x-client': 'web' },
+        });
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Still unauthorized');
+        return res.json();
+      });
+  }
+
+  function renderAccount(data) {
+    var user = data.user;
+    var sub = data.subscription;
+    var auth = data.auth || { hasGoogleSignIn: false, hasPasswordLogin: true };
+
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('user-since').textContent = new Date(user.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    });
+    document.getElementById('auth-methods').textContent = authLabel(auth);
+
+    if (user.username) {
+      var profileLink = document.getElementById('profile-link');
+      profileLink.href = '/u/' + user.username;
+      profileLink.textContent = '/u/' + user.username + ' →';
+      document.getElementById('profile-link-row').style.display = '';
+    }
+
+    // Plan badge
+    var planEl = document.getElementById('plan-badge');
+    var isPro = sub.plan === 'PRO';
+    planEl.innerHTML = '<span class="plan-badge ' + (isPro ? 'plan-pro' : 'plan-free') + '">' + sub.plan + '</span>';
+
+    // Status
+    var statusEl = document.getElementById('sub-status');
+    var isActive = sub.status === 'ACTIVE' || sub.status === 'TRIALING';
+    statusEl.innerHTML = '<span class="status-badge ' + (isActive ? 'status-active' : 'status-other') + '">' + sub.status + '</span>';
+
+    // Billing details (Pro only)
+    if (isPro && sub.billingInterval) {
+      document.getElementById('billing-row').style.display = '';
+      document.getElementById('billing-interval').textContent =
+        sub.billingInterval === 'YEARLY' ? 'Yearly' : 'Monthly';
+    }
+
+    if (isPro && sub.currentPeriodEnd) {
+      document.getElementById('period-row').style.display = '';
+      document.getElementById('period-end').textContent =
+        new Date(sub.currentPeriodEnd).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'long', day: 'numeric',
+        });
+    }
+
+    // Show/hide upgrade vs manage subscription buttons
+    if (isPro) {
+      document.getElementById('upgrade-btn').classList.add('hidden');
+      document.getElementById('manage-btn').classList.remove('hidden');
+    }
+
+    document.getElementById('change-password-card').classList.toggle('hidden', !auth.hasPasswordLogin);
+    document.getElementById('set-password-card').classList.toggle('hidden', !!auth.hasPasswordLogin);
+
+    // Show account content, hide loading
+    loadingEl.classList.add('hidden');
+    contentEl.classList.remove('hidden');
+  }
+
+  function authLabel(auth) {
+    if (auth.hasGoogleSignIn && auth.hasPasswordLogin) return 'Google + Password';
+    if (auth.hasGoogleSignIn) return 'Google';
+    if (auth.hasPasswordLogin) return 'Password';
+    return 'Unknown';
+  }
+
+  // ── Upgrade button ──────────────────────────────────────────────
+  document.getElementById('upgrade-btn').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Redirecting…';
+
+    fetch(API_BASE + '/v1/billing/checkout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+      body: JSON.stringify({ interval: 'monthly' }),
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          showError('Could not create checkout session. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Upgrade to Pro';
+        }
+      })
+      .catch(function() {
+        showError('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Upgrade to Pro';
+      });
+  });
+
+  // ── Manage Subscription (Stripe Portal) ─────────────────────────
+  document.getElementById('manage-btn').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Redirecting…';
+
+    fetch(API_BASE + '/v1/billing/portal', {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          showError('Could not open billing portal. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Manage Subscription';
+        }
+      })
+      .catch(function() {
+        showError('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Manage Subscription';
+      });
+  });
+
+  // ── Logout ──────────────────────────────────────────────────────
+  function doLogout() {
+    fetch(API_BASE + '/v1/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'x-client': 'web' },
+    })
+      .then(function() {
+        try {
+          sessionStorage.removeItem('shogun:user');
+          sessionStorage.removeItem('shogun:subscription');
+        } catch (e) { /* ignore */ }
+        window.location.href = '/login';
+      })
+      .catch(function() {
+        window.location.href = '/login';
+      });
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', showLogoutConfirm);
+  document.getElementById('nav-logout-btn').addEventListener('click', showLogoutConfirm);
+
+  var logoutOverlay = document.getElementById('logout-confirm');
+  function showLogoutConfirm() {
+    logoutOverlay.classList.add('active');
+    document.getElementById('logout-cancel').focus();
+  }
+  function hideLogoutConfirm() { logoutOverlay.classList.remove('active'); }
+  document.getElementById('logout-cancel').addEventListener('click', hideLogoutConfirm);
+  document.getElementById('logout-confirm-btn').addEventListener('click', doLogout);
+  logoutOverlay.addEventListener('click', function(e) { if (e.target === logoutOverlay) hideLogoutConfirm(); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && logoutOverlay.classList.contains('active')) hideLogoutConfirm();
+  });
+
+  // ── Change password ───────────────────────────────────────────
+  document.getElementById('change-pw-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById('pw-error');
+    var successEl = document.getElementById('pw-success');
+    var btn = document.getElementById('pw-submit-btn');
+    errEl.classList.remove('visible');
+    successEl.classList.remove('visible');
+
+    var current = document.getElementById('current-pw').value;
+    var newPw = document.getElementById('new-pw').value;
+    var confirm = document.getElementById('confirm-pw').value;
+
+    if (!current || !newPw || !confirm) {
+      errEl.textContent = 'Please fill in all fields.';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (newPw.length < 8) {
+      errEl.textContent = 'New password must be at least 8 characters.';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (newPw !== confirm) {
+      errEl.textContent = 'New passwords do not match.';
+      errEl.classList.add('visible');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Updating…';
+
+    fetch(API_BASE + '/v1/auth/change-password', {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+      body: JSON.stringify({ currentPassword: current, newPassword: newPw }),
+    })
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function(result) {
+        if (!result.ok) {
+          errEl.textContent = result.data.message || 'Failed to update password.';
+          errEl.classList.add('visible');
+        } else {
+          successEl.textContent = result.data.message || 'Password updated. Redirecting to sign in…';
+          successEl.classList.add('visible');
+          document.getElementById('current-pw').value = '';
+          document.getElementById('new-pw').value = '';
+          document.getElementById('confirm-pw').value = '';
+          setTimeout(function() {
+            window.location.href = '/login';
+          }, 1200);
+        }
+      })
+      .catch(function() {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.classList.add('visible');
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+      });
+  });
+
+  function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+    var sr = document.getElementById('sr-announce');
+    if (sr) sr.textContent = msg;
+  }
+
+  // ── Export Data ──────────────────────────────────────────────
+  document.getElementById('export-data-btn').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Exporting…';
+
+    fetch(API_BASE + '/v1/me', {
+      credentials: 'include',
+      headers: { 'x-client': 'web' },
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'streamshogun-account-data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      })
+      .catch(function() {
+        showError('Failed to export data. Please try again.');
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export My Data';
+      });
+  });
+
+  // ── Delete Account ──────────────────────────────────────────────
+  var userEmailForDelete = '';
+  var deleteOverlay = document.getElementById('delete-confirm');
+  var deleteEmailInput = document.getElementById('delete-email-input');
+  var deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+
+  document.getElementById('delete-account-btn').addEventListener('click', function() {
+    userEmailForDelete = (document.getElementById('user-email').textContent || '').trim();
+    deleteEmailInput.value = '';
+    deleteConfirmBtn.disabled = true;
+    deleteOverlay.classList.add('active');
+    deleteEmailInput.focus();
+  });
+
+  deleteEmailInput.addEventListener('input', function() {
+    deleteConfirmBtn.disabled = this.value.trim().toLowerCase() !== userEmailForDelete.toLowerCase();
+  });
+
+  document.getElementById('delete-cancel').addEventListener('click', function() {
+    deleteOverlay.classList.remove('active');
+  });
+
+  deleteConfirmBtn.addEventListener('click', function() {
+    deleteConfirmBtn.disabled = true;
+    deleteConfirmBtn.textContent = 'Deleting…';
+
+    fetch(API_BASE + '/v1/me', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: authHeaders(),
+    })
+      .then(function(res) {
+        if (res.ok || res.status === 204) {
+          try {
+            sessionStorage.removeItem('shogun:user');
+            sessionStorage.removeItem('shogun:subscription');
+          } catch (e) { /* ignore */ }
+          window.location.href = '/login';
+          return;
+        }
+        return res.json()
+          .catch(function() { return {}; })
+          .then(function(data) {
+            throw new Error(data.message || 'Delete failed');
+          });
+      })
+      .catch(function(err) {
+        deleteOverlay.classList.remove('active');
+        showError((err && err.message) || 'Failed to delete account. Please try again or contact support.');
+        deleteConfirmBtn.disabled = false;
+        deleteConfirmBtn.textContent = 'Delete Forever';
+      });
+  });
+
+  document.getElementById('set-pw-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errEl = document.getElementById('set-pw-error');
+    var successEl = document.getElementById('set-pw-success');
+    var btn = document.getElementById('set-pw-submit-btn');
+    errEl.classList.remove('visible');
+    successEl.classList.remove('visible');
+
+    var newPw = document.getElementById('set-new-pw').value;
+    var confirm = document.getElementById('set-confirm-pw').value;
+
+    if (!newPw || !confirm) {
+      errEl.textContent = 'Please fill in both password fields.';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (newPw.length < 8) {
+      errEl.textContent = 'Password must be at least 8 characters.';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (newPw !== confirm) {
+      errEl.textContent = 'Passwords do not match.';
+      errEl.classList.add('visible');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    fetch(API_BASE + '/v1/auth/set-password', {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders(),
+      body: JSON.stringify({ newPassword: newPw }),
+    })
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function(result) {
+        if (!result.ok) {
+          errEl.textContent = result.data.message || 'Failed to enable password login.';
+          errEl.classList.add('visible');
+          return;
+        }
+
+        successEl.textContent = result.data.message || 'Password login is now enabled.';
+        successEl.classList.add('visible');
+        document.getElementById('set-new-pw').value = '';
+        document.getElementById('set-confirm-pw').value = '';
+        document.getElementById('auth-methods').textContent = 'Google + Password';
+        document.getElementById('set-password-card').classList.add('hidden');
+        document.getElementById('change-password-card').classList.remove('hidden');
+      })
+      .catch(function() {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.classList.add('visible');
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = 'Enable Password Login';
+      });
+  });
+
+  deleteOverlay.addEventListener('click', function(e) {
+    if (e.target === deleteOverlay) deleteOverlay.classList.remove('active');
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && deleteOverlay.classList.contains('active')) deleteOverlay.classList.remove('active');
+  });
+
+  // Hamburger toggle
+  (function() {
+    var burger = document.querySelector('.nav-burger');
+    var mobileMenu = document.getElementById('mobile-menu');
+    if (burger && mobileMenu) {
+      burger.addEventListener('click', function() {
+        var isOpen = burger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+        burger.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+    // Mobile logout btn mirrors nav logout
+    var mobileLogout = document.getElementById('mobile-logout-btn');
+    if (mobileLogout) {
+      mobileLogout.addEventListener('click', function() {
+        document.getElementById('nav-logout-btn').click();
+      });
+    }
+  })();
+
+  // Dynamic copyright year
+  (function() {
+    var el = document.getElementById('c-year');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+
+  // Active nav link
+  (function() {
+    var path = window.location.pathname.replace(/\/$/, '') || '/';
+    document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(function(a) {
+      var href = a.getAttribute('href');
+      if (!href) return;
+      if (href === path || (path !== '/' && href === path + '/')) {
+        a.setAttribute('aria-current', 'page');
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>

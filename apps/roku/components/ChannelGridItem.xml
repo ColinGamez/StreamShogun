@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component name="ChannelGridItem" extends="Group">
+  <interface>
+    <field id="width" type="float" onChange="onSizeChanged" />
+    <field id="height" type="float" onChange="onSizeChanged" />
+    <field id="itemContent" type="node" onChange="onContentChanged" />
+    <field id="itemHasFocus" type="boolean" onChange="onFocusChanged" />
+  </interface>
+
+  <children>
+    <Rectangle id="bg" width="420" height="160" color="#111114" opacity="0.92" />
+    <Rectangle id="posterBg" width="104" height="104" color="#18181b"
+               translation="[18, 18]" />
+    <Poster id="poster" width="104" height="104"
+            translation="[18, 18]"
+            loadDisplayMode="scaleToFit" />
+    <Label id="fallbackLogo" text=""
+           font="font:MediumBoldSystemFont"
+           color="#7c5cfc"
+           horizAlign="center"
+           vertAlign="center"
+           width="104" height="104"
+           translation="[18, 18]" />
+    <Label id="title" text=""
+           font="font:SmallBoldSystemFont"
+           color="#f4f4f5"
+           width="260"
+           maxLines="2"
+           wrap="true"
+           translation="[142, 24]" />
+    <Label id="group" text=""
+           font="font:SmallestSystemFont"
+           color="#a1a1aa"
+           width="260"
+           maxLines="1"
+           translation="[142, 92]" />
+    <Label id="playHint" text="OK to play"
+           font="font:SmallestSystemFont"
+           color="#71717a"
+           width="260"
+           translation="[142, 122]" />
+    <Label id="favoriteBadge" text="★"
+           font="font:SmallBoldSystemFont"
+           color="#7c5cfc"
+           width="34"
+           horizAlign="center"
+           translation="[372, 12]"
+           visible="false" />
+  </children>
+
+  <script type="text/brightscript" uri="ChannelGridItem.brs" />
+</component>

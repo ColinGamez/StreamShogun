@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     ManagePlaylistsScene.xml — TV-native playlist management overlay
+     ========================================================================== -->
+<component name="ManagePlaylistsScene" extends="Group">
+
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <Rectangle width="1920" height="1080" color="#0c0c0e" opacity="0.96" />
+
+    <Group translation="[120, 100]">
+      <Label text="Manage Playlists"
+             font="font:LargeBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 0]" />
+      <Label text="Review saved playlist sources and remove stale entries."
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 58]" />
+
+      <Group translation="[0, 120]">
+        <Rectangle width="620" height="760" color="#111114" opacity="0.72" />
+        <Label text="Saved Playlists"
+               font="font:SmallBoldSystemFont"
+               color="#a1a1aa"
+               translation="[24, 18]" />
+        <LabelList id="playlistList"
+                   translation="[0, 64]"
+                   itemSize="[620, 58]"
+                   numItems="11"
+                   color="#f4f4f5"
+                   focusedColor="#7c5cfc"
+                   font="font:SmallSystemFont"
+                   focusedFont="font:SmallBoldSystemFont"
+                   drawFocusFeedback="true"
+                   focusBitmapBlendColor="#7c5cfc" />
+      </Group>
+
+      <Group translation="[660, 120]">
+        <Rectangle width="1020" height="760" color="#18181b" opacity="0.52" />
+        <Label id="detailTitle" text=""
+               font="font:MediumBoldSystemFont"
+               color="#f4f4f5"
+               translation="[30, 24]" />
+        <Label id="detailBody" text=""
+               font="font:SmallSystemFont"
+               color="#a1a1aa"
+               translation="[30, 82]"
+               wrap="true"
+               width="940"
+               maxLines="11" />
+        <Label id="statusText" text=""
+               font="font:SmallSystemFont"
+               color="#ff6b6b"
+               translation="[30, 470]"
+               wrap="true"
+               width="940"
+               maxLines="3" />
+        <ButtonGroup id="actionButtons"
+                     buttons="[ &quot;Remove&quot;, &quot;Close&quot; ]"
+                     focusedColor="#7c5cfc"
+                     color="#a1a1aa"
+                     font="font:SmallSystemFont"
+                     focusedFont="font:SmallBoldSystemFont"
+                     minWidth="180"
+                     textHorizAlign="center"
+                     translation="[30, 620]" />
+      </Group>
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="ManagePlaylistsScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

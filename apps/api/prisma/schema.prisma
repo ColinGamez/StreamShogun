@@ -1,0 +1,271 @@
+// ── Prisma Schema for StreamShōgun SaaS API ───────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── User ──────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String?  @unique
+  googleSub    String?  @unique @map("google_sub")
+  passwordHash String?  @map("password_hash")
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  sessions         Session[]
+  passwordResetTokens PasswordResetToken[]
+  subscription     Subscription?
+  featureFlags     FeatureFlag[]
+  cloudSettings    AppSettingsCloud?
+  profile          Profile?
+  userAchievements UserAchievement[]
+  userBadges       UserBadge[]
+
+  @@map("users")
+}
+
+// ── Session (refresh-token rotation) ──────────────────────────────
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @map("refresh_token_hash")
+  userAgent        String?   @map("user_agent")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+  @@map("sessions")
+}
+
+// ── Password Reset Tokens ──────────────────────────────────────
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// ── Subscription ──────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+model Subscription {
+  id                   String              @id @default(cuid())
+  userId               String              @unique @map("user_id")
+  plan                 Plan                @default(FREE)
+  status               SubscriptionStatus  @default(ACTIVE)
+  billingInterval      BillingInterval?    @map("billing_interval")
+  stripeCustomerId     String?             @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?             @unique @map("stripe_subscription_id")
+  rokuCustomerId       String?             @map("roku_customer_id")
+  rokuTransactionId    String?             @unique @map("roku_transaction_id")
+  rokuOriginalTransactionId String?         @map("roku_original_transaction_id")
+  rokuProductCode      String?             @map("roku_product_code")
+  rokuLastEventType    String?             @map("roku_last_event_type")
+  currentPeriodEnd     DateTime?           @map("current_period_end")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rokuCustomerId])
+  @@index([rokuOriginalTransactionId])
+  @@map("subscriptions")
+}
+
+// ── Feature Flags ─────────────────────────────────────────────────
+
+model FeatureFlag {
+  id      String  @id @default(cuid())
+  userId  String  @map("user_id")
+  key     String
+  enabled Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@map("feature_flags")
+}
+
+// ── Cloud Settings & Sync ─────────────────────────────────────────
+
+model AppSettingsCloud {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  blobJson      String   @map("blob_json") @db.Text          // legacy / raw settings
+  favoritesJson String   @default("[]") @map("favorites_json") @db.Text
+  historyJson   String   @default("[]") @map("history_json") @db.Text
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("app_settings_cloud")
+}
+
+// ── Webhook Event (idempotency + audit) ───────────────────────────
+
+model WebhookEvent {
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique @map("stripe_event_id")
+  type          String
+  status        String    @default("processed")   // "processed" | "ignored" | "failed"
+  errorMessage  String?   @map("error_message")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  processedAt   DateTime? @map("processed_at")
+
+  @@map("webhook_events")
+}
+
+// ── Roku Pay Event (idempotency + audit) ───────────────────────────
+
+model RokuPayEvent {
+  id                    String    @id @default(cuid())
+  transactionId         String    @unique @map("transaction_id")
+  originalTransactionId String?   @map("original_transaction_id")
+  customerId            String?   @map("customer_id")
+  productCode           String?   @map("product_code")
+  type                  String
+  status                String    @default("processing") // "processed" | "ignored" | "failed"
+  errorMessage          String?   @map("error_message")
+  payload               Json?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  processedAt           DateTime? @map("processed_at")
+
+  @@index([customerId])
+  @@index([originalTransactionId])
+  @@map("roku_pay_events")
+}
+
+// ── Audit Log (admin actions) ─────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  admin      String              // identifier of admin (e.g. "founder" or key prefix)
+  action     String              // e.g. "feature-flag.set"
+  targetType String   @map("target_type") // e.g. "FeatureFlag", "User"
+  targetId   String   @map("target_id")   // id of the affected record
+  payload    Json?               // optional before/after snapshot
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+// ── Profile ───────────────────────────────────────────────────────
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  avatarUrl String?  @map("avatar_url")
+  bio       String?  @db.Text               // markdown "About Me"
+  location  String?
+  website   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ── Achievement (global definitions) ──────────────────────────────
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique                // e.g. "first_stream"
+  name        String                          // "First Stream"
+  description String
+  icon        String                          // emoji or icon class
+  category    String   @default("general")    // "general", "social", "power_user"
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+// ── User ↔ Achievement (join table) ───────────────────────────────
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// ── Badge (global definitions) ────────────────────────────────────
+
+model Badge {
+  id          String   @id @default(cuid())
+  key         String   @unique                // e.g. "founding_member"
+  name        String                          // "Founding Member"
+  description String
+  icon        String
+  color       String   @default("#7c5cfc")    // hex badge tint
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+// ── User ↔ Badge (join table) ─────────────────────────────────────
+
+model UserBadge {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  badgeId    String   @map("badge_id")
+  awardedAt  DateTime @default(now()) @map("awarded_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}

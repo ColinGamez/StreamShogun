@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     AccountScene.xml — On-device StreamShōgun account / Pro status
+     ========================================================================== -->
+<component name="AccountScene" extends="Group">
+
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <field id="showRokuPay" type="boolean" alwaysNotify="true" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <Rectangle width="1920" height="1080" color="#0c0c0e" opacity="0.96" />
+
+    <Group translation="[400, 120]">
+      <Label text="StreamShōgun Account"
+             font="font:LargeBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 0]" />
+      <Label id="accountSummary" text=""
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 60]"
+             width="900"
+             wrap="true" />
+
+      <Label text="API"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 130]" />
+      <TextEditBox id="apiInput"
+                   hintText="https://api.streamshogun.com"
+                   translation="[0, 162]"
+                   width="760"
+                   maxTextLength="500"
+                   cursorColor="#7c5cfc"
+                   textColor="#f4f4f5"
+                   hintTextColor="#71717a"
+                   backgroundUri="" />
+
+      <Label text="Email"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 240]" />
+      <TextEditBox id="emailInput"
+                   hintText="you@example.com"
+                   translation="[0, 272]"
+                   width="760"
+                   maxTextLength="255"
+                   cursorColor="#7c5cfc"
+                   textColor="#f4f4f5"
+                   hintTextColor="#71717a"
+                   backgroundUri="" />
+
+      <Label text="Password"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 350]" />
+      <TextEditBox id="passwordInput"
+                   hintText="Account password"
+                   translation="[0, 382]"
+                   width="760"
+                   maxTextLength="128"
+                   secureMode="true"
+                   cursorColor="#7c5cfc"
+                   textColor="#f4f4f5"
+                   hintTextColor="#71717a"
+                   backgroundUri="" />
+
+      <LayoutGroup layoutDirection="horiz"
+                   itemSpacings="[16]"
+                   translation="[0, 500]">
+        <Button id="signInBtn" text="Sign In"
+                focusedColor="#7c5cfc"
+                minWidth="160" />
+        <Button id="refreshBtn" text="Refresh Pro"
+                focusedColor="#7c5cfc"
+                minWidth="175" />
+        <Button id="rokuPayBtn" text="Roku Pay"
+                focusedColor="#7c5cfc"
+                minWidth="165" />
+        <Button id="signOutBtn" text="Sign Out"
+                focusedColor="#ff6b6b"
+                minWidth="165" />
+        <Button id="closeBtn" text="Close"
+                focusedColor="#a1a1aa"
+                minWidth="135" />
+      </LayoutGroup>
+
+      <Label id="statusMsg" text=""
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 570]"
+             wrap="true"
+             width="900" />
+      <BusySpinner id="busySpinner"
+                   visible="false"
+                   translation="[920, 562]" />
+
+      <Label text="Roku paid releases should use Roku Pay for purchase and upgrade flows. This screen checks an existing StreamShōgun account entitlement."
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 650]"
+             wrap="true"
+             width="900" />
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="AccountScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

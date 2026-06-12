@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     PlayerScene.xml — Video player for HLS/MP4 streams
+     ========================================================================== -->
+<component name="PlayerScene" extends="Group">
+
+  <interface>
+    <field id="channel" type="assocarray" alwaysNotify="true" onChange="onChannelSet" />
+    <field id="done" type="boolean" alwaysNotify="true" />
+  </interface>
+
+  <children>
+    <!-- ── Full-screen background ─────────────────────────────── -->
+    <Rectangle id="bg" width="1920" height="1080" color="#000000" />
+
+    <!-- ── Video node ─────────────────────────────────────────── -->
+    <Video id="videoPlayer"
+           width="1920" height="1080"
+           translation="[0, 0]"
+           enableUI="true"
+           enableTrickPlay="true"
+           notificationInterval="1" />
+
+    <!-- ── Now Playing overlay (shown briefly) ────────────────── -->
+    <Group id="nowPlayingOverlay" visible="false" translation="[0, 0]">
+      <Rectangle width="1920" height="120" color="#000000" opacity="0.75"
+                 translation="[0, 960]" />
+      <Poster id="channelLogo"
+              width="64" height="64"
+              translation="[60, 988]"
+              loadDisplayMode="scaleToFit" />
+      <Label id="channelName" text=""
+             font="font:MediumBoldSystemFont"
+             color="#f4f4f5"
+             translation="[140, 976]" />
+      <Label id="channelGroup" text=""
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[140, 1016]" />
+      <Label id="bufferingLabel" text="Buffering..."
+             font="font:SmallSystemFont"
+             color="#7c5cfc"
+             translation="[1680, 996]"
+             visible="false" />
+      <Label id="favoriteLabel" text=""
+             font="font:SmallBoldSystemFont"
+             color="#7c5cfc"
+             translation="[1680, 1030]" />
+    </Group>
+
+    <!-- ── Error overlay ──────────────────────────────────────── -->
+    <Group id="errorOverlay" visible="false" translation="[0, 0]">
+      <Rectangle width="1920" height="1080" color="#0c0c0e" opacity="0.9" />
+      <Group translation="[500, 380]">
+        <Label text="Playback Error"
+               font="font:LargeBoldSystemFont"
+               color="#ff6b6b"
+               translation="[0, 0]" />
+        <Label id="errorDetail" text=""
+               font="font:SmallSystemFont"
+               color="#a1a1aa"
+               translation="[0, 60]"
+               wrap="true"
+               width="900" />
+        <Label text="Press Back to return."
+               font="font:SmallestSystemFont"
+               color="#71717a"
+               translation="[0, 140]" />
+      </Group>
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="PlayerScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

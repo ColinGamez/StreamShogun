@@ -1,8 +1,10 @@
 // ── Welcome screen – shown on first run (no playlists loaded) ────────
 
+import { useState } from "react";
 import { useAppStore } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import { loadSampleData } from "../lib/sample-data";
+import { showToast } from "./Toast";
 
 interface WelcomeProps {
   onGoToLibrary: () => void;
@@ -10,9 +12,20 @@ interface WelcomeProps {
 
 export function Welcome({ onGoToLibrary }: WelcomeProps) {
   const locale = useAppStore((s) => s.locale);
+  const [loading, setLoading] = useState(false);
 
   const handleSampleData = async () => {
-    await loadSampleData();
+    setLoading(true);
+    try {
+      await loadSampleData();
+    } catch (err) {
+      showToast(
+        t("welcome.sampleError", locale) + (err instanceof Error ? `: ${err.message}` : ""),
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,8 +63,8 @@ export function Welcome({ onGoToLibrary }: WelcomeProps) {
           <button className="welcome-btn primary" onClick={onGoToLibrary}>
             {t("welcome.addPlaylist", locale)}
           </button>
-          <button className="welcome-btn secondary" onClick={handleSampleData}>
-            {t("welcome.loadSample", locale)}
+          <button className="welcome-btn secondary" onClick={handleSampleData} disabled={loading}>
+            {loading ? t("library.loading", locale) : t("welcome.loadSample", locale)}
           </button>
         </div>
 

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#7c5cfc" />
+  <title>Terms of Service — StreamShōgun</title>
+  <meta name="description" content="Terms of Service for StreamShōgun desktop IPTV player application." />
+  <link rel="canonical" href="https://streamshogun.com/terms" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Terms of Service — StreamShōgun" />
+  <meta property="og:description" content="Terms of Service for StreamShōgun desktop IPTV player application." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://streamshogun.com/terms" />
+  <meta property="og:site_name" content="StreamShōgun" />
+  <meta name="twitter:card" content="summary" />
+
+  <!-- Breadcrumb structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://streamshogun.com" },
+      { "@type": "ListItem", "position": 2, "name": "Terms of Service", "item": "https://streamshogun.com/terms" }
+    ]
+  }
+  </script>
+
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    :root {
+      --bg:           #09090b;
+      --bg-subtle:    #111114;
+      --surface:      #18181b;
+      --border:       rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text:         #fafafa;
+      --text-muted:   #a1a1aa;
+      --text-dim:     #71717a;
+      --accent:       #7c5cfc;
+      --accent-hover: #9a7eff;
+      --radius:       12px;
+      --transition:   0.2s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,9,11,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 800px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      font-size: 18px; font-weight: 800; color: var(--text);
+      text-decoration: none; letter-spacing: -0.02em;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-back {
+      color: var(--text-muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; transition: color var(--transition);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-back:hover { color: var(--text); }
+
+    .legal-wrapper {
+      flex: 1; max-width: 800px; margin: 0 auto; width: 100%;
+      padding: 100px 24px 60px;
+    }
+
+    .legal-wrapper h1 {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .legal-meta {
+      color: var(--text-dim); font-size: 14px; margin-bottom: 40px;
+    }
+    .legal-wrapper h2 {
+      font-size: 20px; font-weight: 700; margin-top: 40px; margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .legal-wrapper p {
+      color: var(--text-muted); font-size: 15px; line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    .legal-wrapper ul {
+      list-style: none; margin-bottom: 16px; padding-left: 0;
+    }
+    .legal-wrapper ul li {
+      color: var(--text-muted); font-size: 15px; line-height: 1.8;
+      padding-left: 20px; position: relative;
+    }
+    .legal-wrapper ul li::before {
+      content: ''; position: absolute; left: 0; top: 11px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+    }
+    .legal-wrapper a {
+      color: var(--accent); text-decoration: none;
+    }
+    .legal-wrapper a:hover { color: var(--accent-hover); }
+
+    .page-footer {
+      text-align: center; padding: 24px;
+      color: var(--text-dim); font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    .page-footer a { color: var(--text-muted); text-decoration: none; }
+    .page-footer a:hover { color: var(--text); }
+
+    .back-to-top {
+      position: fixed; bottom: 32px; right: 32px; z-index: 90;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent); color: #fff; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: translateY(10px); pointer-events: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(124,92,252,0.3);
+    }
+    .back-to-top.visible {
+      opacity: 1; transform: translateY(0); pointer-events: auto;
+    }
+    .back-to-top:hover {
+      background: var(--accent-hover); transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(124,92,252,0.4);
+    }
+
+    /* ── Skip Link ───────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100px; left: 16px;
+      background: var(--accent); color: #fff;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      text-decoration: none; z-index: 999;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 12px; }
+
+    /* Page entrance */
+    body { animation: pageEntrance 0.6s ease both; }
+    @keyframes pageEntrance { from { opacity: 0; } to { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ── Print styles ─────────────────────────────────────────────── */
+    @media print {
+      body { background: #fff; color: #000; }
+      .nav, .back-to-top, .page-footer { display: none; }
+      .legal-wrapper { padding-top: 20px; max-width: 100%; }
+      .legal-wrapper h1 { color: #000; font-size: 24px; }
+      .legal-wrapper h2 { color: #222; font-size: 16px; margin-top: 24px; }
+      .legal-wrapper p, .legal-wrapper ul li { color: #333; font-size: 13px; line-height: 1.6; }
+      .legal-wrapper ul li::before { background: #333; }
+      .legal-wrapper a { color: #000; text-decoration: underline; }
+      .legal-meta { color: #666; }
+      .toc { display: none; }
+    }
+
+    /* ── Table of Contents ────────────────────────────────────────── */
+    .toc {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .toc h3 {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 12px;
+    }
+    .toc ol {
+      list-style: none; counter-reset: toc-counter; padding: 0;
+    }
+    .toc ol li {
+      counter-increment: toc-counter;
+    }
+    .toc ol li a {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 6px 0; font-size: 14px; color: var(--text-muted);
+      text-decoration: none; transition: color var(--transition);
+    }
+    .toc ol li a:hover { color: var(--accent); }
+    .toc ol li a.toc-active {
+      color: var(--accent); font-weight: 600;
+    }
+    .toc ol li a.toc-active::before { color: var(--accent); }
+    .toc ol li a::before {
+      content: counter(toc-counter) '.';
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
+      min-width: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Stream<span>Shōgun</span></a>
+    <a href="/" class="nav-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to home
+    </a>
+  </div>
+</nav>
+
+<main id="main" class="legal-wrapper">
+  <h1>Terms of Service</h1>
+  <p class="legal-meta">Last updated: June 12, 2026</p>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#s1">Acceptance of Terms</a></li>
+      <li><a href="#s2">Description of Service</a></li>
+      <li><a href="#s3">User Responsibilities</a></li>
+      <li><a href="#s4">Free and Pro Tiers</a></li>
+      <li><a href="#s5">Cancellation and Refunds</a></li>
+      <li><a href="#s6">Content Disclaimer</a></li>
+      <li><a href="#s7">Intellectual Property</a></li>
+      <li><a href="#s8">Limitation of Liability</a></li>
+      <li><a href="#s9">Termination</a></li>
+      <li><a href="#s10">Changes to Terms</a></li>
+      <li><a href="#s11">Contact</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="s1">1. Acceptance of Terms</h2>
+  <p>
+    By downloading, installing, or using StreamShōgun ("the Application"), you agree to these Terms of Service.
+    If you do not agree, do not use the Application.
+  </p>
+
+  <h2 id="s2">2. Description of Service</h2>
+  <p>
+    StreamShōgun is a desktop media player application that allows you to import and organize M3U playlists
+    and XMLTV electronic programme guides (EPG). The Application does not host, provide, distribute, or
+    aggregate any media content, streams, playlists, or channels.
+  </p>
+
+  <h2 id="s3">3. User Responsibilities</h2>
+  <p>You are solely responsible for:</p>
+  <ul>
+    <li>The content you import into the Application, including M3U playlists and XMLTV sources</li>
+    <li>Ensuring that your use of media content complies with all applicable laws and regulations</li>
+    <li>Maintaining the security of your account credentials</li>
+    <li>Any activity that occurs under your account</li>
+  </ul>
+
+  <h2 id="s4">4. Free and Pro Tiers</h2>
+  <p>
+    The Application offers a free tier with basic features and a paid Pro tier with additional features.
+    Pro subscriptions are billed through Stripe at the rates displayed at the time of purchase.
+    All prices are in United States Dollars (USD) unless otherwise stated.
+  </p>
+
+  <h2 id="s5">5. Cancellation and Refunds</h2>
+  <p>
+    You may cancel your Pro subscription at any time through your account settings or the Stripe billing portal.
+    Upon cancellation, Pro features remain active until the end of your current billing period.
+    Refunds are handled on a case-by-case basis — contact <a href="mailto:support@streamshogun.com">support@streamshogun.com</a>.
+  </p>
+
+  <h2 id="s6">6. Content Disclaimer</h2>
+  <p>
+    StreamShōgun is a media player only. We do not host, index, aggregate, link to, or distribute any media content.
+    Users supply their own legally obtained playlist files and guide data sources. We have no knowledge of or
+    control over the content accessed through the Application.
+  </p>
+
+  <h2 id="s7">7. Intellectual Property</h2>
+  <p>
+    The Application, its design, code, branding, and documentation are the intellectual property
+    of StreamShōgun. You may not reverse-engineer, decompile, or redistribute the Application
+    without written permission.
+  </p>
+
+  <h2 id="s8">8. Limitation of Liability</h2>
+  <p>
+    The Application is provided "as is" without warranty of any kind. StreamShōgun shall not be liable
+    for any damages arising from your use of the Application, including but not limited to direct,
+    indirect, incidental, or consequential damages.
+  </p>
+
+  <h2 id="s9">9. Termination</h2>
+  <p>
+    We reserve the right to suspend or terminate your account at any time if you violate these terms
+    or engage in activity that we determine to be harmful to the service or other users.
+  </p>
+
+  <h2 id="s10">10. Changes to Terms</h2>
+  <p>
+    We may update these Terms from time to time. Continued use of the Application after changes
+    constitutes acceptance of the updated Terms. Material changes will be communicated via the
+    Application or email.
+  </p>
+
+  <h2 id="s11">11. Contact</h2>
+  <p>
+    For questions about these Terms, contact us at <a href="mailto:support@streamshogun.com">support@streamshogun.com</a>.
+  </p>
+</main>
+
+<footer class="page-footer">
+  &copy; <span id="c-year"></span> StreamShōgun &mdash;
+  <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
+  <a href="/changelog">Changelog</a> &middot; <a href="/community">Community</a>
+</footer>
+
+<button class="back-to-top" id="back-to-top" aria-label="Back to top" title="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+  var btt = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 300) btt.classList.add('visible');
+    else btt.classList.remove('visible');
+  });
+  btt.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ── Active ToC highlighting ─────────────────────────────── */
+  (function() {
+    var tocLinks = document.querySelectorAll('.toc a');
+    var sections = [];
+    tocLinks.forEach(function(link) {
+      var id = link.getAttribute('href').substring(1);
+      var el = document.getElementById(id);
+      if (el) sections.push({ el: el, link: link });
+    });
+    var tocObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var link = sections.find(function(s) { return s.el === entry.target; });
+        if (link) {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(function(l) { l.classList.remove('toc-active'); });
+            link.link.classList.add('toc-active');
+          }
+        }
+      });
+    }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+    sections.forEach(function(s) { tocObserver.observe(s.el); });
+  })();
+
+  // Dynamic copyright year
+  (function() {
+    var el = document.getElementById('c-year');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+</script>
+
+</body>
+</html>

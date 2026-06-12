@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     LibraryScene.xml — Playlist selector + channel grid/list view
+     ========================================================================== -->
+<component name="LibraryScene" extends="Group">
+
+  <interface>
+    <field id="showAddPlaylist" type="boolean" alwaysNotify="true" />
+    <field id="playChannel" type="assocarray" alwaysNotify="true" />
+    <function name="refresh" />
+    <function name="refreshMemory" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <!-- ── Empty state ─────────────────────────────────────────── -->
+    <Group id="emptyState" visible="true" translation="[60, 40]">
+      <Label id="emptyTitle" text="No playlists added"
+             font="font:MediumBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 160]" />
+      <Label id="emptyDesc"
+             text="Add your own M3U playlist URL to get started."
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 210]" />
+      <Button id="addBtn" text="+ Add Playlist"
+              focusedColor="#7c5cfc"
+              translation="[0, 270]"
+              minWidth="240" />
+    </Group>
+
+    <!-- ── Playlist selector (horizontal row) ──────────────────── -->
+    <Group id="libraryState" visible="false" translation="[60, 20]">
+      <Label text="Your Playlists"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 0]" />
+
+      <LayoutGroup id="playlistRow" layoutDirection="horiz"
+                   itemSpacings="[12]"
+                   translation="[0, 32]">
+        <ButtonGroup id="playlistSelector"
+                     buttons="[]"
+                     focusedColor="#7c5cfc"
+                     color="#a1a1aa"
+                     font="font:SmallSystemFont"
+                     focusedFont="font:SmallBoldSystemFont"
+                     minWidth="200"
+                     textHorizAlign="center" />
+      </LayoutGroup>
+
+      <!-- ── Group filter ────────────────────────────────────────── -->
+      <Label id="groupLabel" text="Groups"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 90]" />
+      <ButtonGroup id="groupSelector"
+                   buttons="[&quot;All&quot;]"
+                   focusedColor="#7c5cfc"
+                   color="#71717a"
+                   font="font:SmallestSystemFont"
+                   focusedFont="font:SmallestBoldSystemFont"
+                   minWidth="120"
+                   textHorizAlign="center"
+                   translation="[0, 118]" />
+
+      <!-- ── Search (keyboard entry) ─────────────────────────────── -->
+      <Group id="searchGroup" translation="[0, 170]">
+        <Label text="Search:"
+               font="font:SmallSystemFont"
+               color="#a1a1aa"
+               translation="[0, 4]" />
+        <KeyboardDialog id="searchKeyboard" visible="false" />
+      </Group>
+
+      <!-- ── Channel list ────────────────────────────────────────── -->
+      <Label id="channelCount" text=""
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 200]" />
+      <MarkupGrid id="channelGrid"
+                  translation="[0, 230]"
+                  itemComponentName="ChannelGridItem"
+                  numColumns="4"
+                  numRows="3"
+                  itemSize="[420, 160]"
+                  itemSpacing="[16, 12]"
+                  drawFocusFeedback="true"
+                  focusBitmapBlendColor="#7c5cfc" />
+
+      <!-- ── Loading indicator ───────────────────────────────────── -->
+      <Group id="loadingGroup" visible="false" translation="[700, 400]">
+        <BusySpinner id="spinner" visible="true"
+                     translation="[40, 0]" />
+        <Label text="Loading playlist..."
+               font="font:SmallSystemFont"
+               color="#a1a1aa"
+               translation="[0, 60]" />
+      </Group>
+
+      <!-- ── Error state ─────────────────────────────────────────── -->
+      <Group id="errorGroup" visible="false" translation="[60, 400]">
+        <Label id="errorText" text=""
+               font="font:SmallSystemFont"
+               color="#ff6b6b"
+               wrap="true"
+               width="800" />
+      </Group>
+
+      <!-- ── Add Playlist button ─────────────────────────────────── -->
+      <Button id="resumeBtn" text="Resume Last"
+              focusedColor="#7c5cfc"
+              translation="[1240, 0]"
+              minWidth="220"
+              visible="false" />
+      <Button id="addBtnLibrary" text="+ Add Playlist"
+              focusedColor="#7c5cfc"
+              translation="[1500, 0]"
+              minWidth="200" />
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="LibraryScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

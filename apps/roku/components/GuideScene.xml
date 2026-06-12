@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     GuideScene.xml — EPG guide: channel list (left) + programme list (right)
+     ========================================================================== -->
+<component name="GuideScene" extends="Group">
+
+  <interface>
+    <field id="showAddEpg" type="boolean" alwaysNotify="true" />
+    <field id="playChannel" type="assocarray" alwaysNotify="true" />
+    <function name="refresh" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <!-- ── Empty state (no EPG configured) ─────────────────────── -->
+    <Group id="emptyState" visible="true" translation="[60, 40]">
+      <Label id="emptyTitle" text="No EPG configured"
+             font="font:MediumBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 160]" />
+      <Label id="emptyDesc"
+             text="Add an XMLTV EPG URL to see programme guide data."
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 210]" />
+      <Button id="addEpgBtn" text="+ Add EPG Source"
+              focusedColor="#7c5cfc"
+              translation="[0, 270]"
+              minWidth="260" />
+    </Group>
+
+    <!-- ── Guide content ───────────────────────────────────────── -->
+    <Group id="guideState" visible="false" translation="[60, 20]">
+
+      <!-- ── Header row ──────────────────────────────────────── -->
+      <Label text="Programme Guide"
+             font="font:SmallBoldSystemFont"
+             color="#a1a1aa"
+             translation="[0, 0]" />
+      <Label id="epgStatus" text=""
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[300, 4]" />
+      <Button id="editEpgBtn" text="EPG Settings"
+              focusedColor="#7c5cfc"
+              font="font:SmallestSystemFont"
+              minWidth="160"
+              translation="[1520, -8]" />
+
+      <!-- ── Two-panel layout ────────────────────────────────── -->
+      <Group translation="[0, 50]">
+
+        <!-- Left panel: Channel list -->
+        <Rectangle width="440" height="800" color="#111114"
+                   opacity="0.6" translation="[0, 0]" />
+        <Label text="Channels"
+               font="font:SmallBoldSystemFont"
+               color="#a1a1aa"
+               translation="[16, 8]" />
+        <Label id="matchCount" text=""
+               font="font:SmallestSystemFont"
+               color="#71717a"
+               translation="[16, 34]" />
+        <LabelList id="channelList"
+                   translation="[0, 56]"
+                   itemSize="[440, 48]"
+                   numItems="15"
+                   color="#f4f4f5"
+                   focusedColor="#7c5cfc"
+                   font="font:SmallSystemFont"
+                   focusedFont="font:SmallBoldSystemFont"
+                   drawFocusFeedback="true"
+                   focusBitmapBlendColor="#7c5cfc"
+                   vertFocusAnimationStyle="floatingFocus" />
+
+        <!-- Right panel: Programme list for selected channel -->
+        <Rectangle width="1380" height="800" color="#18181b"
+                   opacity="0.4" translation="[460, 0]" />
+        <Label id="selectedChannelName" text="Select a channel"
+               font="font:MediumBoldSystemFont"
+               color="#f4f4f5"
+               translation="[476, 8]" />
+        <Label id="nowPlaying" text=""
+               font="font:SmallSystemFont"
+               color="#7c5cfc"
+               translation="[476, 48]" />
+        <MarkupList id="programmeList"
+                    translation="[460, 84]"
+                    itemComponentName="ProgrammeListItem"
+                    itemSize="[1380, 100]"
+                    numItems="7"
+                    drawFocusFeedback="true"
+                    focusBitmapBlendColor="#7c5cfc"
+                    vertFocusAnimationStyle="floatingFocus" />
+      </Group>
+
+      <!-- ── Loading indicator ───────────────────────────────── -->
+      <Group id="loadingGroup" visible="false" translation="[700, 400]">
+        <BusySpinner id="spinner" visible="true"
+                     translation="[40, 0]" />
+        <Label id="loadingText" text="Loading EPG data..."
+               font="font:SmallSystemFont"
+               color="#a1a1aa"
+               translation="[0, 60]" />
+      </Group>
+
+      <!-- ── Error state ─────────────────────────────────────── -->
+      <Group id="errorGroup" visible="false" translation="[60, 400]">
+        <Label id="errorMsg" text=""
+               font="font:SmallSystemFont"
+               color="#ff6b6b"
+               wrap="true"
+               width="1200" />
+      </Group>
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="GuideScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/xmltv_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

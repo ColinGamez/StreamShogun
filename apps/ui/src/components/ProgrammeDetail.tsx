@@ -1,6 +1,8 @@
 // ── ProgrammeDetail – slide-out detail panel for a selected programme ─
 
+import { useEffect, useRef } from "react";
 import type { Channel, Programme } from "@stream-shogun/core";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 export interface ProgrammeDetailProps {
   programme: Programme;
@@ -28,9 +30,31 @@ export function ProgrammeDetail({ programme, channel, onClose, onPlay }: Program
   const dur = durationMinutes(programme.start, programme.stop);
   const isLive =
     programme.start <= Date.now() && (programme.stop === 0 || programme.stop > Date.now());
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap for keyboard accessibility
+  useFocusTrap(containerRef, true);
+
+  // Live progress percentage
+  const liveProgress =
+    isLive && programme.stop > 0
+      ? Math.min(
+          100,
+          Math.max(0, ((Date.now() - programme.start) / (programme.stop - programme.start)) * 100),
+        )
+      : 0;
+
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   return (
-    <div className="prog-detail" role="dialog" aria-label="Programme details">
+    <div className="prog-detail" role="dialog" aria-label="Programme details" ref={containerRef}>
       {/* Header */}
       <div className="prog-detail-header">
         <div className="prog-detail-title-row">
@@ -50,6 +74,13 @@ export function ProgrammeDetail({ programme, channel, onClose, onPlay }: Program
         {programme.rating && <span className="prog-pill">★ {programme.rating}</span>}
         {programme.episodeNum && <span className="prog-pill">{programme.episodeNum}</span>}
       </div>
+
+      {/* Live progress bar */}
+      {isLive && liveProgress > 0 && (
+        <div className="prog-live-progress" aria-label={`${Math.round(liveProgress)}% complete`}>
+          <div className="prog-live-progress-bar" style={{ width: `${liveProgress}%` }} />
+        </div>
+      )}
 
       {/* Categories */}
       {programme.categories.length > 0 && (

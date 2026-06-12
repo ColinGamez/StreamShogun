@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>StreamShōgun Changelog</title>
+  <subtitle>Release notes, new features, and improvements for StreamShōgun.</subtitle>
+  <link href="https://streamshogun.com/changelog" rel="alternate" />
+  <link href="https://streamshogun.com/feed.xml" rel="self" />
+  <id>https://streamshogun.com/changelog</id>
+  <updated>2026-03-02T00:00:00Z</updated>
+  <author>
+    <name>StreamShōgun</name>
+    <uri>https://streamshogun.com</uri>
+  </author>
+  <icon>https://streamshogun.com/favicon.svg</icon>
+
+  <entry>
+    <title>v0.2.1 — Stability &amp; Safety Improvements</title>
+    <link href="https://streamshogun.com/changelog#v0.2.1" rel="alternate" />
+    <id>https://streamshogun.com/changelog#v0.2.1</id>
+    <updated>2026-03-02T00:00:00Z</updated>
+    <summary type="html"><![CDATA[
+      <p><strong>New:</strong> IPC input validators (requireString, requireFiniteNumber), Discord reconnection backoff, PIP param validation, React ErrorBoundary component with retry button.</p>
+      <p><strong>Improved:</strong> Removed dead secureFetch code, scheduler timeout guard, Discord RPC safety checks, PIP window cleanup, watch history transaction + auto-prune, Zustand .catch() guards, player page unhandled-rejection fixes.</p>
+      <p><strong>Fixed:</strong> PLAYLIST_LOAD_URL gzip decompression bypass.</p>
+    ]]></summary>
+  </entry>
+
+  <entry>
+    <title>v0.1.0 — Initial Release</title>
+    <link href="https://streamshogun.com/changelog#v0.1.0" rel="alternate" />
+    <id>https://streamshogun.com/changelog#v0.1.0</id>
+    <updated>2025-06-01T00:00:00Z</updated>
+    <summary type="html"><![CDATA[
+      <p><strong>New Features:</strong> M3U playlist import, XMLTV EPG guides, smart channel matching (Pro), HLS playback, favorites &amp; watch history, cloud sync (Pro), picture-in-picture (Pro), dark &amp; light themes, auto refresh (Pro).</p>
+      <p><strong>Improvements:</strong> Windows NSIS installer and portable EXE, search and filter across all channels, keyboard navigation for channel list, group channels by category.</p>
+    ]]></summary>
+  </entry>
+</feed>

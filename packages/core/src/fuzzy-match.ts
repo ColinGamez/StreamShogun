@@ -23,7 +23,8 @@ export interface ChannelMatch {
 // ── Constants ─────────────────────────────────────────────────────────
 
 /** Suffixes stripped during normalisation. */
-const STRIP_SUFFIXES = /\s*\(?(?:HD|FHD|UHD|4K|SD|HEVC|H\.?265|H\.?264|MPEG[24]?|PLUS|\+1|\+2)\)?\s*/gi;
+const STRIP_SUFFIXES =
+  /\s*\(?(?:HD|FHD|UHD|4K|SD|HEVC|H\.?265|H\.?264|MPEG[24]?|PLUS|\+1|\+2)\)?\s*/gi;
 
 /** Characters removed during normalisation. */
 const STRIP_CHARS = /[^a-z0-9\s]/g;
