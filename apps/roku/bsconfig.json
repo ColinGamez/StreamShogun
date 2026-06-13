@@ -1,0 +1,6 @@
+{
+  "rootDir": ".",
+  "files": ["source/**/*", "components/**/*", "images/**/*", "manifest"],
+  "outFile": "dist/StreamShogun-roku-bsc.zip",
+  "diagnosticLevel": "warn"
+}

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     RokuPayScene.xml — Roku Pay ChannelStore purchase / restore shell
+     ========================================================================== -->
+<component name="RokuPayScene" extends="Group">
+
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <field id="showAccount" type="boolean" alwaysNotify="true" />
+    <field id="autoValidate" type="boolean" value="false" alwaysNotify="true" />
+    <function name="focusDefault" />
+  </interface>
+
+  <children>
+    <Rectangle width="1920" height="1080" color="#0c0c0e" opacity="0.96" />
+    <ChannelStore id="channelStore" />
+
+    <Group translation="[380, 120]">
+      <Label text="Roku Pay"
+             font="font:LargeBoldSystemFont"
+             color="#f4f4f5"
+             translation="[0, 0]" />
+      <Label text="Purchase and restore Pro with Roku's on-device billing flow."
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 60]" />
+
+      <Rectangle width="900" height="220" color="#111114"
+                 opacity="0.52"
+                 translation="[0, 120]" />
+      <Label id="productSummary" text=""
+             font="font:SmallSystemFont"
+             color="#f4f4f5"
+             translation="[24, 144]"
+             width="852"
+             maxLines="7"
+             wrap="true" />
+
+      <LayoutGroup layoutDirection="horiz"
+                   itemSpacings="[16]"
+                   translation="[0, 390]">
+        <ButtonGroup id="actionButtons"
+                     buttons="[ &quot;Plans&quot;, &quot;Monthly&quot;, &quot;Yearly&quot;, &quot;Account&quot;, &quot;Validate&quot;, &quot;Restore&quot;, &quot;Close&quot; ]"
+                     focusedColor="#7c5cfc"
+                     color="#a1a1aa"
+                     font="font:SmallSystemFont"
+                     focusedFont="font:SmallBoldSystemFont"
+                     minWidth="112"
+                     textHorizAlign="center" />
+      </LayoutGroup>
+
+      <Label id="statusMsg" text=""
+             font="font:SmallSystemFont"
+             color="#a1a1aa"
+             translation="[0, 470]"
+             width="900"
+             wrap="true" />
+      <BusySpinner id="busySpinner"
+                   visible="false"
+                   translation="[920, 462]" />
+
+      <Label text="Entitlement is granted only after the Roku purchase ID is validated by the StreamShōgun backend."
+             font="font:SmallestSystemFont"
+             color="#71717a"
+             translation="[0, 560]"
+             width="900"
+             wrap="true" />
+    </Group>
+  </children>
+
+  <script type="text/brightscript" uri="RokuPayScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+</component>

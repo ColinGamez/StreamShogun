@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     FetchEpgTask.xml — Background task to download + parse XMLTV EPG data
+     ========================================================================== -->
+<component name="FetchEpgTask" extends="Task">
+  <interface>
+    <field id="url" type="string" />
+    <field id="useProxy" type="boolean" value="false" />
+    <field id="proxyBaseUrl" type="string" value="" />
+    <field id="proxyToken" type="string" value="" />
+    <field id="epgData" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/xmltv_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "fetchEpg"
+    end sub
+
+    sub fetchEpg()
+      m.top.state = "loading"
+      url = m.top.url
+      if url = "" or url = invalid
+        m.top.error = "No EPG URL provided"
+        m.top.state = "error"
+        return
+      end if
+
+      ' Cache EPG for 6 hours (21600 seconds)
+      settings = LoadEpgSettings()
+      ttl = settings.ttlHours * 3600
+
+      ' ── Proxy mode: route through StreamShōgun API for .gz support ──
+      fetchUrl = url
+      cacheKey = "epg_data"
+      if m.top.useProxy and m.top.proxyBaseUrl <> "" and m.top.proxyToken <> ""
+        fetchUrl = BuildEpgProxyUrl(m.top.proxyBaseUrl, m.top.url)
+        cacheKey = "epg_proxy"
+        SafeLog("EPG", "Using proxy endpoint for EPG fetch")
+      end if
+
+      if m.top.useProxy and m.top.proxyToken <> ""
+        result = HttpGetWithAuth(fetchUrl, cacheKey, ttl, m.top.proxyToken)
+      else
+        result = HttpGet(fetchUrl, cacheKey, ttl)
+      end if
+      if not result.ok
+        m.top.error = "Failed to download EPG. " + IIF(result.error <> invalid, result.error, "Check URL or network.")
+        m.top.state = "error"
+        return
+      end if
+
+      ' Update last fetch time
+      settings.lastFetch = CreateObject("roDateTime").AsSeconds()
+      SaveEpgSettings(settings)
+
+      epgData = ParseXMLTV(result.body)
+      if epgData.channels.Count() = 0
+        errorMsg = "No EPG data found. Check that the URL points to valid XMLTV data."
+        if not m.top.useProxy
+          errorMsg = errorMsg + " If the file is .xml.gz, enable the EPG Proxy in Settings (Pro required)."
+        end if
+        m.top.error = errorMsg
+        m.top.state = "error"
+        return
+      end if
+
+      m.top.epgData = epgData
+      m.top.state = "done"
+    end sub
+  ]]>
+  </script>
+</component>

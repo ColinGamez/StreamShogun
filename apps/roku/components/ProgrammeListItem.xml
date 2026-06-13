@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component name="ProgrammeListItem" extends="Group">
+  <interface>
+    <field id="width" type="float" onChange="onSizeChanged" />
+    <field id="height" type="float" onChange="onSizeChanged" />
+    <field id="itemContent" type="node" onChange="onContentChanged" />
+    <field id="itemHasFocus" type="boolean" onChange="onFocusChanged" />
+  </interface>
+
+  <children>
+    <Rectangle id="bg" width="1380" height="100" color="#111114" opacity="0.45" />
+    <Rectangle id="accent" width="5" height="72" color="#7c5cfc"
+               visible="false" translation="[18, 14]" />
+    <Label id="title" text=""
+           font="font:SmallBoldSystemFont"
+           color="#f4f4f5"
+           width="1260"
+           maxLines="1"
+           translation="[40, 14]" />
+    <Label id="desc" text=""
+           font="font:SmallestSystemFont"
+           color="#a1a1aa"
+           width="1260"
+           maxLines="2"
+           wrap="true"
+           translation="[40, 48]" />
+  </children>
+
+  <script type="text/brightscript" uri="ProgrammeListItem.brs" />
+</component>

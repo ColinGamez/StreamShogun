@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     AccountSessionTask.xml — StreamShōgun account login / entitlement refresh
+     ========================================================================== -->
+<component name="AccountSessionTask" extends="Task">
+  <interface>
+    <field id="mode" type="string" value="features" />
+    <field id="apiBaseUrl" type="string" />
+    <field id="email" type="string" />
+    <field id="password" type="string" />
+    <field id="session" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "runAccountSession"
+    end sub
+
+    sub runAccountSession()
+      m.top.state = "loading"
+
+      mode = m.top.mode
+      if mode = invalid or mode = "" then mode = "features"
+
+      if mode = "login"
+        doLogin()
+      else if mode = "refresh"
+        doRefresh()
+      else
+        doFeatures()
+      end if
+    end sub
+
+    sub doLogin()
+      apiBase = NormalizeApiBaseUrl(m.top.apiBaseUrl)
+      if apiBase = "" then apiBase = GetDefaultApiBaseUrl()
+
+      email = LCase(TrimString(m.top.email))
+      password = m.top.password
+      if password = invalid then password = ""
+
+      if email = "" or password = ""
+        fail("Enter your StreamShōgun email and password.")
+        return
+      end if
+
+      result = ApiPostJson(apiBase, "/v1/auth/login", { email: email, password: password }, "")
+      if not result.ok
+        fail("Sign in failed. " + result.error)
+        return
+      end if
+
+      payload = result.json
+      if payload = invalid or payload.accessToken = invalid or payload.refreshToken = invalid
+        fail("Sign in response was missing account tokens.")
+        return
+      end if
+
+      session = LoadAccountSession()
+      session.apiBaseUrl = apiBase
+      session.email = email
+      session.accessToken = payload.accessToken
+      session.refreshToken = payload.refreshToken
+
+      if payload.subscription <> invalid
+        applySubscriptionToSession(session, payload.subscription)
+      end if
+
+      finishWithFeatures(session)
+    end sub
+
+    sub doRefresh()
+      session = LoadAccountSession()
+      if m.top.apiBaseUrl <> invalid and m.top.apiBaseUrl <> ""
+        session.apiBaseUrl = NormalizeApiBaseUrl(m.top.apiBaseUrl)
+      end if
+
+      if session.refreshToken = invalid or session.refreshToken = ""
+        fail("No saved account session. Sign in first.")
+        return
+      end if
+
+      result = ApiPostJson(session.apiBaseUrl, "/v1/auth/refresh", { refreshToken: session.refreshToken }, "")
+      if not result.ok
+        fail("Account refresh failed. " + result.error)
+        return
+      end if
+
+      payload = result.json
+      if payload = invalid or payload.accessToken = invalid or payload.refreshToken = invalid
+        fail("Refresh response was missing account tokens.")
+        return
+      end if
+
+      session.accessToken = payload.accessToken
+      session.refreshToken = payload.refreshToken
+      finishWithFeatures(session)
+    end sub
+
+    sub doFeatures()
+      session = LoadAccountSession()
+      if session.accessToken = invalid or session.accessToken = ""
+        fail("No saved account session. Sign in first.")
+        return
+      end if
+
+      finishWithFeatures(session)
+    end sub
+
+    sub finishWithFeatures(session as Object)
+      features = ApiGetJson(session.apiBaseUrl, "/v1/features", session.accessToken)
+      if not features.ok
+        fail("Could not check Pro features. " + features.error)
+        return
+      end if
+
+      payload = features.json
+      if payload = invalid
+        fail("Feature response was not valid JSON.")
+        return
+      end if
+
+      session.plan = IIF(payload.plan <> invalid, payload.plan, "FREE")
+      session.status = IIF(payload.subscriptionStatus <> invalid, payload.subscriptionStatus, "ACTIVE")
+      session.billingInterval = IIF(payload.billingInterval <> invalid, payload.billingInterval, "")
+      session.currentPeriodEnd = IIF(payload.currentPeriodEnd <> invalid, payload.currentPeriodEnd, "")
+      session.flags = IIF(payload.flags <> invalid, payload.flags, {})
+      session.flags["epg_proxy"] = (session.plan = "PRO" and (session.status = "ACTIVE" or session.status = "TRIALING"))
+      session.checkedAt = CreateObject("roDateTime").AsSeconds()
+
+      SaveAccountSession(session)
+      m.top.session = session
+      m.top.state = "done"
+    end sub
+
+    sub applySubscriptionToSession(session as Object, subscription as Object)
+      session.plan = IIF(subscription.plan <> invalid, subscription.plan, "FREE")
+      session.status = IIF(subscription.status <> invalid, subscription.status, "ACTIVE")
+      session.billingInterval = IIF(subscription.billingInterval <> invalid, subscription.billingInterval, "")
+      session.currentPeriodEnd = IIF(subscription.currentPeriodEnd <> invalid, subscription.currentPeriodEnd, "")
+    end sub
+
+    sub fail(message as String)
+      m.top.error = message
+      m.top.state = "error"
+    end sub
+  ]]>
+  </script>
+</component>

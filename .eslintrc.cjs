@@ -38,6 +38,7 @@ module.exports = {
     "dist-tsc",
     "dist-node",
     "release",
+    "generated",
     "node_modules",
     "*.js",
     "*.cjs",
@@ -45,6 +46,14 @@ module.exports = {
   overrides: [
     {
       files: ["**/__demo__/**"],
+      rules: { "no-console": "off" },
+    },
+    {
+      files: ["**/*.test.ts", "**/*.test.tsx"],
+      rules: { "@typescript-eslint/no-explicit-any": "off" },
+    },
+    {
+      files: ["apps/api/prisma/seed.ts"],
       rules: { "no-console": "off" },
     },
   ],

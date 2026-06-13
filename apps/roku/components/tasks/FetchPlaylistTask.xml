@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     FetchPlaylistTask.xml — Background task to download + parse an M3U playlist
+     ========================================================================== -->
+<component name="FetchPlaylistTask" extends="Task">
+  <interface>
+    <field id="url" type="string" />
+    <field id="channels" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "fetchPlaylist"
+    end sub
+
+    sub fetchPlaylist()
+      m.top.state = "loading"
+      url = m.top.url
+      if url = "" or url = invalid
+        m.top.error = "No playlist URL provided"
+        m.top.state = "error"
+        return
+      end if
+
+      result = HttpGet(url, "", 0) ' No caching for playlists — always fresh
+      if not result.ok
+        m.top.error = "Failed to download playlist. " + IIF(result.error <> invalid, result.error, "Check URL or network.")
+        m.top.state = "error"
+        return
+      end if
+
+      channels = ParseM3U(result.body)
+      if channels.Count() = 0
+        m.top.error = "No channels found. Check that the URL points to a valid M3U playlist."
+        m.top.state = "error"
+        return
+      end if
+
+      m.top.channels = { items: channels, count: channels.Count() }
+      m.top.state = "done"
+    end sub
+  ]]>
+  </script>
+</component>

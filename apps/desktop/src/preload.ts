@@ -73,8 +73,7 @@ contextBridge.exposeInMainWorld("shogun", {
     ipcRenderer.invoke(IpcChannels.DB_GET_EPG_RANGE, args),
 
   // ── Settings (F8) ──────────────────────────────────────────────
-  dbGetAllSettings: (): Promise<unknown> =>
-    ipcRenderer.invoke(IpcChannels.DB_GET_ALL_SETTINGS),
+  dbGetAllSettings: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.DB_GET_ALL_SETTINGS),
 
   dbSetSetting: (args: { key: string; value: string }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_SET_SETTING, args),
@@ -93,8 +92,7 @@ contextBridge.exposeInMainWorld("shogun", {
   dbListWatchHistory: (limit?: number): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_LIST_WATCH_HISTORY, limit),
 
-  dbGetLastWatched: (): Promise<unknown> =>
-    ipcRenderer.invoke(IpcChannels.DB_GET_LAST_WATCHED),
+  dbGetLastWatched: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.DB_GET_LAST_WATCHED),
 
   dbClearWatchHistory: (): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_CLEAR_WATCH_HISTORY),
@@ -103,11 +101,9 @@ contextBridge.exposeInMainWorld("shogun", {
   refreshSetInterval: (args: { minutes: number; enabled: boolean }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.REFRESH_SET_INTERVAL, args),
 
-  refreshTrigger: (): Promise<unknown> =>
-    ipcRenderer.invoke(IpcChannels.REFRESH_TRIGGER),
+  refreshTrigger: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.REFRESH_TRIGGER),
 
-  refreshGetStatus: (): Promise<unknown> =>
-    ipcRenderer.invoke(IpcChannels.REFRESH_GET_STATUS),
+  refreshGetStatus: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.REFRESH_GET_STATUS),
 
   /** Subscribe to refresh-completed push events from main process. */
   onRefreshCompleted: (callback: (payload: unknown) => void): (() => void) => {
@@ -120,11 +116,9 @@ contextBridge.exposeInMainWorld("shogun", {
   pipOpen: (args: { channelUrl: string; channelName: string }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.PIP_OPEN, args),
 
-  pipClose: (): Promise<unknown> =>
-    ipcRenderer.invoke(IpcChannels.PIP_CLOSE),
+  pipClose: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.PIP_CLOSE),
 
-  pipIsOpen: (): Promise<unknown> =>
-    ipcRenderer.invoke(IpcChannels.PIP_IS_OPEN),
+  pipIsOpen: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.PIP_IS_OPEN),
 
   // ── Discord Rich Presence (F6) ────────────────────────────────
   discordSetActivity: (args: {
@@ -135,6 +129,57 @@ contextBridge.exposeInMainWorld("shogun", {
 
   discordClearActivity: (): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DISCORD_CLEAR_ACTIVITY),
+
+  // ── License / Pro (Monetization) ──────────────────────────────
+  licenseGetStatus: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.LICENSE_GET_STATUS),
+
+  licenseSetKey: (args: { key: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.LICENSE_SET_KEY, args),
+
+  licenseSetProEnabled: (args: { enabled: boolean }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.LICENSE_SET_PRO_ENABLED, args),
+
+  // ── Auth / SaaS ───────────────────────────────────────────────
+  authRegister: (args: {
+    email: string;
+    password: string;
+    displayName?: string;
+  }): Promise<unknown> => ipcRenderer.invoke(IpcChannels.AUTH_REGISTER, args),
+
+  authLogin: (args: { email: string; password: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.AUTH_LOGIN, args),
+
+  authLogout: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.AUTH_LOGOUT),
+
+  authRefresh: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.AUTH_REFRESH),
+
+  featuresFetch: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.FEATURES_FETCH),
+
+  // ── Billing ────────────────────────────────────────────────────
+  billingCheckout: (args?: { interval?: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.BILLING_CHECKOUT, args),
+
+  billingPortal: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.BILLING_PORTAL),
+
+  // ── Cloud Sync v1 ─────────────────────────────────────────────
+  cloudSyncPull: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PULL),
+
+  cloudSyncPush: (args: {
+    settings?: Record<string, string>;
+    favorites?: string[];
+    history?: {
+      channelUrl: string;
+      channelName: string;
+      channelLogo?: string;
+      groupTitle?: string;
+      watchedAt: number;
+    }[];
+    localUpdatedAt: string;
+  }): Promise<unknown> => ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PUSH, args),
+
+  // ── File save (Support Bundle) ──────────────────────────────────
+  saveFile: (args: { defaultName: string; content: string; title?: string }): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.SAVE_FILE, args),
 });
 
 // Keep the legacy "electronAPI" alias for backward-compat with the UI

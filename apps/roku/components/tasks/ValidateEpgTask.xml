@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     ValidateEpgTask.xml — Background XMLTV source validation before saving
+     ========================================================================== -->
+<component name="ValidateEpgTask" extends="Task">
+  <interface>
+    <field id="url" type="string" />
+    <field id="summary" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/xmltv_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "validateEpg"
+    end sub
+
+    sub validateEpg()
+      m.top.state = "loading"
+
+      url = m.top.url
+      if url = invalid then url = ""
+      url = TrimString(url)
+      if url = ""
+        m.top.error = "No EPG URL provided."
+        m.top.state = "error"
+        return
+      end if
+
+      validationCacheKey = "epg_validate"
+      ClearCachedKey(validationCacheKey)
+      session = LoadAccountSession()
+      useProxy = IsLikelyRawGzip(url, "")
+      if useProxy and IsProFeatureEnabled("epg_proxy") and session.accessToken <> invalid and session.accessToken <> ""
+        result = HttpGetWithAuth(BuildEpgProxyUrl(session.apiBaseUrl, url), validationCacheKey, 0, session.accessToken)
+      else
+        result = HttpGet(url, validationCacheKey, 0)
+      end if
+      if not result.ok
+        ClearCachedKey(validationCacheKey)
+        m.top.error = "Failed to download EPG. " + IIF(result.error <> invalid, result.error, "Check URL or network.")
+        m.top.state = "error"
+        return
+      end if
+
+      epgData = ParseXMLTV(result.body)
+      ClearCachedKey(validationCacheKey)
+      if epgData = invalid or epgData.channels = invalid or epgData.channels.Count() = 0
+        errorMsg = "No XMLTV channels found. Check that the URL points to valid guide data."
+        if IsLikelyRawGzip(url, result.body)
+          errorMsg = "Roku could not parse this .xml.gz file. Use a plain XMLTV URL or serve gzip with decompression headers."
+        end if
+        m.top.error = errorMsg
+        m.top.state = "error"
+        return
+      end if
+
+      programmeCount = 0
+      if epgData.programmes <> invalid then programmeCount = epgData.programmes.Count()
+
+      m.top.summary = {
+        channelCount: epgData.channels.Count(),
+        programmeCount: programmeCount
+      }
+      SafeLog("EPG", "Validated EPG source: " + RedactUrl(url) + " channels=" + Str(epgData.channels.Count()).Trim())
+      m.top.state = "done"
+    end sub
+
+    function IsLikelyRawGzip(url as String, body as Dynamic) as Boolean
+      if EndsWith(LCase(url), ".gz") or EndsWith(LCase(url), ".xml.gz") then return true
+      if body <> invalid and Len(body) >= 2
+        return Asc(Mid(body, 1, 1)) = 31 and Asc(Mid(body, 2, 1)) = 139
+      end if
+      return false
+    end function
+  ]]>
+  </script>
+</component>

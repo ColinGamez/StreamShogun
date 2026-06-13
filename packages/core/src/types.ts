@@ -1,32 +1,5 @@
 // ── Shared types for StreamShōgun ──
 
-/** Represents a stream event from any platform. */
-export interface StreamEvent {
-  id: string;
-  platform: Platform;
-  type: EventType;
-  timestamp: number;
-  payload: Record<string, unknown>;
-}
-
-export type Platform = "twitch" | "youtube" | "kick" | "custom";
-
-export type EventType = "chat_message" | "subscription" | "donation" | "follow" | "raid" | "custom";
-
-/** Application configuration stored on disk. */
-export interface AppConfig {
-  version: string;
-  theme: "light" | "dark" | "system";
-  locale: string;
-  connections: ConnectionConfig[];
-}
-
-export interface ConnectionConfig {
-  platform: Platform;
-  enabled: boolean;
-  credentials: Record<string, string>;
-}
-
 /** IPC channel names shared between main & renderer. */
 export const IpcChannels = {
   GET_APP_INFO: "app:get-info",
@@ -77,6 +50,28 @@ export const IpcChannels = {
   // ── Discord Rich Presence (F6) ────────────────────────────────
   DISCORD_SET_ACTIVITY: "discord:set-activity",
   DISCORD_CLEAR_ACTIVITY: "discord:clear-activity",
+  // ── License / Pro (Monetization) ──────────────────────────────────
+  LICENSE_GET_STATUS: "license:get-status",
+  LICENSE_SET_KEY: "license:set-key",
+  LICENSE_SET_PRO_ENABLED: "license:set-pro-enabled",
+
+  // ── Auth / SaaS ────────────────────────────────────────────────
+  AUTH_REGISTER: "auth:register",
+  AUTH_LOGIN: "auth:login",
+  AUTH_LOGOUT: "auth:logout",
+  AUTH_REFRESH: "auth:refresh",
+  FEATURES_FETCH: "features:fetch",
+
+  // ── Billing ────────────────────────────────────────────────────
+  BILLING_CHECKOUT: "billing:checkout",
+  BILLING_PORTAL: "billing:portal",
+
+  // ── Cloud Sync (v1) ──────────────────────────────────────────
+  CLOUD_SYNC_PULL: "cloud:sync-pull",
+  CLOUD_SYNC_PUSH: "cloud:sync-push",
+
+  // ── File save (Support Bundle) ────────────────────────────────
+  SAVE_FILE: "file:save",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

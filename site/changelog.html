@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#7c5cfc" />
+  <title>Changelog — StreamShōgun</title>
+  <meta name="description" content="See what's new in StreamShōgun. Release notes, new features, bug fixes, and improvements for every version." />
+  <link rel="canonical" href="https://streamshogun.com/changelog" />
+  <link rel="alternate" type="application/atom+xml" title="StreamShōgun Changelog" href="/feed.xml" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Changelog — StreamShōgun" />
+  <meta property="og:description" content="Release notes, new features, bug fixes, and improvements for every version of StreamShōgun." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://streamshogun.com/changelog" />
+  <meta property="og:site_name" content="StreamShōgun" />
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Changelog — StreamShōgun" />
+  <meta name="twitter:description" content="See what's new in StreamShōgun. Release notes and version history." />
+
+  <!-- Breadcrumb structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://streamshogun.com" },
+      { "@type": "ListItem", "position": 2, "name": "Changelog", "item": "https://streamshogun.com/changelog" }
+    ]
+  }
+  </script>
+
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    :root {
+      --bg:           #09090b;
+      --bg-subtle:    #111114;
+      --surface:      #18181b;
+      --surface-2:    #1e1e23;
+      --border:       rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text:         #fafafa;
+      --text-muted:   #a1a1aa;
+      --text-dim:     #71717a;
+      --accent:       #7c5cfc;
+      --accent-hover: #9a7eff;
+      --accent-soft:  rgba(124,92,252,0.12);
+      --success:      #22c55e;
+      --warning:      #f59e0b;
+      --info:         #3b82f6;
+      --radius:       12px;
+      --radius-lg:    16px;
+      --max-w:        760px;
+      --transition:   0.2s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Nav ──────────────────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(9,9,11,0.85); border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1100px; margin: 0 auto; padding: 0 24px; height: 60px;
+    }
+    .nav-brand {
+      font-size: 18px; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--text); text-decoration: none;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a[aria-current="page"] { color: var(--accent); }
+    /* ── Breadcrumb ────────────────────────────────────────────── */
+    .breadcrumb {
+      max-width: var(--max-w); margin: 0 auto;
+      padding: 90px 24px 0;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--text-dim);
+    }
+    .breadcrumb a {
+      color: var(--text-muted); text-decoration: none;
+      transition: color var(--transition);
+    }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb svg { width: 12px; height: 12px; opacity: 0.5; }
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header {
+      padding: 24px 24px 48px;
+      text-align: center;
+    }
+    .page-header h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .page-header p {
+      font-size: 16px; color: var(--text-muted); max-width: 480px;
+      margin: 0 auto; line-height: 1.7;
+    }
+    .rss-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 16px; padding: 6px 14px;
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-dim); font-size: 13px; font-weight: 600;
+      text-decoration: none; transition: all var(--transition);
+    }
+    .rss-link:hover { color: var(--accent); border-color: var(--accent-soft); }
+    .rss-link svg { width: 14px; height: 14px; }
+
+    /* ── Timeline ────────────────────────────────────────────────── */
+    .timeline {
+      max-width: var(--max-w); margin: 0 auto; padding: 0 24px 80px;
+    }
+
+    .release {
+      position: relative;
+      padding-left: 36px;
+      margin-bottom: 48px;
+    }
+    .release::before {
+      content: '';
+      position: absolute; left: 7px; top: 32px; bottom: -48px;
+      width: 2px; background: var(--border);
+    }
+    .release:last-child::before { display: none; }
+
+    .release-dot {
+      position: absolute; left: 0; top: 8px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--accent); border: 3px solid var(--bg);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .release.latest .release-dot {
+      box-shadow: 0 0 0 2px var(--accent-soft), 0 0 12px rgba(124,92,252,0.4);
+    }
+
+    .release-header {
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .release-version {
+      font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
+    }
+    .release-date {
+      font-size: 13px; color: var(--text-dim); font-weight: 500;
+    }
+    .release-tag {
+      display: inline-flex; padding: 3px 10px; border-radius: 100px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tag-latest { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .tag-beta { background: rgba(245,158,11,0.12); color: #fbbf24; }
+
+    .release-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+    }
+    .release-body h3 {
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .release-body h3.feat { color: var(--accent); }
+    .release-body h3.fix { color: var(--success); }
+    .release-body h3.improve { color: var(--info); }
+
+    .release-body ul {
+      list-style: none; margin-bottom: 20px;
+    }
+    .release-body ul:last-child { margin-bottom: 0; }
+    .release-body li {
+      position: relative; padding: 5px 0 5px 20px;
+      font-size: 14px; color: var(--text-muted); line-height: 1.6;
+    }
+    .release-body li::before {
+      content: ''; position: absolute; left: 0; top: 13px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-dim);
+    }
+    .release-body li strong { color: var(--text); font-weight: 600; }
+
+    .release-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 16px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      text-decoration: none; transition: color var(--transition);
+    }
+    .release-link:hover { color: var(--accent-hover); }
+    .release-link svg { width: 14px; height: 14px; }
+
+    .copy-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      color: var(--text-dim); cursor: pointer; font-family: inherit;
+      transition: all var(--transition); position: relative;
+    }
+    .copy-link:hover { border-color: var(--border-hover); color: var(--text-muted); }
+    .copy-link svg { width: 13px; height: 13px; }
+    .copy-link .tooltip {
+      position: absolute; bottom: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%); padding: 4px 10px;
+      background: var(--accent); color: #fff; border-radius: 6px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .copy-link .tooltip.show { opacity: 1; }
+
+    /* Hash-highlight pulse */
+    .release.hash-highlight .release-body {
+      animation: releaseHighlight 2s ease;
+    }
+    @keyframes releaseHighlight {
+      0% { box-shadow: 0 0 0 0 rgba(124,92,252,0.4); }
+      40% { box-shadow: 0 0 0 8px rgba(124,92,252,0.15); }
+      100% { box-shadow: 0 0 0 0 rgba(124,92,252,0); }
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .page-footer {
+      text-align: center; padding: 24px;
+      color: var(--text-dim); font-size: 13px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+    .page-footer a { color: var(--text-muted); text-decoration: none; }
+    .page-footer a:hover { color: var(--text); }
+
+    @media (max-width: 640px) {
+      .release { padding-left: 28px; }
+      .release-body { padding: 20px; }
+      .release-header { gap: 8px; }
+    }
+
+    /* ── Skip Link ───────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100px; left: 16px;
+      background: var(--accent); color: #fff;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      text-decoration: none; z-index: 999;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 12px; }
+
+    /* ── Hamburger ────────────────────────────────────────────────── */
+    .nav-burger {
+      display: none; background: none; border: none; cursor: pointer;
+      padding: 6px; color: var(--text); position: relative;
+      width: 36px; height: 36px;
+    }
+    .nav-burger span {
+      display: block; width: 20px; height: 2px;
+      background: currentColor; border-radius: 2px;
+      transition: all 0.25s ease;
+      position: absolute; left: 8px;
+    }
+    .nav-burger span:nth-child(1) { top: 10px; }
+    .nav-burger span:nth-child(2) { top: 17px; }
+    .nav-burger span:nth-child(3) { top: 24px; }
+    .nav-burger.open span:nth-child(1) { top: 17px; transform: rotate(45deg); }
+    .nav-burger.open span:nth-child(2) { opacity: 0; }
+    .nav-burger.open span:nth-child(3) { top: 17px; transform: rotate(-45deg); }
+
+    .mobile-menu {
+      display: none; position: fixed; top: 60px; left: 0; right: 0;
+      background: rgba(9,9,11,0.98); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px 24px; z-index: 99;
+      transform: translateY(-10px); opacity: 0;
+      transition: all 0.25s ease;
+    }
+    .mobile-menu.open { display: flex; flex-direction: column; gap: 8px; transform: translateY(0); opacity: 1; }
+    .mobile-menu a {
+      display: block; padding: 12px 16px; border-radius: 10px;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 15px; font-weight: 500; transition: all 0.15s ease;
+    }
+    .mobile-menu a:hover { background: var(--surface); color: var(--text); }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-burger { display: block; }
+    }
+
+    /* Page entrance */
+    body { animation: pageEntrance 0.6s ease both; }
+    @keyframes pageEntrance { from { opacity: 0; } to { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ── Back to top ──────────────────────────────────────────────── */
+    .back-to-top {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 42px; height: 42px;
+      border-radius: 50%; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      cursor: pointer; z-index: 90;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: translateY(10px); pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    .back-to-top.visible {
+      opacity: 1; transform: translateY(0); pointer-events: auto;
+    }
+    .back-to-top:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(124,92,252,0.12);
+    }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand" aria-label="StreamShōgun Home">Stream<span>Shōgun</span></a>
+    <div class="nav-links">
+      <a href="/#screenshots">App</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/community">Community</a>
+      <a href="/login">Log In</a>
+    </div>
+    <button class="nav-burger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu" role="menu">
+  <a href="/#screenshots">App</a>
+  <a href="/#pricing">Pricing</a>
+  <a href="/community">Community</a>
+  <a href="/login">Log In</a>
+</div>
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a href="/">Home</a>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span aria-current="page">Changelog</span>
+</nav>
+
+<header class="page-header">
+  <h1>What's New</h1>
+  <p>Release notes, new features, and improvements for every version of StreamShōgun.</p>
+  <a href="/feed.xml" class="rss-link" aria-label="Subscribe via Atom feed">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+    Subscribe
+  </a>
+</header>
+
+<main id="main" class="timeline">
+
+  <!-- ── v0.2.1 ────────────────────────────────────────────────── -->
+  <article class="release latest" id="v0.2.1">
+    <div class="release-dot"></div>
+    <div class="release-header">
+      <span class="release-version">v0.2.1</span>
+      <span class="release-tag tag-latest">Latest</span>
+      <span class="release-date">March 2026</span>
+      <button class="copy-link" data-version="v0.2.1" aria-label="Copy link to this release">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Copy link
+        <span class="tooltip">Copied!</span>
+      </button>
+    </div>
+    <div class="release-body">
+      <h3 class="feat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        New Features
+      </h3>
+      <ul>
+        <li><strong>requireString() / requireFiniteNumber() validators</strong> in IPC handler layer — applied to DB_SET_SETTING and DB_SAVE_WATCH for input safety</li>
+        <li><strong>Discord reconnection backoff</strong> — 15-second cooldown between connection attempts prevents rapid retry spam</li>
+        <li><strong>PIP param validation</strong> — openPipWindow throws on empty channelUrl; channelName falls back to "PIP"</li>
+        <li><strong>&lt;ErrorBoundary&gt; component</strong> — class-based React boundary with retry button, wrapping all six page routes and the PIP player</li>
+        <li><strong>Error boundary CSS</strong> (.error-boundary-*) in App.css</li>
+      </ul>
+
+      <h3 class="improve">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="m18 20 0-4"/><path d="M6 20v-6"/></svg>
+        Improvements
+      </h3>
+      <ul>
+        <li><strong>IPC (main process)</strong> — Removed unused secureFetch() dead code; PLAYLIST_LOAD_URL now uses gzip-aware secureFetchText()</li>
+        <li><strong>Scheduler</strong> — doRefresh() protected by a 60-second timeout guard to prevent stalling</li>
+        <li><strong>Discord RPC</strong> — sendPacket checks socket.destroyed before writing; catches write errors and resets state</li>
+        <li><strong>PIP window</strong> — closePipWindow() no longer double-nulls; cleanup deferred to the 'closed' event handler</li>
+        <li><strong>Watch history DB</strong> — saveWatchSession runs inside a transaction and auto-prunes rows beyond 500</li>
+        <li><strong>Store (Zustand)</strong> — Fire-and-forget calls in initFromDb now have .catch() guards</li>
+        <li><strong>Player page</strong> — All async fire-and-forget calls wrapped with .catch() to prevent unhandled-rejection noise</li>
+      </ul>
+
+      <h3 class="fix">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Bug Fixes
+      </h3>
+      <ul>
+        <li><strong>PLAYLIST_LOAD_URL</strong> previously bypassed gzip decompression — now consistent with all other fetch paths</li>
+      </ul>
+
+      <a href="https://github.com/ColinGamez/StreamShogun/releases/tag/v0.2.1" class="release-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </article>
+
+  <!-- ── v0.1.0 ────────────────────────────────────────────────── -->
+  <article class="release" id="v0.1.0">
+    <div class="release-dot"></div>
+    <div class="release-header">
+      <span class="release-version">v0.1.0</span>
+      <span class="release-date">June 2025</span>
+      <button class="copy-link" data-version="v0.1.0" aria-label="Copy link to this release">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Copy link
+        <span class="tooltip">Copied!</span>
+      </button>
+    </div>
+    <div class="release-body">
+      <h3 class="feat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        New Features
+      </h3>
+      <ul>
+        <li><strong>M3U playlist import</strong> — Add playlists from local files or remote URLs</li>
+        <li><strong>XMLTV EPG guides</strong> — Import programme guide data for your channels</li>
+        <li><strong>Smart channel matching</strong> — Automatically align channel names to EPG entries (Pro)</li>
+        <li><strong>HLS playback</strong> — Full video playback with volume control and channel switching</li>
+        <li><strong>Favorites &amp; watch history</strong> — Bookmark channels and resume where you left off</li>
+        <li><strong>Cloud sync</strong> — Sync playlists, favorites, and settings across devices (Pro)</li>
+        <li><strong>Picture-in-Picture</strong> — Keep watching while browsing other channels (Pro)</li>
+        <li><strong>Dark &amp; light themes</strong> — Choose the look that suits you</li>
+        <li><strong>Auto refresh</strong> — Keep playlists and EPG data up to date automatically (Pro)</li>
+      </ul>
+
+      <h3 class="improve">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="m18 20 0-4"/><path d="M6 20v-6"/></svg>
+        Improvements
+      </h3>
+      <ul>
+        <li>Windows NSIS installer and portable EXE available</li>
+        <li>Search and filter across all channels</li>
+        <li>Keyboard navigation for channel list</li>
+        <li>Group channels by category</li>
+      </ul>
+
+      <a href="https://github.com/ColinGamez/StreamShogun/releases/tag/v0.1.0" class="release-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </article>
+
+</main>
+
+<button class="back-to-top" id="back-to-top" aria-label="Back to top" title="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<footer class="page-footer">
+  &copy; <span id="c-year"></span> StreamShōgun &mdash;
+  <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
+  <a href="/community">Community</a> &middot; <a href="/">Home</a>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-link').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var version = btn.getAttribute('data-version');
+      var url = window.location.origin + '/changelog#' + version;
+      navigator.clipboard.writeText(url).then(function() {
+        var tip = btn.querySelector('.tooltip');
+        tip.classList.add('show');
+        setTimeout(function() { tip.classList.remove('show'); }, 1500);
+      });
+    });
+  });
+
+  /* ── Highlight release from URL hash ────────────────────────── */
+  (function() {
+    var hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    var target = document.getElementById(hash);
+    if (target && target.classList.contains('release')) {
+      setTimeout(function() {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('hash-highlight');
+      }, 300);
+    }
+  })();
+
+  // Hamburger toggle
+  (function() {
+    var burger = document.querySelector('.nav-burger');
+    var mobileMenu = document.getElementById('mobile-menu');
+    if (burger && mobileMenu) {
+      burger.addEventListener('click', function() {
+        var isOpen = burger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+        burger.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+  })();
+
+  // Dynamic copyright year
+  (function() {
+    var el = document.getElementById('c-year');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+
+  // Active nav link
+  (function() {
+    var path = window.location.pathname.replace(/\/$/, '') || '/';
+    document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(function(a) {
+      var href = a.getAttribute('href');
+      if (!href) return;
+      if (href === path || (path !== '/' && href === path + '/')) {
+        a.setAttribute('aria-current', 'page');
+      }
+    });
+  })();
+// Back to top
+(function() {
+  var btt = document.getElementById('back-to-top');
+  if (!btt) return;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 400) btt.classList.add('visible');
+    else btt.classList.remove('visible');
+  }, { passive: true });
+  btt.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
+
+</body>
+</html>

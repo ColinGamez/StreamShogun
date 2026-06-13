@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component name="FetchLibraryTask" extends="Task">
+  <interface>
+    <field id="selectedIndex" type="integer" value="0" />
+    <field id="channels" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "fetchLibrary"
+    end sub
+
+    sub fetchLibrary()
+      m.top.state = "loading"
+
+      playlists = LoadPlaylists()
+      if playlists.Count() = 0
+        m.top.error = "No playlists saved"
+        m.top.state = "error"
+        return
+      end if
+
+      selectedIndex = m.top.selectedIndex
+      if selectedIndex < 0 then selectedIndex = 0
+      if selectedIndex > playlists.Count() then selectedIndex = 0
+
+      allChannels = []
+      failed = []
+      loadedCount = 0
+
+      if selectedIndex = 0
+        for pIdx = 0 to playlists.Count() - 1
+          loadPlaylistIntoLibrary(playlists[pIdx], pIdx, allChannels, failed)
+        end for
+        loadedCount = playlists.Count() - failed.Count()
+      else
+        pIdx = selectedIndex - 1
+        loadPlaylistIntoLibrary(playlists[pIdx], pIdx, allChannels, failed)
+        if failed.Count() = 0 then loadedCount = 1
+      end if
+
+      if allChannels.Count() = 0
+        message = "No channels found."
+        if failed.Count() > 0
+          message = message + " " + failed.Join(" | ")
+        end if
+        m.top.error = message
+        m.top.state = "error"
+        return
+      end if
+
+      warning = ""
+      if failed.Count() > 0
+        warning = Str(failed.Count()).Trim() + " playlist(s) could not be loaded."
+      end if
+
+      m.top.channels = {
+        items: allChannels,
+        count: allChannels.Count(),
+        playlistCount: loadedCount,
+        failedCount: failed.Count(),
+        warning: warning
+      }
+      m.top.state = "done"
+    end sub
+
+    sub loadPlaylistIntoLibrary(playlist as Object, playlistIndex as Integer, allChannels as Object, failed as Object)
+      result = HttpGet(playlist.url, "", 0)
+      if not result.ok
+        failed.Push(playlist.name + ": " + IIF(result.error <> invalid, result.error, "network error"))
+        return
+      end if
+
+      channels = ParseM3U(result.body)
+      if channels.Count() = 0
+        failed.Push(playlist.name + ": no channels found")
+        return
+      end if
+
+      for cIdx = 0 to channels.Count() - 1
+        ch = channels[cIdx]
+        ch.playlistId = IIF(playlist.id <> invalid, playlist.id, "")
+        ch.playlistName = IIF(playlist.name <> invalid, playlist.name, "Playlist")
+        ch.playlistIndex = playlistIndex
+        ch.channelIndex = cIdx
+        ch.libraryId = ch.playlistId + ":" + Str(cIdx).Trim()
+        allChannels.Push(ch)
+      end for
+    end sub
+  ]]>
+  </script>
+</component>

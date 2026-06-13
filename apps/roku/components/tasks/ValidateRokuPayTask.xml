@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- ==========================================================================
+     ValidateRokuPayTask.xml — Send Roku Pay purchase IDs to StreamShōgun API
+     ========================================================================== -->
+<component name="ValidateRokuPayTask" extends="Task">
+  <interface>
+    <field id="purchaseId" type="string" />
+    <field id="productCode" type="string" />
+    <field id="result" type="assocarray" />
+    <field id="error" type="string" />
+    <field id="state" type="string" value="idle" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
+  <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
+  <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
+
+  <script type="text/brightscript">
+  <![CDATA[
+    sub init()
+      m.top.functionName = "validatePurchase"
+    end sub
+
+    sub validatePurchase()
+      m.top.state = "loading"
+
+      purchaseId = TrimString(m.top.purchaseId)
+      productCode = TrimString(m.top.productCode)
+      if purchaseId = "" or productCode = ""
+        fail("Missing Roku Pay purchase metadata.")
+        return
+      end if
+
+      session = LoadAccountSession()
+      if session.accessToken = invalid or session.accessToken = ""
+        fail("Sign in to your StreamShōgun account before validating this Roku Pay purchase.")
+        return
+      end if
+
+      response = ApiPostJson(session.apiBaseUrl, "/v1/roku/validate-purchase", {
+        purchaseId: purchaseId,
+        productCode: productCode
+      }, session.accessToken)
+
+      if not response.ok
+        savePending(productCode, purchaseId, "pending_backend_validation")
+        fail("Backend validation did not complete. " + response.error)
+        return
+      end if
+
+      payload = response.json
+      if payload = invalid or payload.entitled <> true
+        savePending(productCode, purchaseId, "not_entitled")
+        fail("Roku Pay did not confirm this purchase as entitled.")
+        return
+      end if
+
+      savePending(productCode, purchaseId, "validated")
+
+      if payload.subscription <> invalid
+        session.plan = IIF(payload.subscription.plan <> invalid, payload.subscription.plan, "PRO")
+        session.status = IIF(payload.subscription.status <> invalid, payload.subscription.status, "ACTIVE")
+        session.billingInterval = IIF(payload.subscription.billingInterval <> invalid, payload.subscription.billingInterval, "")
+        session.currentPeriodEnd = IIF(payload.subscription.currentPeriodEnd <> invalid, payload.subscription.currentPeriodEnd, "")
+        if session.flags = invalid then session.flags = {}
+        session.flags["epg_proxy"] = true
+        session.flags["unlimited_playlists"] = true
+        session.checkedAt = CreateObject("roDateTime").AsSeconds()
+        SaveAccountSession(session)
+      end if
+
+      m.top.result = payload
+      m.top.state = "done"
+    end sub
+
+    sub savePending(productCode as String, purchaseId as String, status as String)
+      now = CreateObject("roDateTime").AsSeconds()
+      state = LoadRokuPayState()
+      purchasedAt = state.purchasedAt
+      if purchasedAt = invalid or purchasedAt = 0 then purchasedAt = now
+      SaveRokuPayState({
+        productCode: productCode,
+        purchaseId: purchaseId,
+        status: status,
+        purchasedAt: purchasedAt,
+        lastRestoreAt: now
+      })
+    end sub
+
+    sub fail(message as String)
+      m.top.error = message
+      m.top.state = "error"
+    end sub
+  ]]>
+  </script>
+</component>

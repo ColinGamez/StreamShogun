@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#7c5cfc" />
+  <title>Profile — StreamShōgun</title>
+  <meta name="description" content="A simple StreamShōgun profile page for introductions, setup notes, and links." />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://streamshogun.com/u" />
+  <meta property="og:title" content="Profile — StreamShōgun" />
+  <meta property="og:description" content="A simple StreamShōgun profile page." />
+  <meta property="og:type" content="profile" />
+  <meta property="og:url" content="https://streamshogun.com/u" />
+  <meta property="og:site_name" content="StreamShōgun" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090b;
+      --surface: #15151a;
+      --surface-2: #1d1d23;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --accent: #7c5cfc;
+      --accent-hover: #9678ff;
+      --accent-soft: rgba(124,92,252,0.12);
+      --error: #ef4444;
+      --success: #22c55e;
+    }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+    }
+    .nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(9, 9, 11, 0.82);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .nav-links a:hover, .nav-links a[aria-current="page"] { color: var(--text); }
+    .wrap {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 108px 24px 56px;
+      flex: 1;
+    }
+    .state {
+      min-height: 320px;
+      display: grid;
+      place-items: center;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .profile {
+      display: none;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+    .profile.visible { display: grid; }
+    .side, .main-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .avatar {
+      width: 132px;
+      height: 132px;
+      border-radius: 28px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(124,92,252,0.24);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      margin-bottom: 18px;
+      color: #d8d1ff;
+      font-size: 44px;
+      font-weight: 800;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .side h1 {
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+    }
+    .username { color: var(--text-muted); margin-top: 4px; overflow-wrap: anywhere; }
+    .meta-list { display: grid; gap: 10px; margin-top: 20px; }
+    .meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .meta a { color: #d8d1ff; text-decoration: none; overflow-wrap: anywhere; }
+    .meta a:hover { text-decoration: underline; }
+    .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border-strong);
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .btn:hover { border-color: var(--accent); color: #d8d1ff; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); color: #fff; }
+    .main-card h2 {
+      color: var(--text-dim);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 12px;
+    }
+    .bio {
+      color: var(--text-muted);
+      font-size: 16px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      min-height: 88px;
+    }
+    .bio.empty { color: var(--text-dim); font-style: italic; }
+    .callout {
+      margin-top: 22px;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      transition: all 0.2s ease;
+      z-index: 40;
+    }
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0,0,0,0.62);
+      backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.visible { display: flex; }
+    .dialog {
+      width: min(560px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .dialog-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .dialog h2 { font-size: 20px; letter-spacing: -0.02em; }
+    .close {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .form-grid { display: grid; gap: 14px; }
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--text);
+      font: inherit;
+      padding: 11px 12px;
+      outline: none;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,252,0.14); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .error { display: none; color: var(--error); font-size: 13px; margin-top: 10px; }
+    .error.visible { display: block; }
+    .footer {
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 24px;
+      text-align: center;
+    }
+    .footer a { color: var(--text-muted); text-decoration: none; }
+    .footer a:hover { color: var(--text); }
+    @media (max-width: 760px) {
+      .profile.visible { grid-template-columns: 1fr; }
+      .side { display: grid; justify-items: center; text-align: center; }
+      .meta-list { justify-items: center; }
+      .actions { width: 100%; max-width: 320px; }
+    }
+    @media (max-width: 560px) {
+      .nav-links a:nth-child(2), .nav-links a:nth-child(3) { display: none; }
+      .wrap { padding-left: 18px; padding-right: 18px; }
+      .form-actions { flex-direction: column-reverse; }
+      .form-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand" aria-label="StreamShōgun Home">Stream<span>Shōgun</span></a>
+      <div class="nav-links">
+        <a href="/#screenshots">App</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/community">Community</a>
+        <a href="/account">Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <div class="state" id="loading">
+      <div>
+        <div class="spinner"></div>
+        <p>Loading profile...</p>
+      </div>
+    </div>
+
+    <div class="state" id="not-found" style="display:none">
+      <div>
+        <h1 style="font-size:32px;margin-bottom:8px;">Profile not found</h1>
+        <p>This profile is not available yet.</p>
+        <p style="margin-top:18px;"><a class="btn" href="/community">Visit community</a></p>
+      </div>
+    </div>
+
+    <section class="profile" id="profile">
+      <aside class="side">
+        <div class="avatar" id="avatar"></div>
+        <h1 id="display-name">StreamShōgun User</h1>
+        <div class="username" id="username"></div>
+        <div class="meta-list">
+          <div class="meta" id="join-date"></div>
+          <div class="meta" id="location" style="display:none"></div>
+          <div class="meta" id="website" style="display:none"></div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="edit-btn" type="button" style="display:none">Edit profile</button>
+          <button class="btn" id="share-btn" type="button" style="display:none">Share profile</button>
+        </div>
+      </aside>
+      <article class="main-card">
+        <h2>About</h2>
+        <div class="bio empty" id="bio">No profile notes yet.</div>
+        <div class="callout">
+          Profiles are intentionally simple: a name, a short note, and optional links. The focus stays on context and conversation.
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div class="modal" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="dialog">
+      <div class="dialog-head">
+        <h2 id="edit-title">Edit profile</h2>
+        <button class="close" id="close-modal" type="button" aria-label="Close">&times;</button>
+      </div>
+      <form id="edit-form" class="form-grid">
+        <label>Username
+          <input id="edit-username" autocomplete="username" maxlength="30" placeholder="your-name" />
+        </label>
+        <label>Display name
+          <input id="edit-display-name" maxlength="50" placeholder="Name shown on your profile" />
+        </label>
+        <label>Profile note
+          <textarea id="edit-bio" maxlength="500" placeholder="A short intro, setup notes, or what you use StreamShōgun for."></textarea>
+        </label>
+        <label>Location
+          <input id="edit-location" maxlength="80" placeholder="Optional" />
+        </label>
+        <label>Website
+          <input id="edit-website" maxlength="200" placeholder="https://example.com" />
+        </label>
+        <label>Avatar URL
+          <input id="edit-avatar" maxlength="500" placeholder="https://example.com/avatar.png" />
+        </label>
+        <div class="error" id="edit-error"></div>
+        <div class="form-actions">
+          <button class="btn" id="cancel-edit" type="button">Cancel</button>
+          <button class="btn btn-primary" id="save-edit" type="submit">Save profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <footer class="footer">
+    &copy; <span id="c-year"></span> StreamShōgun &mdash;
+    <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
+    <a href="/community">Community</a>
+  </footer>
+
+  <script>
+    function resolveApiBase() {
+      var host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') return window.location.origin + '/api';
+      return 'https://api.streamshogun.com';
+    }
+    var API = resolveApiBase();
+    var profileData = null;
+    var isOwnProfile = false;
+
+    var el = {
+      loading: document.getElementById('loading'),
+      notFound: document.getElementById('not-found'),
+      profile: document.getElementById('profile'),
+      avatar: document.getElementById('avatar'),
+      displayName: document.getElementById('display-name'),
+      username: document.getElementById('username'),
+      joinDate: document.getElementById('join-date'),
+      location: document.getElementById('location'),
+      website: document.getElementById('website'),
+      bio: document.getElementById('bio'),
+      editBtn: document.getElementById('edit-btn'),
+      shareBtn: document.getElementById('share-btn'),
+      modal: document.getElementById('edit-modal'),
+      error: document.getElementById('edit-error'),
+    };
+
+    function getUsernameFromPath() {
+      var parts = window.location.pathname.split('/').filter(Boolean);
+      return parts[0] === 'u' && parts[1] ? decodeURIComponent(parts[1]) : '';
+    }
+
+    function authHeaders(extra) {
+      var headers = { 'Content-Type': 'application/json', 'x-client': 'web' };
+      var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+      if (match) headers['X-CSRF-Token'] = decodeURIComponent(match[1]);
+      if (extra) for (var k in extra) headers[k] = extra[k];
+      return headers;
+    }
+
+    async function loadProfile() {
+      var username = getUsernameFromPath();
+      var url = username ? API + '/v1/profile/' + encodeURIComponent(username) : API + '/v1/profile';
+      isOwnProfile = !username;
+      try {
+        var resp = await fetch(url, { credentials: 'include', headers: { 'x-client': 'web' } });
+        if (resp.status === 401 && !username) {
+          window.location.href = '/login';
+          return;
+        }
+        if (!resp.ok) throw new Error('Profile not found');
+        profileData = await resp.json();
+        if (username) await checkOwnProfile(profileData.username);
+        renderProfile(profileData);
+      } catch (err) {
+        el.loading.style.display = 'none';
+        el.notFound.style.display = 'grid';
+      }
+    }
+
+    async function checkOwnProfile(username) {
+      try {
+        var resp = await fetch(API + '/v1/profile', { credentials: 'include', headers: { 'x-client': 'web' } });
+        if (!resp.ok) return;
+        var me = await resp.json();
+        isOwnProfile = !!(me.username && username && me.username.toLowerCase() === username.toLowerCase());
+      } catch (err) {}
+    }
+
+    function renderProfile(p) {
+      var name = p.displayName || p.username || 'StreamShōgun User';
+      document.title = name + ' - StreamShōgun';
+      el.displayName.textContent = name;
+      el.username.textContent = p.username ? '@' + p.username : '';
+      el.joinDate.textContent = p.joinDate ? 'Member since ' + formatDate(p.joinDate) : '';
+      if (p.location) {
+        el.location.textContent = p.location;
+        el.location.style.display = '';
+      }
+      if (p.website) {
+        var url = normalizeUrl(p.website);
+        el.website.innerHTML = '<a href="' + escapeAttr(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(trimUrl(url)) + '</a>';
+        el.website.style.display = '';
+      }
+      renderAvatar(p.avatarUrl, name);
+      if (p.bio) {
+        el.bio.textContent = p.bio;
+        el.bio.classList.remove('empty');
+      } else {
+        el.bio.textContent = isOwnProfile ? 'Add a short intro or setup note when you are ready.' : 'No profile notes yet.';
+        el.bio.classList.add('empty');
+      }
+      el.editBtn.style.display = isOwnProfile ? '' : 'none';
+      el.shareBtn.style.display = p.username ? '' : 'none';
+      el.loading.style.display = 'none';
+      el.profile.classList.add('visible');
+    }
+
+    function renderAvatar(url, name) {
+      el.avatar.innerHTML = '';
+      if (url) {
+        var img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.onerror = function() {
+          el.avatar.textContent = initials(name);
+        };
+        el.avatar.appendChild(img);
+      } else {
+        el.avatar.textContent = initials(name);
+      }
+    }
+
+    function openEdit() {
+      if (!profileData) return;
+      document.getElementById('edit-username').value = profileData.username || '';
+      document.getElementById('edit-display-name').value = profileData.displayName || '';
+      document.getElementById('edit-bio').value = profileData.bio || '';
+      document.getElementById('edit-location').value = profileData.location || '';
+      document.getElementById('edit-website').value = profileData.website || '';
+      document.getElementById('edit-avatar').value = profileData.avatarUrl || '';
+      el.error.classList.remove('visible');
+      el.modal.classList.add('visible');
+      document.getElementById('edit-display-name').focus();
+    }
+
+    function closeEdit() { el.modal.classList.remove('visible'); }
+
+    async function saveProfile(event) {
+      event.preventDefault();
+      var save = document.getElementById('save-edit');
+      save.disabled = true;
+      save.textContent = 'Saving...';
+      el.error.classList.remove('visible');
+      var newUsername = document.getElementById('edit-username').value.trim().toLowerCase();
+      var payload = {
+        displayName: document.getElementById('edit-display-name').value.trim(),
+        bio: document.getElementById('edit-bio').value.trim(),
+        location: document.getElementById('edit-location').value.trim(),
+        website: normalizeOptionalUrl(document.getElementById('edit-website').value.trim()),
+        avatarUrl: document.getElementById('edit-avatar').value.trim(),
+      };
+      try {
+        if (newUsername && newUsername !== (profileData.username || '').toLowerCase()) {
+          var usernameResp = await fetch(API + '/v1/profile/username', {
+            method: 'PUT',
+            credentials: 'include',
+            headers: authHeaders(),
+            body: JSON.stringify({ username: newUsername }),
+          });
+          if (!usernameResp.ok) throw await responseError(usernameResp);
+          profileData.username = newUsername;
+        }
+        var resp = await fetch(API + '/v1/profile', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) throw await responseError(resp);
+        var updated = await resp.json();
+        profileData = Object.assign({}, profileData, updated, { username: profileData.username || newUsername });
+        closeEdit();
+        renderProfile(profileData);
+        showToast('Profile saved');
+        if (newUsername && window.location.pathname !== '/u/' + encodeURIComponent(newUsername)) {
+          history.replaceState(null, '', '/u/' + encodeURIComponent(newUsername));
+        }
+      } catch (err) {
+        el.error.textContent = err.message || 'Could not save profile.';
+        el.error.classList.add('visible');
+      } finally {
+        save.disabled = false;
+        save.textContent = 'Save profile';
+      }
+    }
+
+    async function responseError(resp) {
+      try {
+        var data = await resp.json();
+        return new Error(data.message || data.error || 'Request failed');
+      } catch (err) {
+        return new Error('Request failed');
+      }
+    }
+
+    function shareProfile() {
+      if (!profileData || !profileData.username) return;
+      var url = window.location.origin + '/u/' + encodeURIComponent(profileData.username);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() { showToast('Profile link copied'); });
+      } else {
+        showToast(url);
+      }
+    }
+
+    function showToast(msg) {
+      var toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(function() { toast.classList.remove('visible'); }, 2200);
+    }
+
+    function initials(name) {
+      return (name || 'S').split(/\s+/).filter(Boolean).slice(0, 2).map(function(part) { return part[0]; }).join('').toUpperCase();
+    }
+    function formatDate(value) {
+      return new Date(value).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+    function normalizeUrl(url) {
+      return /^https?:\/\//i.test(url) ? url : 'https://' + url;
+    }
+    function normalizeOptionalUrl(url) {
+      return url ? normalizeUrl(url) : '';
+    }
+    function trimUrl(url) {
+      return url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, function(ch) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+      });
+    }
+    function escapeAttr(value) { return escapeHtml(value); }
+
+    document.getElementById('edit-btn').addEventListener('click', openEdit);
+    document.getElementById('share-btn').addEventListener('click', shareProfile);
+    document.getElementById('close-modal').addEventListener('click', closeEdit);
+    document.getElementById('cancel-edit').addEventListener('click', closeEdit);
+    document.getElementById('edit-form').addEventListener('submit', saveProfile);
+    el.modal.addEventListener('click', function(event) {
+      if (event.target === el.modal) closeEdit();
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && el.modal.classList.contains('visible')) closeEdit();
+    });
+    var y = document.getElementById('c-year');
+    if (y) y.textContent = new Date().getFullYear();
+    loadProfile();
+  </script>
+</body>
+</html>

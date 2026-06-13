@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: streamshogun-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    domains:
+      - api.streamshogun.com
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: "10000"
+      - key: LOG_LEVEL
+        value: info
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 7d
+      - key: DATABASE_URL
+        fromDatabase:
+          name: streamshogun-db
+          property: connectionString
+      - key: CORS_ORIGIN
+        value: https://streamshogun.com
+      - key: APP_PUBLIC_URL
+        value: https://streamshogun.com
+      - key: COOKIE_DOMAIN
+        value: .streamshogun.com
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: EMAIL_FROM
+        value: StreamShogun <no-reply@streamshogun.com>
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO_YEARLY
+        sync: false
+      - key: STRIPE_PORTAL_RETURN_URL
+        value: https://streamshogun.com/account
+      - key: BILLING_DISABLED
+        sync: false
+      - key: FOUNDING_MEMBER_CUTOFF
+        value: 2026-06-01T00:00:00.000Z
+databases:
+  - name: streamshogun-db
+    plan: basic-256mb
+    region: virginia
+    databaseName: streamshogun
+    user: streamshogun

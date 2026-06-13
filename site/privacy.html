@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#7c5cfc" />
+  <title>Privacy Policy — StreamShōgun</title>
+  <meta name="description" content="Privacy Policy for StreamShōgun desktop IPTV player application." />
+  <link rel="canonical" href="https://streamshogun.com/privacy" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Privacy Policy — StreamShōgun" />
+  <meta property="og:description" content="Privacy Policy for StreamShōgun desktop IPTV player application." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://streamshogun.com/privacy" />
+  <meta property="og:site_name" content="StreamShōgun" />
+  <meta name="twitter:card" content="summary" />
+
+  <!-- Breadcrumb structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://streamshogun.com" },
+      { "@type": "ListItem", "position": 2, "name": "Privacy Policy", "item": "https://streamshogun.com/privacy" }
+    ]
+  }
+  </script>
+
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    :root {
+      --bg:           #09090b;
+      --bg-subtle:    #111114;
+      --surface:      #18181b;
+      --border:       rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text:         #fafafa;
+      --text-muted:   #a1a1aa;
+      --text-dim:     #71717a;
+      --accent:       #7c5cfc;
+      --accent-hover: #9a7eff;
+      --radius:       12px;
+      --transition:   0.2s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,9,11,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 800px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      font-size: 18px; font-weight: 800; color: var(--text);
+      text-decoration: none; letter-spacing: -0.02em;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-back {
+      color: var(--text-muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; transition: color var(--transition);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-back:hover { color: var(--text); }
+
+    .legal-wrapper {
+      flex: 1; max-width: 800px; margin: 0 auto; width: 100%;
+      padding: 100px 24px 60px;
+    }
+
+    .legal-wrapper h1 {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .legal-meta {
+      color: var(--text-dim); font-size: 14px; margin-bottom: 40px;
+    }
+    .legal-wrapper h2 {
+      font-size: 20px; font-weight: 700; margin-top: 40px; margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .legal-wrapper p {
+      color: var(--text-muted); font-size: 15px; line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    .legal-wrapper ul {
+      list-style: none; margin-bottom: 16px; padding-left: 0;
+    }
+    .legal-wrapper ul li {
+      color: var(--text-muted); font-size: 15px; line-height: 1.8;
+      padding-left: 20px; position: relative;
+    }
+    .legal-wrapper ul li::before {
+      content: ''; position: absolute; left: 0; top: 11px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+    }
+    .legal-wrapper strong {
+      color: var(--text); font-weight: 600;
+    }
+    .legal-wrapper a {
+      color: var(--accent); text-decoration: none;
+    }
+    .legal-wrapper a:hover { color: var(--accent-hover); }
+
+    .page-footer {
+      text-align: center; padding: 24px;
+      color: var(--text-dim); font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    .page-footer a { color: var(--text-muted); text-decoration: none; }
+    .page-footer a:hover { color: var(--text); }
+
+    .back-to-top {
+      position: fixed; bottom: 32px; right: 32px; z-index: 90;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent); color: #fff; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: translateY(10px); pointer-events: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(124,92,252,0.3);
+    }
+    .back-to-top.visible {
+      opacity: 1; transform: translateY(0); pointer-events: auto;
+    }
+    .back-to-top:hover {
+      background: var(--accent-hover); transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(124,92,252,0.4);
+    }
+
+    /* ── Skip Link ───────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100px; left: 16px;
+      background: var(--accent); color: #fff;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      text-decoration: none; z-index: 999;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 12px; }
+
+    /* Page entrance */
+    body { animation: pageEntrance 0.6s ease both; }
+    @keyframes pageEntrance { from { opacity: 0; } to { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ── Print styles ─────────────────────────────────────────────── */
+    @media print {
+      body { background: #fff; color: #000; }
+      .nav, .back-to-top, .page-footer { display: none; }
+      .legal-wrapper { padding-top: 20px; max-width: 100%; }
+      .legal-wrapper h1 { color: #000; font-size: 24px; }
+      .legal-wrapper h2 { color: #222; font-size: 16px; margin-top: 24px; }
+      .legal-wrapper p, .legal-wrapper ul li { color: #333; font-size: 13px; line-height: 1.6; }
+      .legal-wrapper ul li::before { background: #333; }
+      .legal-wrapper a { color: #000; text-decoration: underline; }
+      .legal-meta { color: #666; }
+      .toc { display: none; }
+    }
+
+    /* ── Table of Contents ────────────────────────────────────────── */
+    .toc {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .toc h3 {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 12px;
+    }
+    .toc ol {
+      list-style: none; counter-reset: toc-counter; padding: 0;
+    }
+    .toc ol li {
+      counter-increment: toc-counter;
+    }
+    .toc ol li a {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 6px 0; font-size: 14px; color: var(--text-muted);
+      text-decoration: none; transition: color var(--transition);
+    }
+    .toc ol li a:hover { color: var(--accent); }
+    .toc ol li a.toc-active {
+      color: var(--accent); font-weight: 600;
+    }
+    .toc ol li a.toc-active::before { color: var(--accent); }
+    .toc ol li a::before {
+      content: counter(toc-counter) '.';
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
+      min-width: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Stream<span>Shōgun</span></a>
+    <a href="/" class="nav-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to home
+    </a>
+  </div>
+</nav>
+
+<main id="main" class="legal-wrapper">
+  <h1>Privacy Policy</h1>
+  <p class="legal-meta">Last updated: March 4, 2026</p>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#s1">Overview</a></li>
+      <li><a href="#s2">Information We Collect</a></li>
+      <li><a href="#s3">Information We Do NOT Collect</a></li>
+      <li><a href="#s4">How We Use Your Information</a></li>
+      <li><a href="#s5">Data Storage and Security</a></li>
+      <li><a href="#s6">Cookies</a></li>
+      <li><a href="#s7">Data Retention</a></li>
+      <li><a href="#s8">Your Rights</a></li>
+      <li><a href="#s9">Children's Privacy</a></li>
+      <li><a href="#s10">Changes to This Policy</a></li>
+      <li><a href="#s11">Contact</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="s1">1. Overview</h2>
+  <p>
+    StreamShōgun ("we", "us", "our") respects your privacy. This Privacy Policy explains what information
+    we collect, how we use it, and the choices you have. We are committed to collecting only what is
+    necessary to provide and improve the service.
+  </p>
+
+  <h2 id="s2">2. Information We Collect</h2>
+
+  <p><strong>Account Information</strong></p>
+  <p>
+    When you create an account, we collect your email address and a securely hashed password.
+    This is used for authentication and subscription management.
+  </p>
+
+  <p><strong>Billing Information</strong></p>
+  <p>
+    Payment processing is handled entirely by <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe</a>.
+    We do not store credit card numbers, bank account details, or other payment credentials.
+    We receive only a subscription status and Stripe customer ID.
+  </p>
+
+  <p><strong>Cloud Sync Data (Pro only)</strong></p>
+  <p>
+    If you enable Cloud Sync, your playlist URLs, favorites, and settings are synced to our servers.
+    This data is encrypted in transit (TLS) and stored in a secured database. We do not inspect or
+    analyze the content of your playlists.
+  </p>
+
+  <p><strong>Application Usage</strong></p>
+  <p>
+    The desktop application operates locally. We do not collect telemetry, analytics, usage statistics,
+    or personal data from the desktop app unless you explicitly enable Cloud Sync or create an account.
+  </p>
+
+  <h2 id="s3">3. Information We Do NOT Collect</h2>
+  <ul>
+    <li>We do not track which channels you watch or when you watch them</li>
+    <li>We do not collect IP addresses for analytics or profiling</li>
+    <li>We do not sell, rent, or share your information with third parties for marketing</li>
+    <li>We do not use advertising trackers, pixels, or third-party analytics on our website</li>
+    <li>We do not access or inspect the content of your M3U playlists or XMLTV data</li>
+  </ul>
+
+  <h2 id="s4">4. How We Use Your Information</h2>
+  <ul>
+    <li>To authenticate your account and manage your subscription</li>
+    <li>To provide Cloud Sync functionality when enabled</li>
+    <li>To send transactional emails (e.g., billing receipts, password resets)</li>
+    <li>To respond to support requests</li>
+  </ul>
+
+  <h2 id="s5">5. Data Storage and Security</h2>
+  <p>
+    Your data is stored on secured infrastructure. All data in transit is protected with TLS encryption.
+    Passwords are hashed using industry-standard algorithms. We regularly review our security practices.
+  </p>
+
+  <h2 id="s6">6. Cookies</h2>
+  <p>
+    Our website uses httpOnly session cookies for authentication. We do not use tracking cookies,
+    advertising cookies, or third-party cookie-based analytics.
+  </p>
+
+  <h2 id="s7">7. Data Retention</h2>
+  <p>
+    Account data is retained as long as your account is active. If you delete your account, your data
+    will be permanently removed within 30 days. Billing records may be retained as required by law.
+  </p>
+
+  <h2 id="s8">8. Your Rights</h2>
+  <p>You have the right to:</p>
+  <ul>
+    <li>Access the personal data we hold about you</li>
+    <li>Request correction of inaccurate data</li>
+    <li>Request deletion of your account and associated data</li>
+    <li>Export your data in a portable format</li>
+  </ul>
+  <p>
+    To exercise any of these rights, contact <a href="mailto:support@streamshogun.com">support@streamshogun.com</a>.
+  </p>
+
+  <h2 id="s9">9. Children's Privacy</h2>
+  <p>
+    StreamShōgun is not directed at children under 13. We do not knowingly collect personal information
+    from children. If you believe a child has provided us with personal data, please contact us.
+  </p>
+
+  <h2 id="s10">10. Changes to This Policy</h2>
+  <p>
+    We may update this Privacy Policy from time to time. Changes will be posted on this page with an
+    updated revision date. Continued use of the service after changes constitutes acceptance.
+  </p>
+
+  <h2 id="s11">11. Contact</h2>
+  <p>
+    For privacy-related questions, contact us at <a href="mailto:support@streamshogun.com">support@streamshogun.com</a>.
+  </p>
+</main>
+
+<footer class="page-footer">
+  &copy; <span id="c-year"></span> StreamShōgun &mdash;
+  <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
+  <a href="/changelog">Changelog</a> &middot; <a href="/community">Community</a>
+</footer>
+
+<button class="back-to-top" id="back-to-top" aria-label="Back to top" title="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+  var btt = document.getElementById('back-to-top');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 300) btt.classList.add('visible');
+    else btt.classList.remove('visible');
+  });
+  btt.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ── Active ToC highlighting ─────────────────────────────── */
+  (function() {
+    var tocLinks = document.querySelectorAll('.toc a');
+    var sections = [];
+    tocLinks.forEach(function(link) {
+      var id = link.getAttribute('href').substring(1);
+      var el = document.getElementById(id);
+      if (el) sections.push({ el: el, link: link });
+    });
+    var tocObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var link = sections.find(function(s) { return s.el === entry.target; });
+        if (link) {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(function(l) { l.classList.remove('toc-active'); });
+            link.link.classList.add('toc-active');
+          }
+        }
+      });
+    }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+    sections.forEach(function(s) { tocObserver.observe(s.el); });
+  })();
+
+  // Dynamic copyright year
+  (function() {
+    var el = document.getElementById('c-year');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+</script>
+
+</body>
+</html>
