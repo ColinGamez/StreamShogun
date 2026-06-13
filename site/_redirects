@@ -1,0 +1,13 @@
+/login /login.html 200
+/register /register.html 200
+/account /account.html 200
+/terms /terms.html 200
+/privacy /privacy.html 200
+/changelog /changelog.html 200
+/forgot-password /forgot-password.html 200
+/reset-password /reset-password.html 200
+/billing/success /billing/success.html 200
+/billing/cancel /billing/cancel.html 200
+/community /community.html 200
+/u /profile.html 200
+/u/:username /profile.html 200

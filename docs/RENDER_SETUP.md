@@ -4,22 +4,44 @@ This is the $0/month production setup for StreamShogun while money is tight.
 
 Provider split:
 
+- Cloudflare Pages Free: static website
 - Render free web service: API
 - Neon Free: PostgreSQL
 - Resend: transactional email, optional at launch
-- Your DNS host: `api.streamshogun.com`
+- Your DNS host: `streamshogun.com` and `api.streamshogun.com`
 
 Do not use Render Postgres for this free setup. Render's free Postgres is temporary, and the non-expiring Render database plan costs money. Neon Free is the better $0 database choice.
 
 ## What the repo already does
 
+- [site/\_redirects](../site/_redirects) and [site/\_headers](../site/_headers) preserve the static website routes and security headers on Cloudflare Pages
 - [render.yaml](../render.yaml) creates the API service
 - [render.yaml](../render.yaml) keeps the API on Render's `free` plan
 - The API reads `DATABASE_URL` from a secret you paste into Render
 - Password reset emails can use `RESEND_API_KEY` directly without SMTP setup
 - Billing can stay enabled with Stripe live keys when you are ready
 
-## 1. Create the free database
+## 1. Move the website to Cloudflare Pages
+
+Use this when you want the public website off Vercel Hobby before taking real payments.
+
+1. In Cloudflare Pages, create a new project from the GitHub repo.
+2. Set build command to blank or:
+
+```bash
+node -e "console.log('Static site deploy')"
+```
+
+3. Set output directory to:
+
+```text
+site
+```
+
+4. Add the custom domain `streamshogun.com`.
+5. Let Cloudflare give you the DNS records, then switch the domain over.
+
+## 2. Create the free database
 
 1. Open Neon.
 2. Create a free Postgres project.
@@ -32,7 +54,7 @@ The value should look like:
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 ```
 
-## 2. Deploy the API on Render
+## 3. Deploy the API on Render
 
 1. Push this repo to GitHub with [render.yaml](../render.yaml).
 2. In Render, click `New` -> `Blueprint`.
@@ -64,7 +86,7 @@ EMAIL_FROM=StreamShogun <no-reply@streamshogun.com>
 STRIPE_PORTAL_RETURN_URL=https://streamshogun.com/account
 ```
 
-## 3. Add billing secrets when ready
+## 4. Add billing secrets when ready
 
 Stripe does not have a monthly fee for this setup. It takes fees out of successful payments.
 
@@ -81,14 +103,14 @@ Optional:
 - `SENTRY_DSN`
 - `BILLING_DISABLED=true` if you want billing routes off temporarily
 
-## 4. Custom domain
+## 5. API custom domain
 
 1. In Render, open `streamshogun-api`.
 2. Add `api.streamshogun.com` as a custom domain.
 3. Add the DNS record Render gives you.
 4. Wait for TLS to finish provisioning.
 
-## 5. Smoke test after deploy
+## 6. Smoke test after deploy
 
 Check health:
 
