@@ -34,26 +34,10 @@ services:
       - key: COOKIE_DOMAIN
         value: .streamshogun.com
       - key: SUPPORT_EMAIL
-        sync: false
+        value: colin.kenny777@gmail.com
       - key: EMAIL_FROM
         value: StreamShogun <no-reply@streamshogun.com>
-      - key: RESEND_API_KEY
-        sync: false
-      - key: ADMIN_KEY
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: STRIPE_PRICE_ID_PRO_MONTHLY
-        sync: false
-      - key: STRIPE_PRICE_ID_PRO_YEARLY
-        sync: false
       - key: STRIPE_PORTAL_RETURN_URL
         value: https://streamshogun.com/account
-      - key: BILLING_DISABLED
-        sync: false
       - key: FOUNDING_MEMBER_CUTOFF
         value: 2026-06-01T00:00:00.000Z
