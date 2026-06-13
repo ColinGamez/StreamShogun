@@ -72,14 +72,14 @@ The repo now includes a production-ready [render.yaml](../../render.yaml) Bluepr
 Recommended low-chaos stack:
 
 1. Deploy the API as a Docker web service on Render.
-2. Let the Blueprint create a small Render Postgres database automatically.
+2. Use Neon Free for Postgres and paste its pooled connection string as `DATABASE_URL`.
 3. Keep the website on your current static host and point `api.streamshogun.com` at Render.
 
 Minimum secrets to set in Render before the first production deploy:
 
-- `JWT_SECRET`
+- `DATABASE_URL`
 - `SUPPORT_EMAIL`
-- `RESEND_API_KEY`
+- `RESEND_API_KEY` if password reset emails should work on day one
 
 Common production env vars to review:
 
