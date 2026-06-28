@@ -17,6 +17,7 @@ import { billingRoutes } from "./routes/v1/billing.js";
 import { supportRoutes } from "./routes/v1/support.js";
 import { rokuRoutes } from "./routes/v1/roku.js";
 import { profileRoutes } from "./routes/v1/profile.js";
+import { masterRoutes } from "./routes/v1/master.js";
 import { healthRoutes } from "./routes/health.js";
 
 // ── Fastify type augmentations ──────────────────────────────────────────
@@ -157,6 +158,7 @@ export async function buildApp() {
   await app.register(supportRoutes, { prefix: "/v1/support" });
   await app.register(rokuRoutes, { prefix: "/v1/roku" });
   await app.register(profileRoutes, { prefix: "/v1/profile" });
+  await app.register(masterRoutes, { prefix: "/v1/master" });
 
   // ── Global error handler ──────────────────────────────────────
 

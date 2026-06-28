@@ -91,7 +91,11 @@ The Blueprint asks for:
 ```env
 DATABASE_URL=<your Neon pooled connection string>
 RESEND_API_KEY=<your Resend API key>
+MASTER_PLAYLIST_URL=<your private M3U/M3U8 URL>
+MASTER_EPG_URL=<your private XMLTV/XMLTV.GZ URL>
 ```
+
+`MASTER_PLAYLIST_URL` and `MASTER_EPG_URL` are only returned by the API when the signed-in user email is `colin.kenny777@gmail.com`. Do not paste private IPTV URLs into frontend code or docs.
 
 ## 4. Add billing secrets when ready
 

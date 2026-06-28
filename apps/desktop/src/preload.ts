@@ -155,6 +155,9 @@ contextBridge.exposeInMainWorld("shogun", {
 
   featuresFetch: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.FEATURES_FETCH),
 
+  // ── Master profile ─────────────────────────────────────────────
+  masterSourcesFetch: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.MASTER_SOURCES_FETCH),
+
   // ── Billing ────────────────────────────────────────────────────
   billingCheckout: (args?: { interval?: string }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.BILLING_CHECKOUT, args),

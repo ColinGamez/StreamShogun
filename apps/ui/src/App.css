@@ -377,6 +377,25 @@ button:disabled {
   color: var(--text-muted);
 }
 
+.master-sources-card {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.master-sources-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.master-sources-header h2 {
+  margin-bottom: 0;
+}
+
+.master-source-list {
+  margin-top: 0.85rem;
+}
+
 /* ── EPG Preset picker ─────────────────────────────────────────────── */
 
 .epg-presets {

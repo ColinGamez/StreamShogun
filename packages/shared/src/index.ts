@@ -259,6 +259,19 @@ export interface FeaturesResponse {
   isFoundingMember: boolean;
 }
 
+export type MasterSourceKind = "playlist" | "epg";
+
+export interface MasterSourceDTO {
+  id: string;
+  kind: MasterSourceKind;
+  name: string;
+  url: string;
+}
+
+export interface MasterSourcesResponse {
+  sources: MasterSourceDTO[];
+}
+
 export interface CloudSettingsResponse {
   settings: Record<string, unknown> | null;
   updatedAt: string | null;

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import type { MasterSourceDTO } from "@stream-shogun/shared";
 import { useAppStore, type PlaylistEntry, type EpgEntry } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import {
@@ -6,9 +7,11 @@ import {
   loadPlaylistFromFile,
   loadEpgFromUrl,
   loadEpgFromFile,
+  masterSourcesFetch,
 } from "../lib/bridge";
 import { showToast } from "../components/Toast";
 import { EPG_PRESETS } from "../lib/epg-presets";
+import { isMasterEmail } from "../lib/master-profile";
 
 /** Open a native file dialog (Electron) or an HTML <input type="file"> fallback. */
 function pickFilePath(accept: string): Promise<string | null> {
@@ -46,10 +49,14 @@ export function LibraryPage() {
   const removePlaylist = useAppStore((s) => s.removePlaylist);
   const addEpg = useAppStore((s) => s.addEpg);
   const removeEpg = useAppStore((s) => s.removeEpg);
+  const authUser = useAppStore((s) => s.authUser);
 
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [epgUrl, setEpgUrl] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+  const [masterSources, setMasterSources] = useState<MasterSourceDTO[]>([]);
+
+  const isMaster = isMasterEmail(authUser?.email);
 
   // ── Computed stats ──────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -231,9 +238,131 @@ export function LibraryPage() {
     }
   };
 
+  const handleLoadMasterSources = async () => {
+    setLoading("master-sources");
+    try {
+      const sourcesRes = await masterSourcesFetch();
+      if (!sourcesRes.ok) {
+        showToast(sourcesRes.error, "error");
+        return;
+      }
+
+      const sources = sourcesRes.data.sources;
+      setMasterSources(sources);
+
+      if (sources.length === 0) {
+        showToast("No Master sources configured yet", "error");
+        return;
+      }
+
+      const loadedPlaylistUrls = new Set(playlistEntries.map((entry) => entry.location));
+      const loadedEpgUrls = new Set(epgEntries.map((entry) => entry.location));
+      let loadedCount = 0;
+      let skippedCount = 0;
+      let failedCount = 0;
+
+      for (const source of sources) {
+        if (source.kind === "playlist") {
+          if (loadedPlaylistUrls.has(source.url)) {
+            skippedCount++;
+            continue;
+          }
+
+          const res = await loadPlaylistFromUrl(source.url);
+          if (res.ok) {
+            const entry: PlaylistEntry = {
+              id: "",
+              name: source.name,
+              location: source.url,
+              type: "url",
+              channelCount: res.data.channels.length,
+              addedAt: Date.now(),
+            };
+            addPlaylist(entry, res.data.channels);
+            loadedPlaylistUrls.add(source.url);
+            loadedCount++;
+          } else {
+            failedCount++;
+          }
+          continue;
+        }
+
+        if (loadedEpgUrls.has(source.url)) {
+          skippedCount++;
+          continue;
+        }
+
+        const res = await loadEpgFromUrl(source.url);
+        if (res.ok) {
+          const entry: EpgEntry = {
+            id: "",
+            name: source.name,
+            location: source.url,
+            type: "url",
+            programmeCount: res.data.programmes.length,
+            channelCount: res.data.channels.length,
+            addedAt: Date.now(),
+          };
+          addEpg(entry, res.data.programmes, res.data.index);
+          loadedEpgUrls.add(source.url);
+          loadedCount++;
+        } else {
+          failedCount++;
+        }
+      }
+
+      const detail = [
+        `${loadedCount} loaded`,
+        skippedCount ? `${skippedCount} already loaded` : "",
+        failedCount ? `${failedCount} failed` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      showToast(`Master sources: ${detail}`, failedCount ? "error" : "success");
+    } catch (err) {
+      showToast(String(err), "error");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="page page-library">
       <h1 className="page-title">{t("nav.library", locale)}</h1>
+
+      {isMaster && (
+        <section className="card master-sources-card">
+          <div className="master-sources-header">
+            <div className="source-info">
+              <h2>Master Profile</h2>
+              <span className="source-meta">
+                {masterSources.length
+                  ? `${masterSources.length} private source${masterSources.length === 1 ? "" : "s"}`
+                  : "Private sources"}
+              </span>
+            </div>
+            <button className="btn-primary" onClick={handleLoadMasterSources} disabled={!!loading}>
+              {loading === "master-sources" ? "Loading..." : "Load Private Sources"}
+            </button>
+          </div>
+
+          {masterSources.length > 0 && (
+            <ul className="source-list master-source-list">
+              {masterSources.map((source) => (
+                <li key={source.id} className="source-item">
+                  <div className="source-info">
+                    <span className="source-name">{source.name}</span>
+                    <span className="source-meta">
+                      {source.kind === "playlist" ? "Playlist" : "Guide"}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* ── Library Stats Dashboard ──────────────────────── */}
       {(stats.channelCount > 0 || stats.epgSourceCount > 0) && (

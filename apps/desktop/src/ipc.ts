@@ -47,6 +47,7 @@ import {
   apiLogin,
   apiLogout,
   apiGetFeatures,
+  apiGetMasterSources,
   apiRefreshTokens,
   apiCloudSyncGet,
   apiCloudSyncPut,
@@ -769,6 +770,24 @@ export function registerIpcHandlers(): void {
     try {
       const result = await apiGetFeatures();
       if (!result.ok) return fail(new Error("Failed to fetch features"));
+      return ok(result.data);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.MASTER_SOURCES_FETCH, async () => {
+    try {
+      const result = await apiGetMasterSources();
+      if (!result.ok) {
+        const body = result.data as unknown as Record<string, unknown> | undefined;
+        return fail(
+          new Error(
+            (body && typeof body.message === "string" ? body.message : null) ??
+              "Failed to fetch Master sources",
+          ),
+        );
+      }
       return ok(result.data);
     } catch (err) {
       return fail(err);

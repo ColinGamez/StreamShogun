@@ -5,7 +5,7 @@ declare global {
 }
 
 import type { Playlist, Programme, XmltvChannel, LicenseStatus } from "@stream-shogun/core";
-import type { CloudSyncPayload } from "@stream-shogun/shared";
+import type { CloudSyncPayload, MasterSourcesResponse } from "@stream-shogun/shared";
 
 // ── IPC response wrapper (mirrors desktop/ipc.ts) ─────────────────────
 export interface IpcOk<T> {
@@ -208,6 +208,7 @@ export interface ShogunAPI {
       isFoundingMember: boolean;
     }>
   >;
+  masterSourcesFetch: () => Promise<IpcResponse<MasterSourcesResponse>>;
 
   // Billing
   billingCheckout: (args?: { interval?: string }) => Promise<IpcResponse<{ url: string }>>;

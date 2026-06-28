@@ -62,6 +62,9 @@ export const IpcChannels = {
   AUTH_REFRESH: "auth:refresh",
   FEATURES_FETCH: "features:fetch",
 
+  // ── Master profile ─────────────────────────────────────────────
+  MASTER_SOURCES_FETCH: "master:sources-fetch",
+
   // ── Billing ────────────────────────────────────────────────────
   BILLING_CHECKOUT: "billing:checkout",
   BILLING_PORTAL: "billing:portal",

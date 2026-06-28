@@ -328,7 +328,16 @@ export async function billingPortal(): Promise<IpcResponse<{ url: string }>> {
 
 // ── Cloud Sync v1 ────────────────────────────────────────────────────
 
-import type { CloudSyncPayload, CloudHistoryItem } from "@stream-shogun/shared";
+import type {
+  CloudSyncPayload,
+  CloudHistoryItem,
+  MasterSourcesResponse,
+} from "@stream-shogun/shared";
+
+export async function masterSourcesFetch(): Promise<IpcResponse<MasterSourcesResponse>> {
+  if (hasBridge()) return window.shogun!.masterSourcesFetch();
+  return NO_BRIDGE;
+}
 
 export async function cloudSyncPull(): Promise<IpcResponse<CloudSyncPayload>> {
   if (hasBridge()) return window.shogun!.cloudSyncPull();

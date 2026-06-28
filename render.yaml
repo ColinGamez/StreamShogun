@@ -39,6 +39,16 @@ services:
         value: StreamShogun <no-reply@mail.streamshogun.com>
       - key: RESEND_API_KEY
         sync: false
+      - key: MASTER_EMAIL
+        value: colin.kenny777@gmail.com
+      - key: MASTER_PLAYLIST_NAME
+        value: Colin's Private Playlist
+      - key: MASTER_PLAYLIST_URL
+        sync: false
+      - key: MASTER_EPG_NAME
+        value: Colin's Private Guide
+      - key: MASTER_EPG_URL
+        sync: false
       - key: STRIPE_PORTAL_RETURN_URL
         value: https://streamshogun.com/account
       - key: FOUNDING_MEMBER_CUTOFF
