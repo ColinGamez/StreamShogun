@@ -56,7 +56,7 @@ services:
       - key: MASTER_KOREA_EPG_NAME
         value: Korea Guide - epg2xml
       - key: MASTER_KOREA_EPG_URL
-        sync: false
+        value: https://raw.githubusercontent.com/ColinGamez/StreamShogun/epg-output/epg/korea-naver.xml.gz
       - key: STRIPE_PORTAL_RETURN_URL
         value: https://streamshogun.com/account
       - key: FOUNDING_MEMBER_CUTOFF

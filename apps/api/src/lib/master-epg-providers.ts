@@ -9,6 +9,7 @@ const BANGUMI_TOKYO_GROUP_ID = "42";
 const BANGUMI_FETCH_DAYS = 2;
 const FETCH_TIMEOUT_MS = 20_000;
 const MAX_MASTER_DOWNLOAD_BYTES = 12 * 1024 * 1024;
+const MAX_MASTER_EPG_XML_BYTES = 50 * 1024 * 1024;
 
 const USER_AGENT = "StreamShogun-MasterEPG/1.0 (+https://streamshogun.com)";
 
@@ -231,7 +232,9 @@ async function loadKoreaEpg2xmlXmltv(): Promise<string> {
     validation.url.href,
     "application/xml,text/xml,application/gzip,*/*",
   );
-  const result = await processEpgBuffer(validation.url.href, buffer);
+  const result = await processEpgBuffer(validation.url.href, buffer, {
+    maxDecompressedBytes: MAX_MASTER_EPG_XML_BYTES,
+  });
   if (!result.ok) {
     throw new Error(result.reason);
   }

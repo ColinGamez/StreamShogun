@@ -24,6 +24,8 @@ generated/
 .eslintcache
 *.tsbuildinfo
 .cache/
+__pycache__/
+*.pyc
 
 # ── Environment ────────────────────────────────────────────────────────
 .env

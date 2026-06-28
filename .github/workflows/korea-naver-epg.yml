@@ -1,0 +1,89 @@
+name: Korea NAVER EPG
+
+on:
+  schedule:
+    - cron: "23 */12 * * *"
+  workflow_dispatch:
+    inputs:
+      fetch_days:
+        description: "Number of guide days to fetch"
+        default: "2"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: korea-naver-epg
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and publish NAVER-all XMLTV
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      FETCH_DAYS: ${{ github.event.inputs.fetch_days || '2' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install epg2xml
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "epg2xml[all] @ git+https://github.com/epg2xml/epg2xml.git@main"
+
+      - name: Build Korea NAVER guide
+        run: |
+          python scripts/epg/build-korea-naver-epg.py --fetch-days "$FETCH_DAYS"
+
+      - name: Prepare publish branch files
+        run: |
+          set -euo pipefail
+          publish_dir="/tmp/streamshogun-epg"
+          rm -rf "$publish_dir"
+          mkdir -p "$publish_dir/epg"
+          cp build/epg/korea-naver.xml.gz "$publish_dir/epg/korea-naver.xml.gz"
+          cp build/epg/korea-naver.metadata.json "$publish_dir/epg/korea-naver.metadata.json"
+          touch "$publish_dir/.nojekyll"
+          cat > "$publish_dir/README.md" <<'EOF'
+          # StreamShogun EPG Output
+
+          Generated Korea NAVER-all XMLTV output for the StreamShogun Master profile.
+
+          Stable raw URL:
+          https://raw.githubusercontent.com/ColinGamez/StreamShogun/epg-output/epg/korea-naver.xml.gz
+          EOF
+
+      - name: Publish to epg-output branch
+        run: |
+          set -euo pipefail
+          publish_dir="/tmp/streamshogun-epg"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin epg-output || true
+          if git show-ref --verify --quiet refs/remotes/origin/epg-output; then
+            git switch --detach origin/epg-output
+          else
+            git switch --orphan epg-output
+          fi
+
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R "$publish_dir"/. .
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No EPG changes to publish."
+          else
+            git commit -m "chore: update korea naver epg [skip ci]"
+            git push origin HEAD:epg-output --force
+          fi
