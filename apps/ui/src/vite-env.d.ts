@@ -5,7 +5,11 @@ declare global {
 }
 
 import type { Playlist, Programme, XmltvChannel, LicenseStatus } from "@stream-shogun/core";
-import type { CloudSyncPayload, MasterSourcesResponse } from "@stream-shogun/shared";
+import type {
+  CloudSyncPayload,
+  MasterSourceDTO,
+  MasterSourcesResponse,
+} from "@stream-shogun/shared";
 
 // ── IPC response wrapper (mirrors desktop/ipc.ts) ─────────────────────
 export interface IpcOk<T> {
@@ -25,6 +29,12 @@ export interface EpgLoadResult {
   channels: XmltvChannel[];
   programmes: Programme[];
   index: SerializedEpgIndex;
+}
+
+export interface MasterSourceLoadResult {
+  source: MasterSourceDTO;
+  playlist?: Playlist;
+  epg?: EpgLoadResult;
 }
 
 // ── DB row types returned by the persistence IPC ──────────────────────
@@ -209,6 +219,7 @@ export interface ShogunAPI {
     }>
   >;
   masterSourcesFetch: () => Promise<IpcResponse<MasterSourcesResponse>>;
+  masterSourceLoad: (id: string) => Promise<IpcResponse<MasterSourceLoadResult>>;
 
   // Billing
   billingCheckout: (args?: { interval?: string }) => Promise<IpcResponse<{ url: string }>>;

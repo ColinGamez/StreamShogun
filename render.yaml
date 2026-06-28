@@ -49,6 +49,14 @@ services:
         value: Colin's Private Guide
       - key: MASTER_EPG_URL
         sync: false
+      - key: MASTER_JAPAN_BANGUMI_ENABLED
+        value: "true"
+      - key: MASTER_JAPAN_BANGUMI_NAME
+        value: Japan Guide - Bangumi Tokyo
+      - key: MASTER_KOREA_EPG_NAME
+        value: Korea Guide - epg2xml
+      - key: MASTER_KOREA_EPG_URL
+        sync: false
       - key: STRIPE_PORTAL_RETURN_URL
         value: https://streamshogun.com/account
       - key: FOUNDING_MEMBER_CUTOFF

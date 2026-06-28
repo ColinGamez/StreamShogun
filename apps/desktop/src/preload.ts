@@ -157,6 +157,8 @@ contextBridge.exposeInMainWorld("shogun", {
 
   // ── Master profile ─────────────────────────────────────────────
   masterSourcesFetch: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.MASTER_SOURCES_FETCH),
+  masterSourceLoad: (id: string): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.MASTER_SOURCE_LOAD, id),
 
   // ── Billing ────────────────────────────────────────────────────
   billingCheckout: (args?: { interval?: string }): Promise<unknown> =>

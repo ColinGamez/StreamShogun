@@ -13,6 +13,7 @@ import { promisify } from "util";
 const gunzipAsync = promisify(gunzip);
 import { IpcChannels, parseM3U, parseXmltv, createEpgIndex } from "@stream-shogun/core";
 import type { Playlist, XmltvParseResult, EpgIndex, Channel, Programme } from "@stream-shogun/core";
+import type { MasterSourceDTO } from "@stream-shogun/shared";
 import {
   savePlaylist,
   listPlaylists,
@@ -48,6 +49,7 @@ import {
   apiLogout,
   apiGetFeatures,
   apiGetMasterSources,
+  apiGetMasterSourceContent,
   apiRefreshTokens,
   apiCloudSyncGet,
   apiCloudSyncPut,
@@ -794,6 +796,41 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle(
+    IpcChannels.MASTER_SOURCE_LOAD,
+    async (_event, id: unknown): Promise<IpcResponse<MasterSourceLoadResult>> => {
+      try {
+        const sourceId = requireString(id, "source id");
+        const result = await apiGetMasterSourceContent(sourceId);
+        if (!result.ok) {
+          const body = result.data as unknown as Record<string, unknown> | undefined;
+          return fail(
+            new Error(
+              (body && typeof body.message === "string" ? body.message : null) ??
+                "Failed to load Master source",
+            ),
+          );
+        }
+
+        if (result.data.source.kind === "playlist") {
+          return ok({
+            source: result.data.source,
+            playlist: parseM3U(result.data.content),
+          });
+        }
+
+        const parsed = parseXmltv(result.data.content);
+        const index = createEpgIndex(parsed.programmes);
+        return ok({
+          source: result.data.source,
+          epg: { ...parsed, index: serializeIndex(index) },
+        });
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
   // ═══════════════════════════════════════════════════════════════
   //  Billing (opens Stripe in system browser)
   // ═══════════════════════════════════════════════════════════════
@@ -906,6 +943,12 @@ type SerializedEpgIndex = Record<
   string,
   ReturnType<typeof createEpgIndex> extends Map<string, infer V> ? V : never
 >;
+
+interface MasterSourceLoadResult {
+  source: MasterSourceDTO;
+  playlist?: Playlist;
+  epg?: XmltvParseResult & { index: SerializedEpgIndex };
+}
 
 function serializeIndex(index: EpgIndex): SerializedEpgIndex {
   const obj: SerializedEpgIndex = {};

@@ -12,6 +12,7 @@ import type {
   DbProgrammeRow,
   DbNowNextResult,
   DbWatchHistoryRow,
+  MasterSourceLoadResult,
   RefreshStatus,
 } from "../vite-env";
 import type { Playlist, Channel, Programme, LicenseStatus } from "@stream-shogun/core";
@@ -336,6 +337,11 @@ import type {
 
 export async function masterSourcesFetch(): Promise<IpcResponse<MasterSourcesResponse>> {
   if (hasBridge()) return window.shogun!.masterSourcesFetch();
+  return NO_BRIDGE;
+}
+
+export async function masterSourceLoad(id: string): Promise<IpcResponse<MasterSourceLoadResult>> {
+  if (hasBridge()) return window.shogun!.masterSourceLoad(id);
   return NO_BRIDGE;
 }
 

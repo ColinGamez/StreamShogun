@@ -260,16 +260,25 @@ export interface FeaturesResponse {
 }
 
 export type MasterSourceKind = "playlist" | "epg";
+export type MasterSourceLoadMode = "url" | "api";
 
 export interface MasterSourceDTO {
   id: string;
   kind: MasterSourceKind;
   name: string;
-  url: string;
+  url?: string;
+  loadMode?: MasterSourceLoadMode;
+  description?: string;
 }
 
 export interface MasterSourcesResponse {
   sources: MasterSourceDTO[];
+}
+
+export interface MasterSourceContentResponse {
+  source: MasterSourceDTO;
+  content: string;
+  fetchedAt: string;
 }
 
 export interface CloudSettingsResponse {

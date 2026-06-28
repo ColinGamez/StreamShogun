@@ -46,6 +46,10 @@ const envSchema = z
     MASTER_PLAYLIST_URL: z.string().url().optional(),
     MASTER_EPG_NAME: z.string().min(1).optional(),
     MASTER_EPG_URL: z.string().url().optional(),
+    MASTER_JAPAN_BANGUMI_ENABLED: z.string().optional(),
+    MASTER_JAPAN_BANGUMI_NAME: z.string().min(1).optional(),
+    MASTER_KOREA_EPG_NAME: z.string().min(1).optional(),
+    MASTER_KOREA_EPG_URL: z.string().url().optional(),
 
     // Stripe billing (optional — enables /v1/billing endpoints)
     STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),

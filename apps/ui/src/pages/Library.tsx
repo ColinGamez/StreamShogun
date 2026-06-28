@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import type { MasterSourceDTO } from "@stream-shogun/shared";
+import type { Playlist } from "@stream-shogun/core";
+import type { EpgLoadResult, MasterSourceLoadResult } from "../vite-env";
 import { useAppStore, type PlaylistEntry, type EpgEntry } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import {
@@ -8,6 +10,7 @@ import {
   loadEpgFromUrl,
   loadEpgFromFile,
   masterSourcesFetch,
+  masterSourceLoad,
 } from "../lib/bridge";
 import { showToast } from "../components/Toast";
 import { EPG_PRESETS } from "../lib/epg-presets";
@@ -37,6 +40,16 @@ function pickFilePath(accept: string): Promise<string | null> {
     input.addEventListener("cancel", () => resolve(null));
     input.click();
   });
+}
+
+function resolvePlaylistData(data: Playlist | MasterSourceLoadResult): Playlist | null {
+  if ("source" in data) return data.playlist ?? null;
+  return data;
+}
+
+function resolveEpgData(data: EpgLoadResult | MasterSourceLoadResult): EpgLoadResult | null {
+  if ("source" in data) return data.epg ?? null;
+  return data;
 }
 
 export function LibraryPage() {
@@ -262,24 +275,34 @@ export function LibraryPage() {
       let failedCount = 0;
 
       for (const source of sources) {
+        const sourceLocation = source.url ?? `master://${source.id}`;
+
         if (source.kind === "playlist") {
-          if (loadedPlaylistUrls.has(source.url)) {
+          if (loadedPlaylistUrls.has(sourceLocation)) {
             skippedCount++;
             continue;
           }
 
-          const res = await loadPlaylistFromUrl(source.url);
-          if (res.ok) {
+          const res =
+            source.loadMode === "api"
+              ? await masterSourceLoad(source.id)
+              : source.url
+                ? await loadPlaylistFromUrl(source.url)
+                : { ok: false as const, error: "Master playlist source has no URL" };
+
+          const playlist = res.ok ? resolvePlaylistData(res.data) : null;
+
+          if (res.ok && playlist) {
             const entry: PlaylistEntry = {
               id: "",
               name: source.name,
-              location: source.url,
+              location: sourceLocation,
               type: "url",
-              channelCount: res.data.channels.length,
+              channelCount: playlist.channels.length,
               addedAt: Date.now(),
             };
-            addPlaylist(entry, res.data.channels);
-            loadedPlaylistUrls.add(source.url);
+            addPlaylist(entry, playlist.channels);
+            loadedPlaylistUrls.add(sourceLocation);
             loadedCount++;
           } else {
             failedCount++;
@@ -287,24 +310,32 @@ export function LibraryPage() {
           continue;
         }
 
-        if (loadedEpgUrls.has(source.url)) {
+        if (loadedEpgUrls.has(sourceLocation)) {
           skippedCount++;
           continue;
         }
 
-        const res = await loadEpgFromUrl(source.url);
-        if (res.ok) {
+        const res =
+          source.loadMode === "api"
+            ? await masterSourceLoad(source.id)
+            : source.url
+              ? await loadEpgFromUrl(source.url)
+              : { ok: false as const, error: "Master guide source has no URL" };
+
+        const epg = res.ok ? resolveEpgData(res.data) : null;
+
+        if (res.ok && epg) {
           const entry: EpgEntry = {
             id: "",
             name: source.name,
-            location: source.url,
+            location: sourceLocation,
             type: "url",
-            programmeCount: res.data.programmes.length,
-            channelCount: res.data.channels.length,
+            programmeCount: epg.programmes.length,
+            channelCount: epg.channels.length,
             addedAt: Date.now(),
           };
-          addEpg(entry, res.data.programmes, res.data.index);
-          loadedEpgUrls.add(source.url);
+          addEpg(entry, epg.programmes, epg.index);
+          loadedEpgUrls.add(sourceLocation);
           loadedCount++;
         } else {
           failedCount++;
@@ -355,6 +386,7 @@ export function LibraryPage() {
                     <span className="source-name">{source.name}</span>
                     <span className="source-meta">
                       {source.kind === "playlist" ? "Playlist" : "Guide"}
+                      {source.loadMode === "api" ? " - Master API" : ""}
                     </span>
                   </div>
                 </li>

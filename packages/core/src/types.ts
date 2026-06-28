@@ -64,6 +64,7 @@ export const IpcChannels = {
 
   // ── Master profile ─────────────────────────────────────────────
   MASTER_SOURCES_FETCH: "master:sources-fetch",
+  MASTER_SOURCE_LOAD: "master:source-load",
 
   // ── Billing ────────────────────────────────────────────────────
   BILLING_CHECKOUT: "billing:checkout",

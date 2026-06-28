@@ -218,7 +218,7 @@ interface FeaturesResponse {
   flags: Record<string, boolean>;
 }
 
-import type { MasterSourcesResponse } from "@stream-shogun/shared";
+import type { MasterSourceContentResponse, MasterSourcesResponse } from "@stream-shogun/shared";
 
 export async function apiGetMe(): Promise<{
   ok: boolean;
@@ -244,6 +244,16 @@ export async function apiGetMasterSources(): Promise<{
   data: MasterSourcesResponse;
 }> {
   return apiFetchWithRefresh<MasterSourcesResponse>("/v1/master/sources");
+}
+
+export async function apiGetMasterSourceContent(id: string): Promise<{
+  ok: boolean;
+  status: number;
+  data: MasterSourceContentResponse;
+}> {
+  return apiFetchWithRefresh<MasterSourceContentResponse>(
+    `/v1/master/sources/${encodeURIComponent(id)}/content`,
+  );
 }
 
 // ── Billing ───────────────────────────────────────────────────────────
