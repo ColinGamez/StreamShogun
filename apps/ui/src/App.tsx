@@ -50,6 +50,7 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
   const [page, setPage] = useState<Page>("library");
   const [previousPage, setPreviousPage] = useState<Page>("library");
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const setCurrentChannel = useAppStore((s) => s.setCurrentChannel);
   const hasPlaylists = useAppStore(
     (s) => s.playlistEntries.length > 0 || s.channels.length > 0 || s.dbPlaylists.length > 0,
@@ -138,6 +139,11 @@ function App() {
     [page],
   );
 
+  const handleStartLibrary = useCallback(() => {
+    setWelcomeDismissed(true);
+    handlePageChange("library");
+  }, [handlePageChange]);
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -181,7 +187,9 @@ function App() {
   }
 
   // ── First-run: show Welcome when nothing is loaded ──────────────
-  if (!hasPlaylists) {
+  const showWelcome = !hasPlaylists && page === "library" && !welcomeDismissed;
+
+  if (showWelcome) {
     return (
       <div className="app-shell">
         <div className="aurora-bg" aria-hidden="true">
@@ -197,7 +205,7 @@ function App() {
           <OfflineBanner />
           <BillingStateBanner />
           <UpgradeNudgeBanner />
-          <Welcome onGoToLibrary={() => handlePageChange("library")} />
+          <Welcome onGoToLibrary={handleStartLibrary} />
         </main>
         <ToastContainer />
         <LoginModal />

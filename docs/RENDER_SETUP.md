@@ -7,7 +7,7 @@ Provider split:
 - Cloudflare Pages Free: static website
 - Render free web service: API
 - Neon Free: PostgreSQL
-- Resend: transactional email, optional at launch
+- Resend: transactional email, required before launch
 - Your DNS host: `streamshogun.com` and `api.streamshogun.com`
 
 Do not use Render Postgres for this free setup. Render's free Postgres is temporary, and the non-expiring Render database plan costs money. Neon Free is the better $0 database choice.
@@ -70,7 +70,7 @@ SUPPORT_EMAIL=colin.kenny777@gmail.com
 
 Render will generate `JWT_SECRET` automatically from the Blueprint.
 
-`RESEND_API_KEY` is useful for password reset emails, but it can wait if you do not have email set up yet.
+`RESEND_API_KEY` is required for password reset emails before launch.
 
 The Blueprint already fills in:
 
@@ -82,8 +82,15 @@ LOG_LEVEL=info
 CORS_ORIGIN=https://streamshogun.com
 APP_PUBLIC_URL=https://streamshogun.com
 COOKIE_DOMAIN=.streamshogun.com
-EMAIL_FROM=StreamShogun <no-reply@streamshogun.com>
+EMAIL_FROM=StreamShogun <no-reply@mail.streamshogun.com>
 STRIPE_PORTAL_RETURN_URL=https://streamshogun.com/account
+```
+
+The Blueprint asks for:
+
+```env
+DATABASE_URL=<your Neon pooled connection string>
+RESEND_API_KEY=<your Resend API key>
 ```
 
 ## 4. Add billing secrets when ready

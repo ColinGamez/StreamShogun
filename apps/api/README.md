@@ -87,7 +87,7 @@ Common production env vars to review:
 - `APP_PUBLIC_URL=https://streamshogun.com`
 - `COOKIE_DOMAIN=.streamshogun.com`
 - `GOOGLE_CLIENT_ID=...apps.googleusercontent.com`
-- `EMAIL_FROM=StreamShogun <no-reply@streamshogun.com>` if legacy reset emails stay enabled
+- `EMAIL_FROM=StreamShogun <no-reply@mail.streamshogun.com>` if legacy reset emails stay enabled
 - Stripe env vars if billing is enabled
 
 After the service is live:
