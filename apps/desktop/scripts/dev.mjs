@@ -39,7 +39,7 @@ console.log("[desktop] Starting Electron…");
 // and require("electron") returns the npm stub instead of the built-in API.
 const childEnv = { ...process.env };
 delete childEnv.ELECTRON_RUN_AS_NODE;
-childEnv.STREAM_SHOGUN_API_URL ??= "http://localhost:8787";
+childEnv.STREAM_SHOGUN_API_URL ??= "https://api.streamshogun.com";
 
 const child = spawn(electronExe, [root], {
   cwd: root,

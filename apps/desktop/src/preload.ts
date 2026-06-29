@@ -166,6 +166,8 @@ contextBridge.exposeInMainWorld("shogun", {
 
   billingPortal: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.BILLING_PORTAL),
 
+  billingReconcile: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.BILLING_RECONCILE),
+
   // ── Cloud Sync v1 ─────────────────────────────────────────────
   cloudSyncPull: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PULL),
 

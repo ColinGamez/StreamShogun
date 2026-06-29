@@ -29,7 +29,7 @@ export function PaywallModal() {
   const [open, setOpen] = useState(false);
   const [highlightFeature, setHighlightFeature] = useState<string | null>(null);
   const [tab, setTab] = useState<PaywallTab>("saas");
-  const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
+  const [loading, setLoading] = useState<"monthly" | "yearly" | "refresh" | null>(null);
 
   // License key state
   const [keyInput, setKeyInput] = useState("");
@@ -107,6 +107,17 @@ export function PaywallModal() {
     },
     [authUser, locale],
   );
+
+  const handleBillingRefresh = useCallback(async () => {
+    setLoading("refresh");
+    const reconcile = await bridge.billingReconcile();
+    await fetchServerFeatures();
+    setLoading(null);
+    showToast(
+      reconcile.ok ? t("paywall.refreshed", locale) : t("paywall.checkoutFailed", locale),
+      reconcile.ok ? "success" : "error",
+    );
+  }, [fetchServerFeatures, locale]);
 
   const handleActivateKey = useCallback(
     async (e: FormEvent) => {
@@ -253,12 +264,13 @@ export function PaywallModal() {
                 {authUser && (
                   <button
                     className="btn-secondary paywall-refresh"
-                    onClick={async () => {
-                      await fetchServerFeatures();
-                      showToast(t("paywall.refreshed", locale), "success");
-                    }}
+                    disabled={loading !== null}
+                    onClick={handleBillingRefresh}
                   >
-                    🔄 {t("paywall.refreshLabel", locale)}
+                    🔄{" "}
+                    {loading === "refresh"
+                      ? t("paywall.opening", locale)
+                      : t("paywall.refreshLabel", locale)}
                   </button>
                 )}
               </div>

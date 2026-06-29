@@ -69,6 +69,7 @@ export const IpcChannels = {
   // ── Billing ────────────────────────────────────────────────────
   BILLING_CHECKOUT: "billing:checkout",
   BILLING_PORTAL: "billing:portal",
+  BILLING_RECONCILE: "billing:reconcile",
 
   // ── Cloud Sync (v1) ──────────────────────────────────────────
   CLOUD_SYNC_PULL: "cloud:sync-pull",

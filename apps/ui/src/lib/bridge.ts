@@ -327,6 +327,22 @@ export async function billingPortal(): Promise<IpcResponse<{ url: string }>> {
   return NO_BRIDGE;
 }
 
+export async function billingReconcile(): Promise<
+  IpcResponse<{
+    matched: boolean;
+    message?: string;
+    subscription?: {
+      plan: string;
+      status: string;
+      billingInterval: string | null;
+      currentPeriodEnd: string | null;
+    };
+  }>
+> {
+  if (hasBridge()) return window.shogun!.billingReconcile();
+  return NO_BRIDGE;
+}
+
 // ── Cloud Sync v1 ────────────────────────────────────────────────────
 
 import type {

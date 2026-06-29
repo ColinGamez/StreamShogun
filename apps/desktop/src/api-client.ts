@@ -279,6 +279,32 @@ export async function apiBillingPortal(): Promise<{
   });
 }
 
+export async function apiBillingReconcile(): Promise<{
+  ok: boolean;
+  status: number;
+  data: {
+    matched: boolean;
+    message?: string;
+    subscription?: {
+      plan: string;
+      status: string;
+      billingInterval: string | null;
+      currentPeriodEnd: string | null;
+    };
+  };
+}> {
+  return apiFetchWithRefresh<{
+    matched: boolean;
+    message?: string;
+    subscription?: {
+      plan: string;
+      status: string;
+      billingInterval: string | null;
+      currentPeriodEnd: string | null;
+    };
+  }>("/v1/billing/reconcile", { method: "POST" });
+}
+
 // ── Cloud Sync v1 ─────────────────────────────────────────────────────
 
 import type { CloudSyncPayload } from "@stream-shogun/shared";

@@ -55,6 +55,7 @@ import {
   apiCloudSyncPut,
   apiBillingCheckout,
   apiBillingPortal,
+  apiBillingReconcile,
 } from "./api-client";
 import { loadTokens } from "./token-store";
 
@@ -853,6 +854,24 @@ export function registerIpcHandlers(): void {
       if (!result.ok) return fail(new Error("Failed to create portal session"));
       await shell.openExternal(result.data.url);
       return ok({ url: result.data.url });
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.BILLING_RECONCILE, async () => {
+    try {
+      const result = await apiBillingReconcile();
+      if (!result.ok) {
+        const body = result.data as unknown as Record<string, unknown> | undefined;
+        return fail(
+          new Error(
+            (body && typeof body.message === "string" ? body.message : null) ??
+              "Failed to refresh billing status",
+          ),
+        );
+      }
+      return ok(result.data);
     } catch (err) {
       return fail(err);
     }

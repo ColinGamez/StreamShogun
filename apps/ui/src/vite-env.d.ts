@@ -224,6 +224,18 @@ export interface ShogunAPI {
   // Billing
   billingCheckout: (args?: { interval?: string }) => Promise<IpcResponse<{ url: string }>>;
   billingPortal: () => Promise<IpcResponse<{ url: string }>>;
+  billingReconcile: () => Promise<
+    IpcResponse<{
+      matched: boolean;
+      message?: string;
+      subscription?: {
+        plan: string;
+        status: string;
+        billingInterval: string | null;
+        currentPeriodEnd: string | null;
+      };
+    }>
+  >;
 
   // Cloud Sync v1
   cloudSyncPull: () => Promise<IpcResponse<CloudSyncPayload>>;

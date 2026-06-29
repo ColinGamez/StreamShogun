@@ -4,7 +4,6 @@ import { useAppStore } from "./stores/app-store";
 import { showToast } from "./components/Toast";
 
 import { Sidebar, type Page } from "./components/Sidebar";
-import { Welcome } from "./components/Welcome";
 import { ToastContainer } from "./components/Toast";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoginModal } from "./components/LoginModal";
@@ -50,12 +49,9 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
   const [page, setPage] = useState<Page>("library");
   const [previousPage, setPreviousPage] = useState<Page>("library");
-  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const setCurrentChannel = useAppStore((s) => s.setCurrentChannel);
-  const hasPlaylists = useAppStore(
-    (s) => s.playlistEntries.length > 0 || s.channels.length > 0 || s.dbPlaylists.length > 0,
-  );
   const initAuth = useAppStore((s) => s.initAuth);
+  const initFromDb = useAppStore((s) => s.initFromDb);
 
   const settings = useAppStore((s) => s.settings);
   const incrementAppOpen = useAppStore((s) => s.incrementAppOpen);
@@ -88,9 +84,10 @@ function App() {
 
   // Silent auth refresh on startup
   useEffect(() => {
+    void initFromDb();
     initAuth();
     incrementAppOpen();
-  }, [initAuth, incrementAppOpen]);
+  }, [initAuth, incrementAppOpen, initFromDb]);
 
   // Global unhandled promise rejection handler
   useEffect(() => {
@@ -139,11 +136,6 @@ function App() {
     [page],
   );
 
-  const handleStartLibrary = useCallback(() => {
-    setWelcomeDismissed(true);
-    handlePageChange("library");
-  }, [handlePageChange]);
-
   // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -182,34 +174,6 @@ function App() {
             pipName={PIP_NAME}
           />
         </ErrorBoundary>
-      </div>
-    );
-  }
-
-  // ── First-run: show Welcome when nothing is loaded ──────────────
-  const showWelcome = !hasPlaylists && page === "library" && !welcomeDismissed;
-
-  if (showWelcome) {
-    return (
-      <div className="app-shell">
-        <div className="aurora-bg" aria-hidden="true">
-          <div className="aurora-orb aurora-orb-1" />
-          <div className="aurora-orb aurora-orb-2" />
-          <div className="aurora-orb aurora-orb-3" />
-        </div>
-        <a href="#main-content" className="skip-to-content">
-          Skip to content
-        </a>
-        <Sidebar current={page} onChange={handlePageChange} />
-        <main ref={mainRef} id="main-content" tabIndex={-1} className="app-main">
-          <OfflineBanner />
-          <BillingStateBanner />
-          <UpgradeNudgeBanner />
-          <Welcome onGoToLibrary={handleStartLibrary} />
-        </main>
-        <ToastContainer />
-        <LoginModal />
-        <PaywallModal />
       </div>
     );
   }
