@@ -16,6 +16,10 @@ import { env } from "../../config/env.js";
  */
 const FOUNDING_MEMBER_CUTOFF = new Date(env.FOUNDING_MEMBER_CUTOFF ?? "2026-06-01T00:00:00Z");
 
+function isMasterEmail(email: string | undefined): boolean {
+  return email?.trim().toLowerCase() === env.MASTER_EMAIL?.trim().toLowerCase();
+}
+
 export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /v1/features ──────────────────────────────────────────
 
@@ -37,10 +41,12 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
 
       const subscription = user?.subscription ?? null;
       const overrides = user?.featureFlags ?? [];
+      const isMasterAccount = isMasterEmail(request.user.email);
 
-      const plan = subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE;
+      const plan = isMasterAccount || subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE;
       const isPro = plan === Plan.PRO;
-      const isActive = subscription?.status === "ACTIVE" || subscription?.status === "TRIALING";
+      const isActive =
+        isMasterAccount || subscription?.status === "ACTIVE" || subscription?.status === "TRIALING";
 
       // Build override map
       const overrideMap = new Map(overrides.map((f) => [f.key, f.enabled]));
