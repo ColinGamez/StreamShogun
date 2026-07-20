@@ -7,9 +7,13 @@ import { validateEpgUrl } from "./epg-url-validator.js";
 const BANGUMI_BASE_URL = "https://bangumi.org";
 const BANGUMI_TOKYO_GROUP_ID = "42";
 const BANGUMI_FETCH_DAYS = 2;
+const BANGUMI_FETCH_ATTEMPTS = 2;
+const BANGUMI_RETRY_DELAY_MS = 500;
 const FETCH_TIMEOUT_MS = 20_000;
 const MAX_MASTER_DOWNLOAD_BYTES = 12 * 1024 * 1024;
 const MAX_MASTER_EPG_XML_BYTES = 50 * 1024 * 1024;
+const MIN_BANGUMI_CHANNELS = 5;
+const MIN_BANGUMI_PROGRAMMES_PER_PAGE = 20;
 
 const USER_AGENT = "StreamShogun-MasterEPG/1.0 (+https://streamshogun.com)";
 
@@ -118,11 +122,25 @@ async function fetchBangumiSchedulePage(date: string): Promise<{
   programmes: BangumiProgramme[];
 }> {
   const url = `${BANGUMI_BASE_URL}/epg/td?broad_cast_date=${date}&ggm_group_id=${BANGUMI_TOKYO_GROUP_ID}`;
-  const html = await fetchText(url, "text/html,application/xhtml+xml");
-  return parseBangumiScheduleHtml(html);
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= BANGUMI_FETCH_ATTEMPTS; attempt += 1) {
+    try {
+      const html = await fetchText(url, "text/html,application/xhtml+xml");
+      return parseBangumiScheduleHtml(html);
+    } catch (error) {
+      lastError = error;
+      if (attempt < BANGUMI_FETCH_ATTEMPTS) {
+        await delay(BANGUMI_RETRY_DELAY_MS);
+      }
+    }
+  }
+
+  const detail = lastError instanceof Error ? lastError.message : "unknown upstream error";
+  throw new Error(`Bangumi schedule fetch failed for ${date}: ${detail}`);
 }
 
-function parseBangumiScheduleHtml(html: string): {
+export function parseBangumiScheduleHtml(html: string): {
   channels: BangumiChannel[];
   programmes: BangumiProgramme[];
 } {
@@ -137,7 +155,7 @@ function parseBangumiScheduleHtml(html: string): {
   const byLine = new Map(channels.map((channel) => [channel.line, channel]));
   const programmes: BangumiProgramme[] = [];
 
-  const lineRegex = /<ul\s+id="program_line_(\d+)"[^>]*>([\s\S]*?)<\/ul>/g;
+  const lineRegex = /<ul\b[^>]*\bid=["']program_line_(\d+)["'][^>]*>([\s\S]*?)<\/ul>/gi;
   for (const lineMatch of html.matchAll(lineRegex)) {
     const line = Number(lineMatch[1]);
     const channel = byLine.get(line);
@@ -145,25 +163,27 @@ function parseBangumiScheduleHtml(html: string): {
 
     const lineHtml = lineMatch[2] ?? "";
     const itemRegex =
-      /<li\b(?=[^>]*\bs="(\d{12})")(?=[^>]*\be="(\d{12})")(?=[^>]*\bpid="([^"]*)")(?=[^>]*\bse-id="([^"]*)")[^>]*>([\s\S]*?)<\/li>/g;
+      /<li\b(?=[^>]*\bs=["'](\d{12})["'])(?=[^>]*\be=["'](\d{12})["'])[^>]*>([\s\S]*?)<\/li>/gi;
 
     for (const itemMatch of lineHtml.matchAll(itemRegex)) {
-      const itemHtml = itemMatch[5] ?? "";
-      const title = cleanText(
-        matchFirst(itemHtml, /<p\s+class="program_title"[^>]*>([\s\S]*?)<\/p>/),
-      );
+      const start = itemMatch[1] ?? "";
+      const stop = itemMatch[2] ?? "";
+      if (stop <= start) continue;
+
+      const itemHtml = itemMatch[3] ?? "";
+      const title = cleanText(matchClassElement(itemHtml, "p", "program_title"));
       if (!title) continue;
 
-      const description = cleanText(
-        matchFirst(itemHtml, /<p\s+class="program_detail"[^>]*>([\s\S]*?)<\/p>/),
-      );
-      const href = decodeHtml(matchFirst(itemHtml, /<a\s+[^>]*href="([^"]+)"/) ?? "");
-      const categoryClass = matchFirst(itemHtml, /<div\s+class="program_time\s+([^"]+)"/);
+      const description = cleanText(matchClassElement(itemHtml, "p", "program_detail"));
+      const href = decodeHtml(matchFirst(itemHtml, /<a\b[^>]*\bhref=["']([^"']+)["']/i) ?? "");
+      const categoryClass = matchClassAttribute(itemHtml, "div", "program_time")
+        ?.split(/\s+/)
+        .find((className) => className !== "program_time");
 
       programmes.push({
         channelId: channel.id,
-        start: xmltvJstTime(itemMatch[1] ?? ""),
-        stop: xmltvJstTime(itemMatch[2] ?? ""),
+        start: xmltvJstTime(start),
+        stop: xmltvJstTime(stop),
         title,
         description,
         categories: categoryClassToCategories(categoryClass),
@@ -172,19 +192,21 @@ function parseBangumiScheduleHtml(html: string): {
     }
   }
 
+  if (channels.length < MIN_BANGUMI_CHANNELS) {
+    throw new Error(`Bangumi returned only ${channels.length} channels`);
+  }
+  if (programmes.length < MIN_BANGUMI_PROGRAMMES_PER_PAGE) {
+    throw new Error(`Bangumi returned only ${programmes.length} programmes`);
+  }
+
   return { channels, programmes };
 }
 
 function parseBangumiChannels(html: string): BangumiChannel[] {
-  const chArea = matchFirst(
-    html,
-    /<div\s+id="ch_area"[^>]*>([\s\S]*?)<\/div>\s*<div\s+id="top_bord"/,
-  );
-  if (!chArea) return [];
-
   const channels: BangumiChannel[] = [];
-  const channelRegex = /<li\b[^>]*class="[^"]*js_channel[^"]*"[^>]*>\s*<p>([\s\S]*?)<\/p>/g;
-  for (const match of chArea.matchAll(channelRegex)) {
+  const channelRegex =
+    /<li\b(?=[^>]*\bclass=["'][^"']*\bjs_channel\b[^"']*["'])[^>]*>[\s\S]*?<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+  for (const match of html.matchAll(channelRegex)) {
     const visibleName = cleanText(match[1] ?? "");
     if (!visibleName) continue;
 
@@ -387,8 +409,28 @@ function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 function matchFirst(text: string, pattern: RegExp): string | undefined {
   return pattern.exec(text)?.[1];
+}
+
+function matchClassAttribute(text: string, tag: string, requiredClass: string): string | undefined {
+  const pattern = new RegExp(
+    `<${tag}\\b[^>]*\\bclass=["']([^"']*\\b${requiredClass}\\b[^"']*)["'][^>]*>`,
+    "i",
+  );
+  return matchFirst(text, pattern);
+}
+
+function matchClassElement(text: string, tag: string, requiredClass: string): string | undefined {
+  const pattern = new RegExp(
+    `<${tag}\\b(?=[^>]*\\bclass=["'][^"']*\\b${requiredClass}\\b[^"']*["'])[^>]*>([\\s\\S]*?)<\\/${tag}>`,
+    "i",
+  );
+  return matchFirst(text, pattern);
 }
 
 function cleanText(value: string | undefined): string {
