@@ -9,16 +9,13 @@ import {
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { env } from "../../config/env.js";
+import { isMasterEmail } from "../../lib/master-account.js";
 
 /**
  * Users created before this date are considered "founding members"
  * and may receive special badge / pricing treatment.
  */
 const FOUNDING_MEMBER_CUTOFF = new Date(env.FOUNDING_MEMBER_CUTOFF ?? "2026-06-01T00:00:00Z");
-
-function isMasterEmail(email: string | undefined): boolean {
-  return email?.trim().toLowerCase() === env.MASTER_EMAIL?.trim().toLowerCase();
-}
 
 export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /v1/features ──────────────────────────────────────────
