@@ -154,7 +154,11 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     const existingProgrammes = Object.values(get().epgIndex).flat();
     const merged = serializeMergedEpg(
       mergeEpgSources([
-        { sourceId: "existing", sourceName: "Existing EPG sources", programmes: existingProgrammes },
+        {
+          sourceId: "existing",
+          sourceName: "Existing EPG sources",
+          programmes: existingProgrammes,
+        },
         { sourceId: id, sourceName: entry.name, programmes },
       ]),
     );

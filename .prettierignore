@@ -6,3 +6,4 @@ out
 generated
 pnpm-lock.yaml
 CHANGELOG.md
+site/styles.css
