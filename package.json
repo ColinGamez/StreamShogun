@@ -26,8 +26,8 @@
     "typescript"
   ],
   "scripts": {
-    "dev": "pnpm --filter @stream-shogun/ui dev:electron",
-    "dev:ui": "pnpm --filter @stream-shogun/ui dev",
+    "dev": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui dev:electron",
+    "dev:ui": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui dev",
     "dev:electron": "pnpm --filter @stream-shogun/desktop dev",
     "dev:api": "pnpm --filter @stream-shogun/api dev",
     "site:css": "tailwindcss -i ./site/src.css -o ./site/styles.css --minify",

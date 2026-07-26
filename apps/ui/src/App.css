@@ -5639,6 +5639,107 @@ button:active::after {
   }
 }
 
+/* Guided activation flow */
+.library-setup-card {
+  overflow: hidden;
+}
+
+.library-setup-primary {
+  border-color: rgba(124, 92, 255, 0.3);
+  box-shadow:
+    inset 3px 0 0 #7c5cff,
+    0 18px 55px rgba(0, 0, 0, 0.16);
+}
+
+.library-setup-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.library-setup-heading h2 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.library-setup-heading p {
+  margin: 0.3rem 0 0;
+  color: #8390a3;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.library-step {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  border-radius: 7px;
+  background: rgba(124, 92, 255, 0.1);
+  color: #b9a7ff;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.library-epg-setup > summary {
+  margin: -0.1rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.library-epg-setup > summary::-webkit-details-marker {
+  display: none;
+}
+
+.library-epg-setup[open] > summary {
+  margin-bottom: 1.3rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.library-summary-action {
+  margin-left: auto;
+  color: #a78bfa;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.library-epg-content {
+  padding-left: calc(3.7rem + 1px);
+}
+
+.page-title {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: #f1f5f9;
+}
+
+.group-pill.active,
+.btn-toggle.active,
+button:not(.sidebar-btn):not(.btn-secondary):not(.btn-danger):not(.preset-btn) {
+  border-color: #7c5cff;
+  background: #7c5cff;
+}
+
+@media (max-width: 720px) {
+  .library-setup-heading {
+    flex-wrap: wrap;
+  }
+
+  .library-summary-action {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .library-epg-content {
+    padding-left: 0;
+  }
+}
+
 /* ── Accessibility: Reduced Motion ────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -6041,5 +6142,286 @@ button.preset-btn:not(.sidebar-btn):not(.btn-secondary):not(.btn-danger):hover:n
   .sidebar-brand,
   .sidebar-btn {
     justify-content: center;
+  }
+}
+
+/* ── Product alignment: premium first-run experience ─────────────── */
+:root {
+  --accent: #7c5cff;
+  --accent-hover: #9278ff;
+  --accent-glow: rgba(124, 92, 255, 0.3);
+}
+
+.welcome-screen {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 2.5vh, 2rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, #000 10%, transparent 88%);
+  pointer-events: none;
+}
+
+.welcome-screen::after {
+  content: "";
+  position: absolute;
+  width: 42rem;
+  height: 42rem;
+  top: -22rem;
+  right: -10rem;
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.2);
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.welcome-card {
+  position: relative;
+  z-index: 1;
+  width: min(60rem, 100%);
+  padding: clamp(1.5rem, 3.2vw, 3rem);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(15, 18, 32, 0.96), rgba(8, 10, 19, 0.94));
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(124, 92, 255, 0.05);
+  text-align: left;
+}
+
+.welcome-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.72rem;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.08);
+  color: #c4b5fd;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.welcome-eyebrow-dot {
+  width: 0.36rem;
+  height: 0.36rem;
+  border-radius: 50%;
+  background: #67e8f9;
+  box-shadow: 0 0 12px #67e8f9;
+}
+
+.welcome-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.3rem;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+}
+
+.welcome-logo {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: 0;
+  border-radius: 11px;
+  background: #7c5cff;
+  color: white;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 12px 32px rgba(124, 92, 255, 0.3);
+}
+
+.welcome-title {
+  max-width: 44rem;
+  margin: 1rem 0 0;
+  color: #f8fafc;
+  font-size: clamp(2.2rem, 4.2vw, 4rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.welcome-subtitle {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  color: #a8b2c3;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.welcome-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 1.4rem 0 0;
+}
+
+.welcome-feature {
+  display: block;
+  min-width: 0;
+  padding: 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.welcome-feature-number {
+  display: block;
+  margin-bottom: 0.7rem;
+  color: #a78bfa;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.63rem;
+  letter-spacing: 0.12em;
+}
+
+.welcome-feature strong {
+  color: #f1f5f9;
+  font-size: 0.88rem;
+}
+
+.welcome-feature p {
+  margin: 0.45rem 0 0;
+  color: #7d899b;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.65rem;
+}
+
+.welcome-btn {
+  min-height: 3rem;
+  padding: 0.8rem 1.15rem;
+  border-radius: 11px;
+}
+
+.welcome-btn.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #7c5cff !important;
+  border-color: #7c5cff !important;
+  box-shadow: 0 14px 34px rgba(124, 92, 255, 0.28);
+}
+
+.welcome-btn.primary:hover:not(:disabled) {
+  background: #9278ff !important;
+  border-color: #9278ff !important;
+}
+
+.welcome-btn.secondary {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.welcome-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1.1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.59rem;
+  letter-spacing: 0.1em;
+}
+
+.welcome-hint {
+  margin: 0.65rem 0 0;
+  color: #566174;
+  font-size: 0.72rem;
+  text-align: left;
+}
+
+@media (max-height: 820px) and (min-width: 981px) {
+  .welcome-brand-row {
+    margin-top: 0.85rem;
+  }
+
+  .welcome-title {
+    font-size: clamp(2.25rem, 4vw, 3.45rem);
+  }
+
+  .welcome-subtitle {
+    margin-top: 0.7rem;
+  }
+
+  .welcome-features {
+    margin-top: 1rem;
+  }
+
+  .welcome-feature {
+    padding: 0.9rem;
+  }
+
+  .welcome-actions {
+    margin-top: 1rem;
+  }
+
+  .welcome-trust {
+    margin-top: 0.9rem;
+    padding-top: 0.8rem;
+  }
+}
+
+.sidebar-btn.active {
+  background: rgba(124, 92, 255, 0.13);
+  border-color: rgba(124, 92, 255, 0.28);
+}
+
+.sidebar-title {
+  background: linear-gradient(90deg, #ffffff, #b9a7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (max-width: 980px) {
+  .welcome-features {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-feature-number {
+    margin-bottom: 0.55rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .welcome-screen {
+    padding: 0.75rem;
+  }
+
+  .welcome-card {
+    padding: 1.4rem;
+    border-radius: 18px;
+  }
+
+  .welcome-actions {
+    flex-direction: column;
+  }
+
+  .welcome-btn {
+    width: 100%;
   }
 }

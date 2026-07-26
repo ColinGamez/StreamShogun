@@ -423,8 +423,14 @@ export function LibraryPage() {
       )}
 
       {/* ── Add Playlist ─────────────────────────────────── */}
-      <section className="card">
-        <h2>{t("library.addPlaylist", locale)}</h2>
+      <section className="card library-setup-card library-setup-primary">
+        <div className="library-setup-heading">
+          <span className="library-step">STEP 1</span>
+          <div>
+            <h2>{t("library.addPlaylist", locale)}</h2>
+            <p>Paste an M3U URL or choose a local file. Your source stays under your control.</p>
+          </div>
+        </div>
         <div className="input-row">
           <input
             className="text-input"
@@ -473,56 +479,70 @@ export function LibraryPage() {
       )}
 
       {/* ── Add EPG ──────────────────────────────────────── */}
-      <section className="card">
-        <h2>{t("library.addEpg", locale)}</h2>
-
-        {/* ── EPG Presets ── */}
-        <div className="epg-presets">
-          <h3 className="presets-label">{t("library.epgPresets", locale)}</h3>
-          <p className="presets-hint">{t("library.epgPresetsHint", locale)}</p>
-          <div className="preset-grid">
-            {EPG_PRESETS.map((preset) => {
-              const alreadyLoaded = epgEntries.some((e) => e.location === preset.url);
-              const isLoading = loading === `preset-${preset.id}`;
-              return (
-                <button
-                  key={preset.id}
-                  className={`preset-btn${alreadyLoaded ? " preset-loaded" : ""}`}
-                  disabled={!!loading || alreadyLoaded}
-                  onClick={() => handleLoadPreset(preset.id)}
-                  title={preset.url}
-                >
-                  <span className="preset-flag">{preset.flag}</span>
-                  <span className="preset-name">{isLoading ? "…" : preset.name}</span>
-                  <span className="preset-region">{preset.region}</span>
-                  {alreadyLoaded && <span className="preset-check">✓</span>}
-                </button>
-              );
-            })}
+      <details
+        className="card library-setup-card library-epg-setup"
+        open={playlistEntries.length > 0}
+      >
+        <summary className="library-setup-heading">
+          <span className="library-step">STEP 2</span>
+          <div>
+            <h2>{t("library.addEpg", locale)}</h2>
+            <p>Optional: connect XMLTV guide data after your channels are loaded.</p>
           </div>
-        </div>
+          <span className="library-summary-action">
+            {playlistEntries.length > 0 ? "Configure" : "Set up later"}
+          </span>
+        </summary>
 
-        <hr className="card-divider" />
+        <div className="library-epg-content">
+          {/* ── EPG Presets ── */}
+          <div className="epg-presets">
+            <h3 className="presets-label">{t("library.epgPresets", locale)}</h3>
+            <p className="presets-hint">{t("library.epgPresetsHint", locale)}</p>
+            <div className="preset-grid">
+              {EPG_PRESETS.map((preset) => {
+                const alreadyLoaded = epgEntries.some((e) => e.location === preset.url);
+                const isLoading = loading === `preset-${preset.id}`;
+                return (
+                  <button
+                    key={preset.id}
+                    className={`preset-btn${alreadyLoaded ? " preset-loaded" : ""}`}
+                    disabled={!!loading || alreadyLoaded}
+                    onClick={() => handleLoadPreset(preset.id)}
+                    title={preset.url}
+                  >
+                    <span className="preset-flag">{preset.flag}</span>
+                    <span className="preset-name">{isLoading ? "…" : preset.name}</span>
+                    <span className="preset-region">{preset.region}</span>
+                    {alreadyLoaded && <span className="preset-check">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        {/* ── Manual URL / File ── */}
-        <div className="input-row">
-          <input
-            className="text-input"
-            placeholder={t("library.epgUrl", locale)}
-            aria-label={t("library.epgUrl", locale)}
-            value={epgUrl}
-            onChange={(e) => setEpgUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddEpgUrl()}
-            disabled={loading === "epg-url"}
-          />
-          <button onClick={handleAddEpgUrl} disabled={!!loading || !epgUrl.trim()}>
-            {loading === "epg-url" ? "…" : t("common.add", locale)}
+          <hr className="card-divider" />
+
+          {/* ── Manual URL / File ── */}
+          <div className="input-row">
+            <input
+              className="text-input"
+              placeholder={t("library.epgUrl", locale)}
+              aria-label={t("library.epgUrl", locale)}
+              value={epgUrl}
+              onChange={(e) => setEpgUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddEpgUrl()}
+              disabled={loading === "epg-url"}
+            />
+            <button onClick={handleAddEpgUrl} disabled={!!loading || !epgUrl.trim()}>
+              {loading === "epg-url" ? "…" : t("common.add", locale)}
+            </button>
+          </div>
+          <button className="btn-secondary" onClick={handleAddEpgFile} disabled={!!loading}>
+            {loading === "epg-file" ? "…" : t("library.loadFile", locale)}
           </button>
         </div>
-        <button className="btn-secondary" onClick={handleAddEpgFile} disabled={!!loading}>
-          {loading === "epg-file" ? "…" : t("library.loadFile", locale)}
-        </button>
-      </section>
+      </details>
 
       {/* ── EPG sources ──────────────────────────────────── */}
       {epgEntries.length > 0 && (

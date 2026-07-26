@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Guided first-run experience** — new users now land on a focused, privacy-first onboarding
+  screen with a direct playlist-import path, optional sample data, and an explicit reminder that
+  StreamShōgun manages user-provided sources rather than providing IPTV service.
+- **Two-step Library setup** — playlist import is presented as the primary activation step while
+  optional XMLTV/EPG configuration stays collapsed until it is needed.
+
+- **Premium product visual alignment** — onboarding, navigation, active controls, cards, and setup
+  states now share the site's slate-and-violet visual language and fit common laptop viewports.
+- **Reliable clean-start development** — root development commands now build internal shared and
+  core packages before starting Vite or Electron, eliminating missing workspace build artifacts.
+
 - **System theme support** — theme selector now offers Dark / Light / **System** options.
   "System" follows the OS `prefers-color-scheme` media query and auto-updates when the
   OS switches between light and dark mode.
