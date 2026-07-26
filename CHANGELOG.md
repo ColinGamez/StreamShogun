@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Modernized desktop and build runtime** - Electron 43, electron-builder 26, Vite 7, and the
   complete Squirrel packaging peer chain replace outdated release infrastructure; better-sqlite3
   13 restores native packaging compatibility with Electron 43 across supported platforms.
+- **Deterministic package identity** - Explicit executable and Linux desktop names prevent scoped
+  workspace metadata from producing invalid AppImage paths, while CI packaging never publishes
+  outside the release workflow's controlled artifact step.
 - **Patched input and authentication dependencies** - Fastify/JWT, Nodemailer, XMLTV parsing, HLS,
   test tooling, and compatible vulnerable transitives were upgraded intentionally.
 

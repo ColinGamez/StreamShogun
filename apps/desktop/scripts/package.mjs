@@ -58,6 +58,8 @@ const result = spawnSync(
     "electron-builder.yml",
     "--config.electronVersion",
     electronVersion,
+    "--publish",
+    "never",
     ...process.argv.slice(2),
   ],
   {

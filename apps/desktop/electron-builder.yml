@@ -1,5 +1,6 @@
 appId: com.stream-shogun.app
 productName: StreamShōgun
+executableName: StreamShogun
 copyright: Copyright © 2026 StreamShōgun
 artifactName: StreamShogun-${version}-${os}-${arch}.${ext}
 
@@ -43,4 +44,5 @@ linux:
     - AppImage
     - deb
   category: Utility
+  syncDesktopName: true
   maintainer: StreamShōgun Contributors <support@streamshogun.com>
