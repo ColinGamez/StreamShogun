@@ -1,6 +1,7 @@
 appId: com.stream-shogun.app
 productName: StreamShōgun
 copyright: Copyright © 2026 StreamShōgun
+artifactName: StreamShogun-${version}-${os}-${arch}.${ext}
 
 directories:
   output: release
