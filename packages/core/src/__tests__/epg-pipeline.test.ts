@@ -24,6 +24,10 @@ function programme(channelId: string, start: number, stop: number, title: string
 }
 
 describe("EPG pipeline", () => {
+  it("rejects structurally corrupt XMLTV instead of importing partial garbage", () => {
+    expect(() => parseXmltv('<tv><channel id="news"><display-name>News</tv>')).toThrow();
+  });
+
   it("parses XMLTV channels with missing icons and sparse programme metadata", () => {
     const result = parseXmltv(`<?xml version="1.0" encoding="UTF-8"?>
       <tv>

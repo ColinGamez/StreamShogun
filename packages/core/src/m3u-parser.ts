@@ -100,6 +100,7 @@ export function parseM3U(text: string): Playlist {
   const rawLineCount = rawLines.length;
 
   const channels: Channel[] = [];
+  const seenStreamUrls = new Set<string>();
   const malformedLines: string[] = [];
   let headerAttrs: Record<string, string> = {};
   let epgSources: EpgSource[] = [];
@@ -170,18 +171,22 @@ export function parseM3U(text: string): Playlist {
         const resolvedName =
           pendingExtinf.name || pendingExtinf.tvgName || pendingExtinf.tvgId || "Unnamed Channel";
 
-        channels.push({
-          tvgId: pendingExtinf.tvgId,
-          tvgName: pendingExtinf.tvgName || resolvedName,
-          name: resolvedName,
-          tvgLogo: pendingExtinf.tvgLogo,
-          groupTitle: pendingExtinf.groupTitle,
-          url: line,
-          duration: pendingExtinf.duration,
-          extras: pendingExtinf.extras,
-        });
+        if (!seenStreamUrls.has(line)) {
+          seenStreamUrls.add(line);
+          channels.push({
+            tvgId: pendingExtinf.tvgId,
+            tvgName: pendingExtinf.tvgName || resolvedName,
+            name: resolvedName,
+            tvgLogo: pendingExtinf.tvgLogo,
+            groupTitle: pendingExtinf.groupTitle,
+            url: line,
+            duration: pendingExtinf.duration,
+            extras: pendingExtinf.extras,
+          });
+        }
         pendingExtinf = null;
-      } else {
+      } else if (!seenStreamUrls.has(line)) {
+        seenStreamUrls.add(line);
         // Bare URL without preceding #EXTINF – still valid.
         channels.push({
           tvgId: "",

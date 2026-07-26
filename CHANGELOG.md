@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Import failure coverage** - automated desktop tests now exercise request timeouts, HTTP 403/404,
+  dropped connections, oversized payloads, and plain/gzip downloads through one shared network path.
+- **Strict source validation** - malformed XMLTV is rejected before parsing, and repeated playlist
+  stream URLs are deduplicated before SQLite persistence.
+
 - **Deterministic playback recovery** - HLS and direct streams share a tested, bounded retry policy;
   signed and uppercase manifest URLs are correctly routed through hls.js.
 - **Source-aware EPG restoration** - programmes retain their provider ownership across SQLite and

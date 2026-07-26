@@ -59,14 +59,9 @@ import {
   apiBillingReconcile,
 } from "./api-client";
 import { loadTokens } from "./token-store";
+import { fetchRaw as fetchNetworkRaw } from "./network-fetch";
 
 // ── Security constants ────────────────────────────────────────────────
-
-/** Maximum download size: 25 MB. */
-const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
-
-/** Fetch timeout in milliseconds: 30 s. */
-const FETCH_TIMEOUT_MS = 30_000;
 
 /** Allowed local file extensions for playlists. */
 const PLAYLIST_EXTENSIONS = new Set([".m3u", ".m3u8"]);
@@ -120,6 +115,8 @@ function validateFilePath(raw: unknown, allowedExtensions: Set<string>): string 
 // ── Fetch with size + timeout enforcement ─────────────────────────────
 
 async function secureFetchRaw(url: URL): Promise<Buffer> {
+  return fetchNetworkRaw(url, { userAgent: `StreamShogun/${app.getVersion()}` });
+  /* Legacy implementation retained temporarily for source-map continuity.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -173,18 +170,17 @@ async function secureFetchRaw(url: URL): Promise<Buffer> {
   } finally {
     clearTimeout(timer);
   }
+  */
 }
 
 /** Fetch a URL and decompress if gzip. */
 async function secureFetchText(url: URL): Promise<string> {
   const raw = await secureFetchRaw(url);
-  const isGz =
-    url.pathname.endsWith(".gz") || (raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b);
-  if (isGz) {
-    const decompressed = await gunzipAsync(raw);
-    return new TextDecoder("utf-8").decode(decompressed);
-  }
-  return new TextDecoder("utf-8").decode(raw);
+  const isGzip =
+    url.pathname.toLowerCase().endsWith(".gz") ||
+    (raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b);
+  const content = isGzip ? await gunzipAsync(raw) : raw;
+  return new TextDecoder("utf-8").decode(content);
 }
 
 // ── Safe file read with size check ────────────────────────────────────

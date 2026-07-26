@@ -77,4 +77,20 @@ describe("parseM3U", () => {
     expect(result.channels[19_999].name).toBe("Channel 19999");
     expect(elapsedMs).toBeLessThan(2_500);
   });
+
+  it("deduplicates repeated stream URLs before persistence", () => {
+    const result = parseM3U(
+      [
+        "#EXTM3U",
+        '#EXTINF:-1 tvg-id="news-a",News A',
+        "https://example.test/news.m3u8",
+        '#EXTINF:-1 tvg-id="news-b",News B duplicate',
+        "https://example.test/news.m3u8",
+        "https://example.test/news.m3u8",
+      ].join("\n"),
+    );
+
+    expect(result.channels).toHaveLength(1);
+    expect(result.channels[0]).toMatchObject({ tvgId: "news-a", name: "News A" });
+  });
 });
