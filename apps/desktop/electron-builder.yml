@@ -6,7 +6,7 @@ directories:
   output: release
   buildResources: build
 
-icon: build/icon.png
+icon: build/icon-1024.png
 
 files:
   - dist/**/*
@@ -19,13 +19,13 @@ extraResources:
 
 mac:
   category: public.app-category.entertainment
-  icon: build/icon.png
+  icon: build/icon-1024.png
   target:
     - dmg
     - zip
 
 win:
-  icon: build/icon.png
+  icon: build/icon-1024.png
   target:
     - nsis
     - portable
@@ -36,8 +36,9 @@ nsis:
   allowToChangeInstallationDirectory: false
 
 linux:
-  icon: build/icon.png
+  icon: build/icon-1024.png
   target:
     - AppImage
     - deb
   category: Utility
+  maintainer: StreamShōgun Contributors <support@streamshogun.com>

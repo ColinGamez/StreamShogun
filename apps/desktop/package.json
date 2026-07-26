@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "StreamShōgun desktop app built with Electron.",
-  "author": "StreamShōgun Contributors",
+  "author": {
+    "name": "StreamShōgun Contributors",
+    "email": "support@streamshogun.com"
+  },
+  "homepage": "https://streamshogun.com",
   "license": "MIT",
   "main": "dist/main.mjs",
   "scripts": {
