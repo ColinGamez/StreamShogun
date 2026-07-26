@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Upgrade persistence gate** - transactional migration tests preserve user settings and playlist
+  data across schema versions and verify failed migrations roll back cleanly.
+- **Reinstall-safe Windows behavior** - NSIS uninstalls explicitly retain StreamShogun user data so
+  a later reinstall can restore the local library and preferences.
+
 - **Import failure coverage** - automated desktop tests now exercise request timeouts, HTTP 403/404,
   dropped connections, oversized payloads, and plain/gzip downloads through one shared network path.
 - **Strict source validation** - malformed XMLTV is rejected before parsing, and repeated playlist

@@ -35,6 +35,7 @@ nsis:
   oneClick: true
   perMachine: false
   allowToChangeInstallationDirectory: false
+  deleteAppDataOnUninstall: false
 
 linux:
   icon: build/icon-1024.png
