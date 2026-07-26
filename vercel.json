@@ -2,7 +2,7 @@
   "buildCommand": "pnpm site:css",
   "outputDirectory": "site",
   "framework": null,
-  "cleanUrls": true,
+  "cleanUrls": false,
   "rewrites": [
     { "source": "/login", "destination": "/login.html" },
     { "source": "/register", "destination": "/register.html" },
@@ -15,6 +15,7 @@
     { "source": "/billing/success", "destination": "/billing/success.html" },
     { "source": "/billing/cancel", "destination": "/billing/cancel.html" },
     { "source": "/community", "destination": "/community.html" },
+    { "source": "/blog/the-legal-guide-to-free-iptv", "destination": "/blog/the-legal-guide-to-free-iptv.html" },
     { "source": "/u", "destination": "/profile.html" },
     { "source": "/u/:username", "destination": "/profile.html" }
   ],
