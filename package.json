@@ -30,6 +30,8 @@
     "dev:ui": "pnpm --filter @stream-shogun/ui dev",
     "dev:electron": "pnpm --filter @stream-shogun/desktop dev",
     "dev:api": "pnpm --filter @stream-shogun/api dev",
+    "site:css": "tailwindcss -i ./site/src.css -o ./site/styles.css --minify",
+    "site:css:watch": "tailwindcss -i ./site/src.css -o ./site/styles.css --watch",
     "db:up": "docker compose -f docker/docker-compose.yml up -d",
     "db:down": "docker compose -f docker/docker-compose.yml down",
     "db:migrate": "pnpm --filter @stream-shogun/api exec prisma migrate dev",
@@ -41,7 +43,7 @@
     "selfhost:down": "docker compose --env-file docker/.env.production -f docker/docker-compose.production.yml down",
     "selfhost:logs": "docker compose --env-file docker/.env.production -f docker/docker-compose.production.yml logs -f",
     "billing:smoke": "powershell -ExecutionPolicy Bypass -File scripts/billing-smoke.ps1",
-    "build": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/api build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:unpackaged",
+    "build": "pnpm site:css && pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/api build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:unpackaged",
     "build:win": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:win",
     "build:mac": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:mac",
     "build:linux": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:linux",
@@ -75,12 +77,14 @@
     }
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.2.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.4.0"
   }
 }

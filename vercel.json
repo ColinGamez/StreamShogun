@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node -e \"console.log('Static site deploy: using committed site directory')\"",
+  "buildCommand": "pnpm site:css",
   "outputDirectory": "site",
   "framework": null,
   "cleanUrls": true,
