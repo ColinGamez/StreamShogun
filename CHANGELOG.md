@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enforced dependency security policy** - CI now blocks high/critical production advisories and
+  critical build/development advisories, with accepted build-only findings documented separately.
+- **Modernized desktop and build runtime** - Electron 43, electron-builder 26, Vite 7, and the
+  complete Squirrel packaging peer chain replace outdated release infrastructure.
+- **Patched input and authentication dependencies** - Fastify/JWT, Nodemailer, XMLTV parsing, HLS,
+  test tooling, and compatible vulnerable transitives were upgraded intentionally.
+
 - **Upgrade persistence gate** - transactional migration tests preserve user settings and playlist
   data across schema versions and verify failed migrations roll back cleanly.
 - **Reinstall-safe Windows behavior** - NSIS uninstalls explicitly retain StreamShogun user data so
