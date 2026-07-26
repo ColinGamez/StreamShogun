@@ -5712,6 +5712,16 @@ button:active::after {
   padding-left: calc(3.7rem + 1px);
 }
 
+.channel-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.4rem 0 0.5rem;
+  color: #7f8da1;
+  font-size: 0.78rem;
+}
+
 .page-title {
   background: none;
   -webkit-text-fill-color: currentColor;

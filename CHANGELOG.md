@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Release-scale import coverage** — automated suites now exercise 20,000-channel M3U files,
+  100,000 XMLTV programmes, malformed entries, missing logos, multiple stream protocols, and
+  multi-provider EPG conflict resolution against explicit performance budgets.
+- **Pre-release platform builds** — the Windows, macOS, and Linux packaging matrix can now be run
+  manually before creating a version tag, and missing installer artifacts fail the build.
+- **Large-library batching** — Channels initially renders 300 results and progressively reveals
+  additional batches, preventing 5,000–20,000 channel playlists from mounting every card at once.
+- **Durable desktop source persistence** — normal playlist and EPG imports now use SQLite, restore
+  guide programmes after relaunch, and refresh channel/guide state after source deletion.
+
 - **Guided first-run experience** — new users now land on a focused, privacy-first onboarding
   screen with a direct playlist-import path, optional sample data, and an explicit reminder that
   StreamShōgun manages user-provided sources rather than providing IPTV service.

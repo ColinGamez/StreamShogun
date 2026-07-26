@@ -22,6 +22,7 @@ export const IpcChannels = {
   DB_SAVE_EPG_SOURCE: "db:save-epg-source",
   DB_LIST_EPG_SOURCES: "db:list-epg-sources",
   DB_REMOVE_EPG_SOURCE: "db:remove-epg-source",
+  DB_LIST_PROGRAMMES: "db:list-programmes",
   DB_GET_NOW_NEXT: "db:get-now-next",
   DB_GET_EPG_RANGE: "db:get-epg-range",
 

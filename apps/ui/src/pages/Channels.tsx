@@ -10,6 +10,8 @@ interface ChannelsPageProps {
   onPlay: (ch: Channel) => void;
 }
 
+const CHANNEL_BATCH_SIZE = 300;
+
 export function ChannelsPage({ onPlay }: ChannelsPageProps) {
   const locale = useAppStore((s) => s.locale);
   const channels = useAppStore((s) => s.channels);
@@ -19,6 +21,7 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState("");
   const [showFavsOnly, setShowFavsOnly] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(CHANNEL_BATCH_SIZE);
 
   // ── Derived data ────────────────────────────────────────────────────
   const groups = useMemo(() => {
@@ -39,6 +42,12 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
       return true;
     });
   }, [channels, search, group, showFavsOnly, favorites]);
+
+  const visibleChannels = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
+  useEffect(() => {
+    setVisibleCount(CHANNEL_BATCH_SIZE);
+  }, [search, group, showFavsOnly, channels]);
 
   // Now-playing lookup helper
   const nowProgramme = useCallback(
@@ -96,7 +105,7 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
 
     grid.addEventListener("keydown", handler);
     return () => grid.removeEventListener("keydown", handler);
-  }, [filtered]);
+  }, [visibleChannels]);
 
   return (
     <div className="page page-channels">
@@ -153,7 +162,7 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
             </div>
           ) : (
             <div className="channel-grid" ref={gridRef}>
-              {filtered.map((ch) => (
+              {visibleChannels.map((ch) => (
                 <ChannelCard
                   key={ch.url}
                   channel={ch}
@@ -161,6 +170,20 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
                   onPlay={onPlay}
                 />
               ))}
+            </div>
+          )}
+          {visibleChannels.length < filtered.length && (
+            <div className="channel-load-more">
+              <button
+                className="btn-secondary"
+                onClick={() => setVisibleCount((count) => count + CHANNEL_BATCH_SIZE)}
+              >
+                Show {Math.min(CHANNEL_BATCH_SIZE, filtered.length - visibleChannels.length)} more
+              </button>
+              <span>
+                Showing {visibleChannels.length.toLocaleString()} of{" "}
+                {filtered.length.toLocaleString()}
+              </span>
             </div>
           )}
         </>

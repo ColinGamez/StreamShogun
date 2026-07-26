@@ -73,7 +73,7 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     const newChannels = channels.filter((c) => !existingUrls.has(c.url));
     const allChannels = [...get().channels, ...newChannels];
     saveJson(P, "shogun:playlists", entries);
-    saveJson(P, "shogun:channels", allChannels);
+    if (!window.shogun) saveJson(P, "shogun:channels", allChannels);
     set({ playlistEntries: entries, channels: allChannels });
   },
 
@@ -107,8 +107,10 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     const allProgrammes = [...get().programmes, ...programmes];
     const merged = { ...get().epgIndex, ...index };
     saveJson(P, "shogun:epg-entries", entries);
-    saveJson(P, "shogun:programmes", allProgrammes);
-    saveJson(P, "shogun:epg-index", merged);
+    if (!window.shogun) {
+      saveJson(P, "shogun:programmes", allProgrammes);
+      saveJson(P, "shogun:epg-index", merged);
+    }
     set({ epgEntries: entries, programmes: allProgrammes, epgIndex: merged });
   },
 
@@ -147,15 +149,36 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
   dbFavorites: new Set<string>(),
 
   initFromDb: async () => {
-    const [plRes, favRes, epgRes] = await Promise.all([
+    const [plRes, favRes, epgRes, programmeRes] = await Promise.all([
       bridge.dbListPlaylists(),
       bridge.dbListFavorites(),
       bridge.dbListEpgSources(),
+      bridge.dbListProgrammes(),
     ]);
 
     const dbPlaylists = plRes.ok ? plRes.data : [];
     const dbFavorites = new Set(favRes.ok ? favRes.data : []);
     const dbEpgSources = epgRes.ok ? epgRes.data : [];
+
+    if (programmeRes.ok && programmeRes.data.length > 0) {
+      const restoredProgrammes: Programme[] = programmeRes.data.map((row) => ({
+        channelId: row.channelId,
+        start: row.start,
+        stop: row.stop,
+        titles: [row.title],
+        subtitle: row.subtitle,
+        description: row.description,
+        categories: row.categories,
+        episodeNum: row.episodeNum,
+        icon: row.icon,
+        rating: row.rating,
+      }));
+      const restoredIndex: SerializedEpgIndex = {};
+      for (const item of restoredProgrammes) {
+        (restoredIndex[item.channelId] ??= []).push(item);
+      }
+      set({ programmes: restoredProgrammes, epgIndex: restoredIndex });
+    }
 
     const chRes = await bridge.dbListChannels();
     if (chRes.ok && chRes.data.length > 0) {
@@ -171,7 +194,9 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
       }));
 
       const existingUrls = new Set(dbChannels.map((c) => c.url));
-      const merged = [...dbChannels, ...get().channels.filter((c) => !existingUrls.has(c.url))];
+      const merged = window.shogun
+        ? dbChannels
+        : [...dbChannels, ...get().channels.filter((c) => !existingUrls.has(c.url))];
       set({ channels: merged });
     }
 
@@ -219,6 +244,7 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
         duration: -1,
         extras: {},
       }));
+      saveJson(P, "shogun:channels", dbChannels);
       set({ channels: dbChannels });
     }
   },
@@ -235,6 +261,26 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     await bridge.dbRemoveEpgSource(id);
     const epgRes = await bridge.dbListEpgSources();
     if (epgRes.ok) set({ dbEpgSources: epgRes.data });
+    const programmeRes = await bridge.dbListProgrammes();
+    if (programmeRes.ok) {
+      const restoredProgrammes: Programme[] = programmeRes.data.map((row) => ({
+        channelId: row.channelId,
+        start: row.start,
+        stop: row.stop,
+        titles: [row.title],
+        subtitle: row.subtitle,
+        description: row.description,
+        categories: row.categories,
+        episodeNum: row.episodeNum,
+        icon: row.icon,
+        rating: row.rating,
+      }));
+      const restoredIndex: SerializedEpgIndex = {};
+      for (const item of restoredProgrammes) {
+        (restoredIndex[item.channelId] ??= []).push(item);
+      }
+      set({ programmes: restoredProgrammes, epgIndex: restoredIndex });
+    }
   },
 
   dbToggleFavorite: async (channelId) => {

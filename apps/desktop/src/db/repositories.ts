@@ -301,6 +301,14 @@ export function removeEpgSource(id: string): void {
   getDb().prepare("DELETE FROM epg_sources WHERE id = ?").run(id);
 }
 
+/** Restore all persisted programmes for the renderer's in-memory EPG index. */
+export function listProgrammes(): ProgrammeRow[] {
+  const rows = getDb()
+    .prepare("SELECT * FROM programmes ORDER BY channelId, start ASC")
+    .all() as Record<string, unknown>[];
+  return rows.map(toProgrammeRow);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 //  EPG Queries
 // ═══════════════════════════════════════════════════════════════════════

@@ -24,6 +24,7 @@ import {
   saveEpgSource,
   listEpgSources,
   removeEpgSource,
+  listProgrammes,
   getNowNext,
   getEpgRange,
   getAllSettings,
@@ -442,6 +443,14 @@ export function registerIpcHandlers(): void {
     try {
       removeEpgSource(id);
       return ok(null);
+    } catch (err) {
+      return fail(err);
+    }
+  });
+
+  ipcMain.handle(IpcChannels.DB_LIST_PROGRAMMES, () => {
+    try {
+      return ok(listProgrammes());
     } catch (err) {
       return fail(err);
     }

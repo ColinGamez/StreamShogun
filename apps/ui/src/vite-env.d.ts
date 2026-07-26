@@ -136,6 +136,7 @@ export interface ShogunAPI {
   }) => Promise<IpcResponse<DbEpgSourceRow>>;
   dbListEpgSources: () => Promise<IpcResponse<DbEpgSourceRow[]>>;
   dbRemoveEpgSource: (id: string) => Promise<IpcResponse<null>>;
+  dbListProgrammes: () => Promise<IpcResponse<DbProgrammeRow[]>>;
   dbGetNowNext: (args: {
     channelId: string;
     now?: number;

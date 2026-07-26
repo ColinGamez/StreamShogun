@@ -60,8 +60,12 @@ export function LibraryPage() {
   const favorites = useAppStore((s) => s.favorites);
   const addPlaylist = useAppStore((s) => s.addPlaylist);
   const removePlaylist = useAppStore((s) => s.removePlaylist);
+  const dbSavePlaylist = useAppStore((s) => s.dbSavePlaylist);
+  const dbRemovePlaylist = useAppStore((s) => s.dbRemovePlaylist);
   const addEpg = useAppStore((s) => s.addEpg);
   const removeEpg = useAppStore((s) => s.removeEpg);
+  const dbSaveEpgSource = useAppStore((s) => s.dbSaveEpgSource);
+  const dbRemoveEpgSource = useAppStore((s) => s.dbRemoveEpgSource);
   const authUser = useAppStore((s) => s.authUser);
 
   const [playlistUrl, setPlaylistUrl] = useState("");
@@ -70,6 +74,35 @@ export function LibraryPage() {
   const [masterSources, setMasterSources] = useState<MasterSourceDTO[]>([]);
 
   const isMaster = isMasterEmail(authUser?.email);
+
+  const persistPlaylist = async (
+    entry: PlaylistEntry,
+    channelsToSave: Playlist["channels"],
+  ): Promise<void> => {
+    const saved = await dbSavePlaylist(entry.name, entry.type, entry.location, channelsToSave);
+    if (window.shogun && !saved) {
+      throw new Error("The playlist was parsed but could not be saved to the local database.");
+    }
+    addPlaylist({ ...entry, id: saved?.id ?? entry.id }, channelsToSave);
+  };
+
+  const persistEpg = async (entry: EpgEntry, data: EpgLoadResult): Promise<void> => {
+    const saved = await dbSaveEpgSource(entry.name, entry.type, entry.location, data.programmes);
+    if (window.shogun && !saved) {
+      throw new Error("The guide was parsed but could not be saved to the local database.");
+    }
+    addEpg({ ...entry, id: saved?.id ?? entry.id }, data.programmes, data.index);
+  };
+
+  const deletePlaylist = async (id: string): Promise<void> => {
+    if (window.shogun) await dbRemovePlaylist(id);
+    removePlaylist(id);
+  };
+
+  const deleteEpg = async (id: string): Promise<void> => {
+    if (window.shogun) await dbRemoveEpgSource(id);
+    removeEpg(id);
+  };
 
   // ── Computed stats ──────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -99,7 +132,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addPlaylist(entry, res.data.channels);
+        await persistPlaylist(entry, res.data.channels);
         showToast(
           `${t("library.playlistAdded", locale)} (${res.data.channels.length} ch)`,
           "success",
@@ -134,7 +167,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addPlaylist(entry, res.data.channels);
+        await persistPlaylist(entry, res.data.channels);
         showToast(
           `${t("library.playlistAdded", locale)} (${res.data.channels.length} ch)`,
           "success",
@@ -165,7 +198,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addEpg(entry, res.data.programmes, res.data.index);
+        await persistEpg(entry, res.data);
         showToast(
           `${t("library.epgAdded", locale)} (${res.data.programmes.length} ${t("library.programmes_count", locale)})`,
           "success",
@@ -200,7 +233,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addEpg(entry, res.data.programmes, res.data.index);
+        await persistEpg(entry, res.data);
         showToast(
           `${t("library.epgAdded", locale)} (${res.data.programmes.length} ${t("library.programmes_count", locale)})`,
           "success",
@@ -236,7 +269,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addEpg(entry, res.data.programmes, res.data.index);
+        await persistEpg(entry, res.data);
         showToast(
           `${t("library.epgAdded", locale)} — ${preset.name} (${res.data.channels.length} ch, ${res.data.programmes.length} prog)`,
           "success",
@@ -301,7 +334,7 @@ export function LibraryPage() {
               channelCount: playlist.channels.length,
               addedAt: Date.now(),
             };
-            addPlaylist(entry, playlist.channels);
+            await persistPlaylist(entry, playlist.channels);
             loadedPlaylistUrls.add(sourceLocation);
             loadedCount++;
           } else {
@@ -334,7 +367,7 @@ export function LibraryPage() {
             channelCount: epg.channels.length,
             addedAt: Date.now(),
           };
-          addEpg(entry, epg.programmes, epg.index);
+          await persistEpg(entry, epg);
           loadedEpgUrls.add(sourceLocation);
           loadedCount++;
         } else {
@@ -467,7 +500,9 @@ export function LibraryPage() {
                 <button
                   className="btn-danger btn-sm"
                   onClick={() => {
-                    if (window.confirm(t("library.confirmRemove", locale))) removePlaylist(p.id);
+                    if (window.confirm(t("library.confirmRemove", locale))) {
+                      void deletePlaylist(p.id);
+                    }
                   }}
                 >
                   {t("common.remove", locale)}
@@ -561,7 +596,9 @@ export function LibraryPage() {
                 <button
                   className="btn-danger btn-sm"
                   onClick={() => {
-                    if (window.confirm(t("library.confirmRemove", locale))) removeEpg(e.id);
+                    if (window.confirm(t("library.confirmRemove", locale))) {
+                      void deleteEpg(e.id);
+                    }
                   }}
                 >
                   {t("common.remove", locale)}

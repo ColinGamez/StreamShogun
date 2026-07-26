@@ -115,6 +115,11 @@ export async function dbRemoveEpgSource(id: string): Promise<IpcResponse<null>> 
   return NO_BRIDGE;
 }
 
+export async function dbListProgrammes(): Promise<IpcResponse<DbProgrammeRow[]>> {
+  if (hasBridge()) return window.shogun!.dbListProgrammes();
+  return NO_BRIDGE;
+}
+
 export async function dbGetNowNext(
   channelId: string,
   now?: number,

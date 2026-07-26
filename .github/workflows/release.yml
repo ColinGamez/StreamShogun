@@ -1,6 +1,7 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -60,7 +61,7 @@ jobs:
         with:
           name: release-${{ matrix.artifact-name }}
           path: ${{ matrix.artifact-pattern }}
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     name: Create Release

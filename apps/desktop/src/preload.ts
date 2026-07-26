@@ -66,6 +66,8 @@ contextBridge.exposeInMainWorld("shogun", {
   dbRemoveEpgSource: (id: string): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_REMOVE_EPG_SOURCE, id),
 
+  dbListProgrammes: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.DB_LIST_PROGRAMMES),
+
   dbGetNowNext: (args: { channelId: string; now?: number }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_GET_NOW_NEXT, args),
 
