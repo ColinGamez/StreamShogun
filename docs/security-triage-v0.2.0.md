@@ -24,6 +24,7 @@ force-upgrade or a blanket `continue-on-error` rule.
 | Nodemailer 7                                       | API runtime                                 | Password-reset email generation                            | Upgraded to Nodemailer 9.0.3                                      |
 | fast-xml-parser                                    | Desktop/core runtime                        | Parses untrusted user-provided XMLTV                       | Upgraded to 5.10.1; strict XML validation remains enabled         |
 | hls.js                                             | Desktop renderer runtime                    | Parses and plays remote HLS manifests                      | Upgraded to 1.6.16                                                |
+| better-sqlite3                                     | Desktop runtime                             | Persists playlists, EPG data, settings, and migrations     | Upgraded to 13.0.1 for Electron 43 native ABI compatibility       |
 | Vitest 4.0                                         | Test only                                   | Local/CI test server, not shipped                          | Upgraded all workspaces to 4.1.10                                 |
 | PostCSS, flatted, effect, defu, picomatch, js-yaml | Build/configuration transitive dependencies | Build, generated-client configuration, lint, or test paths | Pinned to patched compatible releases through workspace overrides |
 

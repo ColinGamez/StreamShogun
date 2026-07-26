@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enforced dependency security policy** - CI now blocks high/critical production advisories and
   critical build/development advisories, with accepted build-only findings documented separately.
 - **Modernized desktop and build runtime** - Electron 43, electron-builder 26, Vite 7, and the
-  complete Squirrel packaging peer chain replace outdated release infrastructure.
+  complete Squirrel packaging peer chain replace outdated release infrastructure; better-sqlite3
+  13 restores native packaging compatibility with Electron 43 across supported platforms.
 - **Patched input and authentication dependencies** - Fastify/JWT, Nodemailer, XMLTV parsing, HLS,
   test tooling, and compatible vulnerable transitives were upgraded intentionally.
 
