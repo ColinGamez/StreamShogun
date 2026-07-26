@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:electron": "concurrently -k -n UI,ELECTRON \"vite\" \"pnpm --filter @stream-shogun/desktop dev\"",
     "build": "tsc -b && vite build",
+    "test": "vitest run",
     "preview": "vite preview",
     "clean": "rm -rf dist"
   },

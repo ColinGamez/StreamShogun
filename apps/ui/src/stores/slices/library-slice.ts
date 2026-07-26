@@ -1,7 +1,13 @@
 // ── Library slice (playlists, channels, EPG, favorites, DB persistence) ──
 import type { StateCreator } from "zustand";
 import type { AppState, PlaylistEntry, EpgEntry } from "../app-store";
-import type { Channel, Programme } from "@stream-shogun/core";
+import {
+  mergeEpgSources,
+  serializeMergedEpg,
+  type Channel,
+  type EpgSourceBatch,
+  type Programme,
+} from "@stream-shogun/core";
 import { FREE_PLAYLIST_LIMIT } from "@stream-shogun/shared";
 import type { SerializedEpgIndex, DbPlaylistRow, DbEpgSourceRow } from "../../vite-env";
 import { localStorageAdapter, loadJson, saveJson } from "../../lib/persistence";
@@ -15,6 +21,47 @@ function uid(): string {
 
 function persistFavorites(favs: Set<string>) {
   saveJson(P, "shogun:favorites", [...favs]);
+}
+
+function restoreMergedEpg(
+  rows: {
+    epgSourceId: string;
+    sourceName: string;
+    channelId: string;
+    start: number;
+    stop: number;
+    title: string;
+    subtitle: string;
+    description: string;
+    categories: string[];
+    episodeNum: string;
+    icon: string;
+    rating: string;
+  }[],
+): { programmes: Programme[]; index: SerializedEpgIndex } {
+  const grouped = new Map<string, EpgSourceBatch>();
+  for (const row of rows) {
+    const sourceId = row.epgSourceId || "legacy";
+    let batch = grouped.get(sourceId);
+    if (!batch) {
+      batch = { sourceId, sourceName: row.sourceName || "EPG source", programmes: [] };
+      grouped.set(sourceId, batch);
+    }
+    batch.programmes.push({
+      channelId: row.channelId,
+      start: row.start,
+      stop: row.stop,
+      titles: [row.title],
+      subtitle: row.subtitle,
+      description: row.description,
+      categories: row.categories,
+      episodeNum: row.episodeNum,
+      icon: row.icon,
+      rating: row.rating,
+    });
+  }
+  const index = serializeMergedEpg(mergeEpgSources([...grouped.values()]));
+  return { programmes: Object.values(index).flat(), index };
 }
 
 export { persistFavorites };
@@ -100,12 +147,18 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
   epgIndex: loadJson<SerializedEpgIndex>(P, "shogun:epg-index", {}),
   programmes: loadJson<Programme[]>(P, "shogun:programmes", []),
 
-  addEpg: (entry, programmes, index) => {
+  addEpg: (entry, programmes, _index) => {
     const id = entry.id || uid();
     const newEntry = { ...entry, id };
     const entries = [...get().epgEntries, newEntry];
-    const allProgrammes = [...get().programmes, ...programmes];
-    const merged = { ...get().epgIndex, ...index };
+    const existingProgrammes = Object.values(get().epgIndex).flat();
+    const merged = serializeMergedEpg(
+      mergeEpgSources([
+        { sourceId: "existing", sourceName: "Existing EPG sources", programmes: existingProgrammes },
+        { sourceId: id, sourceName: entry.name, programmes },
+      ]),
+    );
+    const allProgrammes = Object.values(merged).flat();
     saveJson(P, "shogun:epg-entries", entries);
     if (!window.shogun) {
       saveJson(P, "shogun:programmes", allProgrammes);
@@ -160,24 +213,9 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     const dbFavorites = new Set(favRes.ok ? favRes.data : []);
     const dbEpgSources = epgRes.ok ? epgRes.data : [];
 
-    if (programmeRes.ok && programmeRes.data.length > 0) {
-      const restoredProgrammes: Programme[] = programmeRes.data.map((row) => ({
-        channelId: row.channelId,
-        start: row.start,
-        stop: row.stop,
-        titles: [row.title],
-        subtitle: row.subtitle,
-        description: row.description,
-        categories: row.categories,
-        episodeNum: row.episodeNum,
-        icon: row.icon,
-        rating: row.rating,
-      }));
-      const restoredIndex: SerializedEpgIndex = {};
-      for (const item of restoredProgrammes) {
-        (restoredIndex[item.channelId] ??= []).push(item);
-      }
-      set({ programmes: restoredProgrammes, epgIndex: restoredIndex });
+    if (programmeRes.ok) {
+      const restored = restoreMergedEpg(programmeRes.data);
+      set({ programmes: restored.programmes, epgIndex: restored.index });
     }
 
     const chRes = await bridge.dbListChannels();
@@ -263,23 +301,8 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     if (epgRes.ok) set({ dbEpgSources: epgRes.data });
     const programmeRes = await bridge.dbListProgrammes();
     if (programmeRes.ok) {
-      const restoredProgrammes: Programme[] = programmeRes.data.map((row) => ({
-        channelId: row.channelId,
-        start: row.start,
-        stop: row.stop,
-        titles: [row.title],
-        subtitle: row.subtitle,
-        description: row.description,
-        categories: row.categories,
-        episodeNum: row.episodeNum,
-        icon: row.icon,
-        rating: row.rating,
-      }));
-      const restoredIndex: SerializedEpgIndex = {};
-      for (const item of restoredProgrammes) {
-        (restoredIndex[item.channelId] ??= []).push(item);
-      }
-      set({ programmes: restoredProgrammes, epgIndex: restoredIndex });
+      const restored = restoreMergedEpg(programmeRes.data);
+      set({ programmes: restored.programmes, epgIndex: restored.index });
     }
   },
 

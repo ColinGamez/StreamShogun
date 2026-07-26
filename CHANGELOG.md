@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Deterministic playback recovery** - HLS and direct streams share a tested, bounded retry policy;
+  signed and uppercase manifest URLs are correctly routed through hls.js.
+- **Source-aware EPG restoration** - programmes retain their provider ownership across SQLite and
+  IPC so overlapping guides resolve predictably, with the most recently imported provider winning.
+- **Complete test gate** - the root test command and CI now include renderer policy tests instead
+  of validating only the core and API workspaces.
+
 - **Release-scale import coverage** — automated suites now exercise 20,000-channel M3U files,
   100,000 XMLTV programmes, malformed entries, missing logos, multiple stream protocols, and
   multi-provider EPG conflict resolution against explicit performance budgets.

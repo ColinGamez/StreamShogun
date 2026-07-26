@@ -68,6 +68,8 @@ export interface DbEpgSourceRow {
 }
 
 export interface DbProgrammeRow {
+  epgSourceId: string;
+  sourceName: string;
   channelId: string;
   start: number;
   stop: number;

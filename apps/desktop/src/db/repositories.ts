@@ -44,6 +44,8 @@ export interface EpgSourceRow {
 }
 
 export interface ProgrammeRow {
+  epgSourceId: string;
+  sourceName: string;
   channelId: string;
   start: number;
   stop: number;
@@ -84,6 +86,8 @@ function deterministicId(...parts: string[]): string {
 /** Convert a raw DB programme row into the public DTO. */
 function toProgrammeRow(row: Record<string, unknown>): ProgrammeRow {
   return {
+    epgSourceId: (row.epgSourceId as string) || "",
+    sourceName: (row.sourceName as string) || "",
     channelId: row.channelId as string,
     start: row.start as number,
     stop: row.stop as number,
@@ -290,7 +294,7 @@ export function listEpgSources(): EpgSourceRow[] {
       FROM epg_sources e
       LEFT JOIN programmes p ON p.epgSourceId = e.id
       GROUP BY e.id
-      ORDER BY e.name
+      ORDER BY e.lastFetchedAt ASC, e.name ASC
     `,
     )
     .all() as EpgSourceRow[];
@@ -304,7 +308,12 @@ export function removeEpgSource(id: string): void {
 /** Restore all persisted programmes for the renderer's in-memory EPG index. */
 export function listProgrammes(): ProgrammeRow[] {
   const rows = getDb()
-    .prepare("SELECT * FROM programmes ORDER BY channelId, start ASC")
+    .prepare(
+      `SELECT p.*, e.name AS sourceName
+       FROM programmes p
+       JOIN epg_sources e ON e.id = p.epgSourceId
+       ORDER BY e.lastFetchedAt ASC, p.channelId ASC, p.start ASC`,
+    )
     .all() as Record<string, unknown>[];
   return rows.map(toProgrammeRow);
 }
