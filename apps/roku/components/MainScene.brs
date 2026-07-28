@@ -2,7 +2,6 @@
 ' MainScene.brs — Tab navigation controller
 ' =============================================================================
 sub init()
-    ImportPrivateBootstrapSession()
     m.tabGroup = m.top.FindNode("tabGroup")
     m.libraryScene = m.top.FindNode("libraryScene")
     m.guideScene = m.top.FindNode("guideScene")
