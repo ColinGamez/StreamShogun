@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Personal Roku channel library** - The same master-account channel feed used by desktop can now
   be added to Roku without exposing or retyping its private M3U URL.
 
+### Fixed
+
+- **Roku Windows packaging** - Sideload ZIP entries now always use Roku-compatible forward-slash
+  paths and fail packaging if the required `source` or `components` entries are malformed.
+
 - **Enforced dependency security policy** - CI now blocks high/critical production advisories and
   critical build/development advisories, with accepted build-only findings documented separately.
 - **Modernized desktop and build runtime** - Electron 43, electron-builder 26, Vite 7, and the

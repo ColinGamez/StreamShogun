@@ -58,7 +58,41 @@ try {
   Copy-Item -LiteralPath (Join-Path $appRoot "components") -Destination $tempRoot -Recurse
   Copy-Item -LiteralPath (Join-Path $appRoot "images") -Destination $tempRoot -Recurse
 
-  Compress-Archive -Path (Join-Path $tempRoot "*") -DestinationPath $zipPath -Force
+  Add-Type -AssemblyName System.IO.Compression
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $archive = [System.IO.Compression.ZipFile]::Open(
+    $zipPath,
+    [System.IO.Compression.ZipArchiveMode]::Create
+  )
+  try {
+    $files = Get-ChildItem -LiteralPath $tempRoot -Recurse -File
+    foreach ($file in $files) {
+      $entryName = $file.FullName.Substring($tempRoot.Length + 1).Replace("\", "/")
+      [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+        $archive,
+        $file.FullName,
+        $entryName,
+        [System.IO.Compression.CompressionLevel]::Optimal
+      ) | Out-Null
+    }
+  } finally {
+    $archive.Dispose()
+  }
+
+  $audit = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+  try {
+    $entryNames = @($audit.Entries | ForEach-Object { $_.FullName })
+    foreach ($requiredEntry in @("manifest", "source/main.brs", "components/MainScene.xml")) {
+      if ($entryNames -notcontains $requiredEntry) {
+        throw "Roku package is missing required ZIP entry: $requiredEntry"
+      }
+    }
+    if ($entryNames | Where-Object { $_.Contains("\") }) {
+      throw "Roku package contains Windows-style ZIP paths that the device cannot load."
+    }
+  } finally {
+    $audit.Dispose()
+  }
 } finally {
   if (Test-Path -LiteralPath $tempRoot) {
     Remove-Item -LiteralPath $tempRoot -Recurse -Force
