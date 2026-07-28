@@ -62,6 +62,11 @@ try {
     [System.IO.Directory]::CreateDirectory((Join-Path $tempRoot "private")) | Out-Null
     Copy-Item -LiteralPath $privateSession -Destination (Join-Path $tempRoot "private\session.json")
   }
+  $privatePlaylist = Join-Path $appRoot "private\master-playlist.m3u"
+  if (Test-Path -LiteralPath $privatePlaylist) {
+    [System.IO.Directory]::CreateDirectory((Join-Path $tempRoot "private")) | Out-Null
+    Copy-Item -LiteralPath $privatePlaylist -Destination (Join-Path $tempRoot "private\master-playlist.m3u")
+  }
 
   Add-Type -AssemblyName System.IO.Compression
   Add-Type -AssemblyName System.IO.Compression.FileSystem

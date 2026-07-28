@@ -151,6 +151,15 @@ function IsMasterPlaylist(url as String) as Boolean
 end function
 
 function FetchMasterPlaylist() as Object
+    privatePath = "pkg:/private/master-playlist.m3u"
+    fs = CreateObject("roFileSystem")
+    if fs <> invalid and fs.Exists(privatePath)
+        body = ReadAsciiFile(privatePath)
+        if body <> invalid and body <> ""
+            return { ok: true, body: body, code: 200 }
+        end if
+    end if
+
     session = LoadAccountSession()
     if session.accessToken = invalid or session.accessToken = ""
         return { ok: false, error: "Sign in to your StreamShogun account first." }
