@@ -146,6 +146,18 @@ function FetchMasterJapanKoreaGuide() as Object
     return result
 end function
 
+function IsMasterPlaylist(url as String) as Boolean
+    return LCase(TrimString(url)) = "streamshogun:master-playlist"
+end function
+
+function FetchMasterPlaylist() as Object
+    session = LoadAccountSession()
+    if session.accessToken = invalid or session.accessToken = ""
+        return { ok: false, error: "Sign in to your StreamShogun account first." }
+    end if
+    return ApiGetTextUrl(BuildApiUrl(session.apiBaseUrl, "/v1/master/playlist.m3u"), session.accessToken)
+end function
+
 function EncodeQueryParam(value as String) as String
     encoded = value
     encoded = encoded.Replace("%", "%25")

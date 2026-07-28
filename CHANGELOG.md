@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Personal Roku Japan + Korea guide** - Master-account users can connect the protected combined
   Tokyo terrestrial and Korea XMLTV guide from the Roku EPG screen with one remote click.
+- **Personal Roku channel library** - The same master-account channel feed used by desktop can now
+  be added to Roku without exposing or retyping its private M3U URL.
 
 - **Enforced dependency security policy** - CI now blocks high/critical production advisories and
   critical build/development advisories, with accepted build-only findings documented separately.

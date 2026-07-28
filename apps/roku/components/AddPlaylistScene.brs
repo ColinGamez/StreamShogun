@@ -4,6 +4,7 @@
 sub init()
     m.nameInput = m.top.FindNode("nameInput")
     m.urlInput = m.top.FindNode("urlInput")
+    m.masterBtn = m.top.FindNode("masterBtn")
     m.saveBtn = m.top.FindNode("saveBtn")
     m.upgradeBtn = m.top.FindNode("upgradeBtn")
     m.cancelBtn = m.top.FindNode("cancelBtn")
@@ -11,6 +12,7 @@ sub init()
     m.validationSpinner = m.top.FindNode("validationSpinner")
 
     m.saveBtn.ObserveField("buttonSelected", "onSave")
+    m.masterBtn.ObserveField("buttonSelected", "onMasterPlaylist")
     m.upgradeBtn.ObserveField("buttonSelected", "onUpgrade")
     m.cancelBtn.ObserveField("buttonSelected", "onCancel")
 
@@ -20,6 +22,24 @@ sub init()
     m.pendingUrl = ""
 
     m.nameInput.SetFocus(true)
+end sub
+
+sub onMasterPlaylist()
+    if m.isValidating then return
+    if not HasAccountSession()
+        m.validationMsg.color = "#ff6b6b"
+        m.validationMsg.text = "Sign in under Settings > Account first, then try again."
+        return
+    end if
+    if PlaylistUrlExists("streamshogun:master-playlist")
+        m.validationMsg.color = "#ff6b6b"
+        m.validationMsg.text = "Your Japan + Korea channels are already saved."
+        return
+    end if
+
+    m.nameInput.text = "Japan + Korea Channels"
+    m.urlInput.text = "streamshogun:master-playlist"
+    beginValidation(m.nameInput.text, m.urlInput.text)
 end sub
 
 sub focusDefault()
@@ -51,7 +71,7 @@ sub onSave()
     end if
 
     urlLower = LCase(url)
-    if not StartsWith(urlLower, "http://") and not StartsWith(urlLower, "https://")
+    if not StartsWith(urlLower, "http://") and not StartsWith(urlLower, "https://") and not IsMasterPlaylist(url)
         m.validationMsg.text = "URL must start with http:// or https://"
         m.urlInput.SetFocus(true)
         return
