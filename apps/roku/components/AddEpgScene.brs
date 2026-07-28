@@ -5,6 +5,7 @@ sub init()
     m.urlInput = m.top.FindNode("urlInput")
     m.ttlSelector = m.top.FindNode("ttlSelector")
     m.saveBtn = m.top.FindNode("saveBtn")
+    m.jpKrBtn = m.top.FindNode("jpKrBtn")
     m.removeBtn = m.top.FindNode("removeBtn")
     m.upgradeBtn = m.top.FindNode("upgradeBtn")
     m.cancelBtn = m.top.FindNode("cancelBtn")
@@ -12,6 +13,7 @@ sub init()
     m.validationSpinner = m.top.FindNode("validationSpinner")
 
     m.saveBtn.ObserveField("buttonSelected", "onSave")
+    m.jpKrBtn.ObserveField("buttonSelected", "onJapanKorea")
     m.removeBtn.ObserveField("buttonSelected", "onRemove")
     m.upgradeBtn.ObserveField("buttonSelected", "onUpgrade")
     m.cancelBtn.ObserveField("buttonSelected", "onCancel")
@@ -26,6 +28,18 @@ sub init()
 
     ' Pre-populate from existing settings
     populateFromSettings()
+end sub
+
+sub onJapanKorea()
+    if m.isValidating then return
+    if not HasAccountSession()
+        m.validationMsg.color = "#ff6b6b"
+        m.validationMsg.text = "Sign in under Settings > Account first, then try again."
+        return
+    end if
+
+    m.urlInput.text = "streamshogun:master-japan-korea"
+    beginValidation(m.urlInput.text, 6)
 end sub
 
 sub focusDefault()
@@ -65,7 +79,7 @@ sub onSave()
         return
     end if
     urlLower = LCase(url)
-    if not StartsWith(urlLower, "http://") and not StartsWith(urlLower, "https://")
+    if not StartsWith(urlLower, "http://") and not StartsWith(urlLower, "https://") and not IsMasterJapanKoreaGuide(url)
         m.validationMsg.text = "URL must start with http:// or https://"
         m.urlInput.SetFocus(true)
         return

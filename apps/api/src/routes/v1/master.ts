@@ -7,6 +7,7 @@ import type {
 import { env } from "../../config/env.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import {
+  JAPAN_KOREA_COMBINED_SOURCE_ID,
   getGeneratedMasterSources,
   loadGeneratedMasterSourceContent,
 } from "../../lib/master-epg-providers.js";
@@ -100,6 +101,23 @@ export async function masterRoutes(app: FastifyInstance): Promise<void> {
       };
 
       return reply.code(200).send(response);
+    },
+  );
+
+  app.get(
+    "/japan-korea.xml",
+    { preHandler: [authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if (!assertMaster(request, reply)) return;
+
+      try {
+        const xml = await loadGeneratedMasterSourceContent(JAPAN_KOREA_COMBINED_SOURCE_ID);
+        return reply.type("application/xml; charset=utf-8").code(200).send(xml);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to load combined guide";
+        request.log.error({ err: message }, "master.japan_korea_failed");
+        return reply.code(502).send({ error: "BadGateway", message });
+      }
     },
   );
 }

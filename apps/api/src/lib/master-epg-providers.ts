@@ -21,6 +21,7 @@ const masterEpgCache = new EpgCache(6 * 60 * 60 * 1000, 20);
 
 export const JAPAN_BANGUMI_SOURCE_ID = "japan-bangumi-tokyo-terrestrial";
 export const KOREA_EPG2XML_SOURCE_ID = "korea-epg2xml";
+export const JAPAN_KOREA_COMBINED_SOURCE_ID = "japan-korea-combined";
 
 const TOKYO_TERRESTRIAL_CHANNELS = [
   "NHK総合1・東京",
@@ -74,6 +75,16 @@ export function getGeneratedMasterSources(): MasterSourceDTO[] {
       loadMode: "api",
       description: "XMLTV loaded from an epg2xml-compatible private output URL.",
     });
+
+    if (env.MASTER_JAPAN_BANGUMI_ENABLED !== "false") {
+      sources.push({
+        id: JAPAN_KOREA_COMBINED_SOURCE_ID,
+        kind: "epg",
+        name: "Japan + Korea Guide",
+        loadMode: "api",
+        description: "Combined Tokyo terrestrial and Korea XMLTV guide for the Master profile.",
+      });
+    }
   }
 
   return sources;
@@ -88,7 +99,32 @@ export async function loadGeneratedMasterSourceContent(sourceId: string): Promis
     return getCachedXml(sourceId, loadKoreaEpg2xmlXmltv);
   }
 
+  if (sourceId === JAPAN_KOREA_COMBINED_SOURCE_ID) {
+    return getCachedXml(sourceId, async () => {
+      const [japan, korea] = await Promise.all([buildJapanBangumiXmltv(), loadKoreaEpg2xmlXmltv()]);
+      return mergeXmltvDocuments([japan, korea], "StreamShogun Japan + Korea");
+    });
+  }
+
   throw new Error("Unknown generated Master source");
+}
+
+export function mergeXmltvDocuments(documents: string[], generator: string): string {
+  const bodies: string[] = [];
+  for (const document of documents) {
+    const match = /<tv\b[^>]*>([\s\S]*?)<\/tv>/i.exec(document);
+    if (!match) throw new Error("Cannot merge invalid XMLTV document");
+    bodies.push(match[1].trim());
+  }
+
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<!DOCTYPE tv SYSTEM "xmltv.dtd">',
+    `<tv generator-info-name="${xmlEscape(generator)}">`,
+    ...bodies.map((body) => `  ${body.replace(/\n/g, "\n  ")}`),
+    "</tv>",
+    "",
+  ].join("\n");
 }
 
 async function getCachedXml(cacheKey: string, loader: () => Promise<string>): Promise<string> {

@@ -7,7 +7,7 @@ vi.mock("../config/env.js", () => ({
   },
 }));
 
-import { parseBangumiScheduleHtml } from "./master-epg-providers.js";
+import { mergeXmltvDocuments, parseBangumiScheduleHtml } from "./master-epg-providers.js";
 
 function scheduleHtml(programmeCount = 20): string {
   const channels = Array.from(
@@ -57,6 +57,27 @@ describe("Bangumi G-Guide parser", () => {
   it("rejects suspiciously partial schedules", () => {
     expect(() => parseBangumiScheduleHtml(scheduleHtml(3))).toThrow(
       "Bangumi returned only 3 programmes",
+    );
+  });
+});
+
+describe("Master XMLTV merge", () => {
+  it("combines Japan and Korea channels and programmes under one XMLTV root", () => {
+    const japan = `<?xml version="1.0"?><tv><channel id="jp-1"><display-name>JP One</display-name></channel><programme channel="jp-1" start="20260728000000 +0900" stop="20260728010000 +0900"><title>Japan</title></programme></tv>`;
+    const korea = `<?xml version="1.0"?><tv><channel id="kr-1"><display-name>KR One</display-name></channel><programme channel="kr-1" start="20260728000000 +0900" stop="20260728010000 +0900"><title>Korea</title></programme></tv>`;
+
+    const merged = mergeXmltvDocuments([japan, korea], "Japan + Korea");
+
+    expect(merged.match(/<tv\b/g)).toHaveLength(1);
+    expect(merged).toContain('channel id="jp-1"');
+    expect(merged).toContain('channel id="kr-1"');
+    expect(merged).toContain("<title>Japan</title>");
+    expect(merged).toContain("<title>Korea</title>");
+  });
+
+  it("rejects malformed source documents", () => {
+    expect(() => mergeXmltvDocuments(["not xmltv"], "Combined")).toThrow(
+      "Cannot merge invalid XMLTV document",
     );
   });
 });
