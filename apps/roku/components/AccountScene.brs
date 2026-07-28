@@ -43,7 +43,11 @@ end sub
 sub populate()
     session = LoadAccountSession()
     m.apiInput.text = session.apiBaseUrl
-    m.emailInput.text = session.email
+    if session.email <> invalid and session.email <> ""
+        m.emailInput.text = session.email
+    else
+        m.emailInput.text = "colin.kenny777@gmail.com"
+    end if
     updateSummary(session)
 end sub
 
