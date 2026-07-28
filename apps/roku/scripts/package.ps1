@@ -57,6 +57,11 @@ try {
   Copy-Item -LiteralPath (Join-Path $appRoot "source") -Destination $tempRoot -Recurse
   Copy-Item -LiteralPath (Join-Path $appRoot "components") -Destination $tempRoot -Recurse
   Copy-Item -LiteralPath (Join-Path $appRoot "images") -Destination $tempRoot -Recurse
+  $privateSession = Join-Path $appRoot "private\session.json"
+  if (Test-Path -LiteralPath $privateSession) {
+    [System.IO.Directory]::CreateDirectory((Join-Path $tempRoot "private")) | Out-Null
+    Copy-Item -LiteralPath $privateSession -Destination (Join-Path $tempRoot "private\session.json")
+  }
 
   Add-Type -AssemblyName System.IO.Compression
   Add-Type -AssemblyName System.IO.Compression.FileSystem

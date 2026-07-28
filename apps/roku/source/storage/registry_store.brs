@@ -306,6 +306,16 @@ function LoadAccountSession() as Object
     }
 end function
 
+sub ImportPrivateBootstrapSession()
+    if HasAccountSession() then return
+    path = "pkg:/private/session.json"
+    if not CreateObject("roFileSystem").Exists(path) then return
+    raw = ReadAsciiFile(path)
+    session = ParseJSON(raw)
+    if session = invalid or session.accessToken = invalid or session.refreshToken = invalid then return
+    SaveAccountSession(session)
+end sub
+
 sub SaveAccountSession(session as Object)
     sec = GetRegistrySection("account")
     sec.Write("apiBaseUrl", IIF(session.apiBaseUrl <> invalid, session.apiBaseUrl, "https://api.streamshogun.com"))
