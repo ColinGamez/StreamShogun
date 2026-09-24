@@ -2,11 +2,11 @@
   "provider": "NAVER",
   "channelSelection": "all",
   "fetchDays": 2,
-  "generatedAt": "2026-09-24T01:19:35.092517+00:00",
+  "generatedAt": "2026-09-24T12:59:19.319953+00:00",
   "sourceProject": "https://github.com/epg2xml/epg2xml",
   "output": "korea-naver.xml.gz",
   "channels": 471,
-  "programmes": 25487,
-  "xmlBytes": 9812904,
-  "gzipBytes": 594142
+  "programmes": 25488,
+  "xmlBytes": 9813949,
+  "gzipBytes": 594254
 }
