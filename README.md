@@ -106,6 +106,7 @@ stream-shogun/
 │   ├── dependabot.yml           # Automated dependency updates
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── apps/
+│   ├── api/                     # Fastify backend (auth, billing/Stripe, Roku, EPG)
 │   ├── desktop/                 # Electron main process
 │   │   ├── build/               # App icons (electron-builder)
 │   │   ├── scripts/             # Dev launcher
@@ -128,8 +129,9 @@ stream-shogun/
 │       │   └── App.css          # Full application styles
 │       ├── package.json
 │       └── vite.config.ts
+│   └── roku/                    # Roku SceneGraph channel (private sideload)
 ├── packages/
-│   └── core/                    # Shared library
+│   ├── core/                    # IPTV parsers, EPG index, licensing
 │       ├── data/                # Test fixtures (M3U, XMLTV)
 │       ├── src/
 │       │   ├── __demo__/        # Parser demo/test runners
@@ -141,6 +143,7 @@ stream-shogun/
 │       │   └── xmltv-types.ts   # Programme, XmltvData
 │       ├── package.json
 │       └── tsconfig.json
+│   └── shared/                  # Cross-app types + utils (API/UI contract)
 ├── assets/                      # SVG icon source
 ├── scripts/                     # Build utilities (clean, icon gen)
 ├── .editorconfig
@@ -182,7 +185,7 @@ See [SECURITY.md](SECURITY.md) for the full security policy and vulnerability re
 
 | Tool                           | Version            |
 | ------------------------------ | ------------------ |
-| [Node.js](https://nodejs.org/) | ≥ 18.0.0           |
+| [Node.js](https://nodejs.org/) | ≥ 22.0.0           |
 | [pnpm](https://pnpm.io/)       | ≥ 9.0.0            |
 | [Git](https://git-scm.com/)    | Any recent version |
 
@@ -215,17 +218,17 @@ pnpm dev
 pnpm dev:ui
 ```
 
-| Script              | Description                                 |
-| ------------------- | ------------------------------------------- |
-| `pnpm dev`          | Start Vite dev server + Electron            |
-| `pnpm dev:ui`       | Start Vite dev server only (browser)        |
-| `pnpm test`         | Run core library tests (96 tests)           |
-| `pnpm typecheck`    | TypeScript strict check across all packages |
-| `pnpm lint`         | ESLint across the monorepo                  |
-| `pnpm lint:fix`     | ESLint with auto-fix                        |
-| `pnpm format`       | Prettier format all files                   |
-| `pnpm format:check` | Prettier check (CI-friendly)                |
-| `pnpm clean`        | Remove all build artifacts                  |
+| Script              | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `pnpm dev`          | Start Vite dev server + Electron                           |
+| `pnpm dev:ui`       | Start Vite dev server only (browser)                       |
+| `pnpm test`         | Run all workspaces (core 47 + ui 94 + desktop 8 + api 181) |
+| `pnpm typecheck`    | TypeScript strict check across all packages                |
+| `pnpm lint`         | ESLint across the monorepo                                 |
+| `pnpm lint:fix`     | ESLint with auto-fix                                       |
+| `pnpm format`       | Prettier format all files                                  |
+| `pnpm format:check` | Prettier check (CI-friendly)                               |
+| `pnpm clean`        | Remove all build artifacts                                 |
 
 ## Production Build
 

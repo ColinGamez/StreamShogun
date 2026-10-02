@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Production audit back to green** - Fastify `5.10.0` to `5.12.5`, Nodemailer `9.0.3` to
+  `10.0.13`, and `fast-uri` / `deepmerge-ts` workspace pins clear all high production
+  advisories; the Nodemailer 10 namespace-type break in password-reset email is fixed without
+  runtime changes. See `docs/security-triage-v0.2.0.md`.
+- **Flaky billing test hardened** - the API suite raises `testTimeout` to 15s so Fastify cold-start
+  under parallel workers no longer trips the 5s default; 330/330 tests pass.
+- **Stale automation pruned** - Zustand `5.0.11` to `5.0.12`, `pnpm/action-setup` v4 to v6 and
+  `softprops/action-gh-release` v2 to v3 (hash-pinned) absorb three Dependabot branches.
+
 - **Roku Windows packaging** - Sideload ZIP entries now always use Roku-compatible forward-slash
   paths and fail packaging if the required `source` or `components` entries are malformed.
 
