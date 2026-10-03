@@ -9,6 +9,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Personal Roku Japan + Korea guide** - Master-account users can connect the protected combined
+  Tokyo terrestrial and Korea XMLTV guide from the Roku EPG screen with one remote click.
+- **Personal Roku channel library** - The same master-account channel feed used by desktop can now
+  be added to Roku without exposing or retyping its private M3U URL.
+
+### Fixed
+
+- **Production audit back to green** - Fastify `5.10.0` to `5.12.5`, Nodemailer `9.0.3` to
+  `10.0.13`, and `fast-uri` / `deepmerge-ts` workspace pins clear all high production
+  advisories; the Nodemailer 10 namespace-type break in password-reset email is fixed without
+  runtime changes. See `docs/security-triage-v0.2.0.md`.
+- **Flaky billing test hardened** - the API suite raises `testTimeout` to 15s so Fastify cold-start
+  under parallel workers no longer trips the 5s default; 330/330 tests pass.
+- **Stale automation pruned** - Zustand `5.0.11` to `5.0.12`, `pnpm/action-setup` v4 to v6 and
+  `softprops/action-gh-release` v2 to v3 (hash-pinned) absorb three Dependabot branches.
+
+- **Roku Windows packaging** - Sideload ZIP entries now always use Roku-compatible forward-slash
+  paths and fail packaging if the required `source` or `components` entries are malformed.
+
+- **Enforced dependency security policy** - CI now blocks high/critical production advisories and
+  critical build/development advisories, with accepted build-only findings documented separately.
+- **Modernized desktop and build runtime** - Electron 43, electron-builder 26, Vite 7, and the
+  complete Squirrel packaging peer chain replace outdated release infrastructure; better-sqlite3
+  13 restores native packaging compatibility with Electron 43 across supported platforms.
+- **Deterministic package identity** - Explicit executable and Linux desktop names prevent scoped
+  workspace metadata from producing invalid AppImage paths, while CI packaging never publishes
+  outside the release workflow's controlled artifact step.
+- **Patched input and authentication dependencies** - Fastify/JWT, Nodemailer, XMLTV parsing, HLS,
+  test tooling, and compatible vulnerable transitives were upgraded intentionally.
+
+- **Upgrade persistence gate** - transactional migration tests preserve user settings and playlist
+  data across schema versions and verify failed migrations roll back cleanly.
+- **Reinstall-safe Windows behavior** - NSIS uninstalls explicitly retain StreamShogun user data so
+  a later reinstall can restore the local library and preferences.
+
+- **Import failure coverage** - automated desktop tests now exercise request timeouts, HTTP 403/404,
+  dropped connections, oversized payloads, and plain/gzip downloads through one shared network path.
+- **Strict source validation** - malformed XMLTV is rejected before parsing, and repeated playlist
+  stream URLs are deduplicated before SQLite persistence.
+
+- **Deterministic playback recovery** - HLS and direct streams share a tested, bounded retry policy;
+  signed and uppercase manifest URLs are correctly routed through hls.js.
+- **Source-aware EPG restoration** - programmes retain their provider ownership across SQLite and
+  IPC so overlapping guides resolve predictably, with the most recently imported provider winning.
+- **Complete test gate** - the root test command and CI now include renderer policy tests instead
+  of validating only the core and API workspaces.
+
+- **Release-scale import coverage** — automated suites now exercise 20,000-channel M3U files,
+  100,000 XMLTV programmes, malformed entries, missing logos, multiple stream protocols, and
+  multi-provider EPG conflict resolution against explicit performance budgets.
+- **Pre-release platform builds** — the Windows, macOS, and Linux packaging matrix can now be run
+  manually before creating a version tag, and missing installer artifacts fail the build.
+- **Large-library batching** — Channels initially renders 300 results and progressively reveals
+  additional batches, preventing 5,000–20,000 channel playlists from mounting every card at once.
+- **Durable desktop source persistence** — normal playlist and EPG imports now use SQLite, restore
+  guide programmes after relaunch, and refresh channel/guide state after source deletion.
+
+- **Guided first-run experience** — new users now land on a focused, privacy-first onboarding
+  screen with a direct playlist-import path, optional sample data, and an explicit reminder that
+  StreamShōgun manages user-provided sources rather than providing IPTV service.
+- **Two-step Library setup** — playlist import is presented as the primary activation step while
+  optional XMLTV/EPG configuration stays collapsed until it is needed.
+
+- **Premium product visual alignment** — onboarding, navigation, active controls, cards, and setup
+  states now share the site's slate-and-violet visual language and fit common laptop viewports.
+- **Reliable clean-start development** — root development commands now build internal shared and
+  core packages before starting Vite or Electron, eliminating missing workspace build artifacts.
+
 - **System theme support** — theme selector now offers Dark / Light / **System** options.
   "System" follows the OS `prefers-color-scheme` media query and auto-updates when the
   OS switches between light and dark mode.

@@ -128,6 +128,45 @@ function BuildEpgProxyUrl(apiBase as String, epgUrl as String) as String
     return BuildApiUrl(apiBase, "/v1/roku/epg?url=" + EncodeQueryParam(epgUrl))
 end function
 
+function IsMasterJapanKoreaGuide(url as String) as Boolean
+    return LCase(TrimString(url)) = "streamshogun:master-japan-korea"
+end function
+
+function FetchMasterJapanKoreaGuide() as Object
+    session = LoadAccountSession()
+    if session.accessToken = invalid or session.accessToken = ""
+        return { ok: false, error: "Sign in to your StreamShogun account first." }
+    end if
+
+    result = ApiGetTextUrl(BuildApiUrl(session.apiBaseUrl, "/v1/master/japan-korea.xml"), session.accessToken)
+    if not result.ok then return result
+    if result.body = invalid or result.body = ""
+        return { ok: false, error: "The combined guide response was empty." }
+    end if
+    return result
+end function
+
+function IsMasterPlaylist(url as String) as Boolean
+    return LCase(TrimString(url)) = "streamshogun:master-playlist"
+end function
+
+function FetchMasterPlaylist() as Object
+    privatePath = "pkg:/private/master-playlist.m3u"
+    fs = CreateObject("roFileSystem")
+    if fs <> invalid and fs.Exists(privatePath)
+        body = ReadAsciiFile(privatePath)
+        if body <> invalid and body <> ""
+            return { ok: true, body: body, code: 200 }
+        end if
+    end if
+
+    session = LoadAccountSession()
+    if session.accessToken = invalid or session.accessToken = ""
+        return { ok: false, error: "Sign in to your StreamShogun account first." }
+    end if
+    return ApiGetTextUrl(BuildApiUrl(session.apiBaseUrl, "/v1/master/playlist.m3u"), session.accessToken)
+end function
+
 function EncodeQueryParam(value as String) as String
     encoded = value
     encoded = encoded.Replace("%", "%25")

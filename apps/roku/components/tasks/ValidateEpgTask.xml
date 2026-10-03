@@ -39,7 +39,9 @@
       ClearCachedKey(validationCacheKey)
       session = LoadAccountSession()
       useProxy = IsLikelyRawGzip(url, "")
-      if useProxy and IsProFeatureEnabled("epg_proxy") and session.accessToken <> invalid and session.accessToken <> ""
+      if IsMasterJapanKoreaGuide(url)
+        result = FetchMasterJapanKoreaGuide()
+      else if useProxy and IsProFeatureEnabled("epg_proxy") and session.accessToken <> invalid and session.accessToken <> ""
         result = HttpGetWithAuth(BuildEpgProxyUrl(session.apiBaseUrl, url), validationCacheKey, 0, session.accessToken)
       else
         result = HttpGet(url, validationCacheKey, 0)

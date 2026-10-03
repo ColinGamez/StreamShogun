@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { Plan, SubscriptionStatus, type MeResponse } from "@stream-shogun/shared";
+import { SubscriptionStatus, type MeResponse } from "@stream-shogun/shared";
 import { prisma } from "../../lib/prisma.js";
 import { clearAuthCookies, isWebClient } from "../../lib/cookies.js";
+import { effectiveSubscription } from "../../lib/master-account.js";
 import { authenticate } from "../../middleware/authenticate.js";
 
 export async function meRoutes(app: FastifyInstance): Promise<void> {
@@ -22,8 +23,6 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(404).send({ error: "Not Found", message: "User not found" });
       }
 
-      const sub_ = user.subscription;
-
       const response: MeResponse = {
         user: {
           id: user.id,
@@ -32,12 +31,7 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
           displayName: user.displayName ?? undefined,
           createdAt: user.createdAt.toISOString(),
         },
-        subscription: {
-          plan: sub_?.plan === "PRO" ? Plan.PRO : Plan.FREE,
-          status: (sub_?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
-          billingInterval: (sub_?.billingInterval as "MONTHLY" | "YEARLY") ?? null,
-          currentPeriodEnd: sub_?.currentPeriodEnd?.toISOString() ?? null,
-        },
+        subscription: effectiveSubscription(user.email, user.subscription),
         auth: {
           hasGoogleSignIn: Boolean(user.googleSub),
           hasPasswordLogin: Boolean(user.passwordHash),

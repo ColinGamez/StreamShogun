@@ -11,7 +11,6 @@ import {
   resetPasswordSchema,
   type AuthResponse,
   type TokenPairResponse,
-  Plan,
   SubscriptionStatus,
 } from "@stream-shogun/shared";
 import { prisma } from "../../lib/prisma.js";
@@ -34,6 +33,7 @@ import {
 } from "../../lib/tokens.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { validateBody } from "../../middleware/validate.js";
+import { effectiveSubscription } from "../../lib/master-account.js";
 import {
   isWebClient,
   setAuthCookies,
@@ -67,15 +67,6 @@ function toUserPayload(user: AuthUserRecord) {
   };
 }
 
-function toSubscriptionPayload(subscription?: AuthSubscriptionRecord | null) {
-  return {
-    plan: subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE,
-    status: (subscription?.status as SubscriptionStatus) ?? SubscriptionStatus.ACTIVE,
-    billingInterval: subscription?.billingInterval ?? null,
-    currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() ?? null,
-  };
-}
-
 async function replyWithAuthSession(
   app: FastifyInstance,
   request: FastifyRequest,
@@ -97,7 +88,7 @@ async function replyWithAuthSession(
 
   const accessToken = signAccessToken(app, { sub: user.id, email: user.email });
   const userPayload = toUserPayload(user);
-  const subscriptionPayload = toSubscriptionPayload(subscription);
+  const subscriptionPayload = effectiveSubscription(user.email, subscription);
 
   if (isWebClient(request)) {
     setAuthCookies(reply, accessToken, rawRefresh);

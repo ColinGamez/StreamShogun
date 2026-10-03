@@ -66,6 +66,8 @@ contextBridge.exposeInMainWorld("shogun", {
   dbRemoveEpgSource: (id: string): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_REMOVE_EPG_SOURCE, id),
 
+  dbListProgrammes: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.DB_LIST_PROGRAMMES),
+
   dbGetNowNext: (args: { channelId: string; now?: number }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.DB_GET_NOW_NEXT, args),
 
@@ -155,11 +157,18 @@ contextBridge.exposeInMainWorld("shogun", {
 
   featuresFetch: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.FEATURES_FETCH),
 
+  // ── Master profile ─────────────────────────────────────────────
+  masterSourcesFetch: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.MASTER_SOURCES_FETCH),
+  masterSourceLoad: (id: string): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.MASTER_SOURCE_LOAD, id),
+
   // ── Billing ────────────────────────────────────────────────────
   billingCheckout: (args?: { interval?: string }): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.BILLING_CHECKOUT, args),
 
   billingPortal: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.BILLING_PORTAL),
+
+  billingReconcile: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.BILLING_RECONCILE),
 
   // ── Cloud Sync v1 ─────────────────────────────────────────────
   cloudSyncPull: (): Promise<unknown> => ipcRenderer.invoke(IpcChannels.CLOUD_SYNC_PULL),

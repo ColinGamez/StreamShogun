@@ -1,12 +1,14 @@
 appId: com.stream-shogun.app
 productName: StreamShōgun
+executableName: StreamShogun
 copyright: Copyright © 2026 StreamShōgun
+artifactName: StreamShogun-${version}-${os}-${arch}.${ext}
 
 directories:
   output: release
   buildResources: build
 
-icon: build/icon.png
+icon: build/icon-1024.png
 
 files:
   - dist/**/*
@@ -19,13 +21,13 @@ extraResources:
 
 mac:
   category: public.app-category.entertainment
-  icon: build/icon.png
+  icon: build/icon-1024.png
   target:
     - dmg
     - zip
 
 win:
-  icon: build/icon.png
+  icon: build/icon-1024.png
   target:
     - nsis
     - portable
@@ -34,10 +36,13 @@ nsis:
   oneClick: true
   perMachine: false
   allowToChangeInstallationDirectory: false
+  deleteAppDataOnUninstall: false
 
 linux:
-  icon: build/icon.png
+  icon: build/icon-1024.png
   target:
     - AppImage
     - deb
   category: Utility
+  syncDesktopName: true
+  maintainer: StreamShōgun Contributors <support@streamshogun.com>

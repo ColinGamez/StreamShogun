@@ -120,7 +120,7 @@ POSTGRES_PASSWORD=...
 JWT_SECRET=...
 SUPPORT_EMAIL=colin.kenny777@gmail.com
 RESEND_API_KEY=<resend-api-key>
-EMAIL_FROM=StreamShogun <no-reply@streamshogun.com>
+EMAIL_FROM=StreamShogun <no-reply@mail.streamshogun.com>
 ```
 
 ## Smoke test

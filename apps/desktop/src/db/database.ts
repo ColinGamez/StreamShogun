@@ -41,7 +41,7 @@ export function closeDatabase(): void {
 
 // ── Migration runner ──────────────────────────────────────────────────
 
-function runMigrations(database: Database.Database): void {
+export function runMigrations(database: Database.Database, availableMigrations = migrations): void {
   // Ensure the version-tracking table exists
   database.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
@@ -56,7 +56,7 @@ function runMigrations(database: Database.Database): void {
 
   const currentVersion = row.v;
 
-  for (const migration of migrations) {
+  for (const migration of availableMigrations) {
     if (migration.version > currentVersion) {
       database.transaction(() => {
         database.exec(migration.sql);

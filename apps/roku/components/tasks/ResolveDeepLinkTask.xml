@@ -9,6 +9,7 @@
   </interface>
 
   <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
   <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
@@ -42,7 +43,11 @@
 
       for pIdx = 0 to playlists.Count() - 1
         playlist = playlists[pIdx]
-        result = HttpGet(playlist.url, "deeplink_pl_" + playlist.id, 3600)
+        if IsMasterPlaylist(playlist.url)
+          result = FetchMasterPlaylist()
+        else
+          result = HttpGet(playlist.url, "deeplink_pl_" + playlist.id, 3600)
+        end if
         if result.ok
           channels = ParseM3U(result.body)
           AnnotateChannels(channels, playlist, pIdx)

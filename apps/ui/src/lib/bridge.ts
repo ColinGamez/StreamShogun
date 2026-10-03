@@ -12,6 +12,7 @@ import type {
   DbProgrammeRow,
   DbNowNextResult,
   DbWatchHistoryRow,
+  MasterSourceLoadResult,
   RefreshStatus,
 } from "../vite-env";
 import type { Playlist, Channel, Programme, LicenseStatus } from "@stream-shogun/core";
@@ -111,6 +112,11 @@ export async function dbListEpgSources(): Promise<IpcResponse<DbEpgSourceRow[]>>
 
 export async function dbRemoveEpgSource(id: string): Promise<IpcResponse<null>> {
   if (hasBridge()) return window.shogun!.dbRemoveEpgSource(id);
+  return NO_BRIDGE;
+}
+
+export async function dbListProgrammes(): Promise<IpcResponse<DbProgrammeRow[]>> {
+  if (hasBridge()) return window.shogun!.dbListProgrammes();
   return NO_BRIDGE;
 }
 
@@ -326,9 +332,39 @@ export async function billingPortal(): Promise<IpcResponse<{ url: string }>> {
   return NO_BRIDGE;
 }
 
+export async function billingReconcile(): Promise<
+  IpcResponse<{
+    matched: boolean;
+    message?: string;
+    subscription?: {
+      plan: string;
+      status: string;
+      billingInterval: string | null;
+      currentPeriodEnd: string | null;
+    };
+  }>
+> {
+  if (hasBridge()) return window.shogun!.billingReconcile();
+  return NO_BRIDGE;
+}
+
 // ── Cloud Sync v1 ────────────────────────────────────────────────────
 
-import type { CloudSyncPayload, CloudHistoryItem } from "@stream-shogun/shared";
+import type {
+  CloudSyncPayload,
+  CloudHistoryItem,
+  MasterSourcesResponse,
+} from "@stream-shogun/shared";
+
+export async function masterSourcesFetch(): Promise<IpcResponse<MasterSourcesResponse>> {
+  if (hasBridge()) return window.shogun!.masterSourcesFetch();
+  return NO_BRIDGE;
+}
+
+export async function masterSourceLoad(id: string): Promise<IpcResponse<MasterSourceLoadResult>> {
+  if (hasBridge()) return window.shogun!.masterSourceLoad(id);
+  return NO_BRIDGE;
+}
 
 export async function cloudSyncPull(): Promise<IpcResponse<CloudSyncPayload>> {
   if (hasBridge()) return window.shogun!.cloudSyncPull();

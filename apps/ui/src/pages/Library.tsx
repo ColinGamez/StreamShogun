@@ -1,4 +1,7 @@
 import { useState, useMemo } from "react";
+import type { MasterSourceDTO } from "@stream-shogun/shared";
+import type { Playlist } from "@stream-shogun/core";
+import type { EpgLoadResult, MasterSourceLoadResult } from "../vite-env";
 import { useAppStore, type PlaylistEntry, type EpgEntry } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import {
@@ -6,9 +9,12 @@ import {
   loadPlaylistFromFile,
   loadEpgFromUrl,
   loadEpgFromFile,
+  masterSourcesFetch,
+  masterSourceLoad,
 } from "../lib/bridge";
 import { showToast } from "../components/Toast";
 import { EPG_PRESETS } from "../lib/epg-presets";
+import { isMasterEmail } from "../lib/master-profile";
 
 /** Open a native file dialog (Electron) or an HTML <input type="file"> fallback. */
 function pickFilePath(accept: string): Promise<string | null> {
@@ -36,6 +42,16 @@ function pickFilePath(accept: string): Promise<string | null> {
   });
 }
 
+function resolvePlaylistData(data: Playlist | MasterSourceLoadResult): Playlist | null {
+  if ("source" in data) return data.playlist ?? null;
+  return data;
+}
+
+function resolveEpgData(data: EpgLoadResult | MasterSourceLoadResult): EpgLoadResult | null {
+  if ("source" in data) return data.epg ?? null;
+  return data;
+}
+
 export function LibraryPage() {
   const locale = useAppStore((s) => s.locale);
   const playlistEntries = useAppStore((s) => s.playlistEntries);
@@ -44,12 +60,49 @@ export function LibraryPage() {
   const favorites = useAppStore((s) => s.favorites);
   const addPlaylist = useAppStore((s) => s.addPlaylist);
   const removePlaylist = useAppStore((s) => s.removePlaylist);
+  const dbSavePlaylist = useAppStore((s) => s.dbSavePlaylist);
+  const dbRemovePlaylist = useAppStore((s) => s.dbRemovePlaylist);
   const addEpg = useAppStore((s) => s.addEpg);
   const removeEpg = useAppStore((s) => s.removeEpg);
+  const dbSaveEpgSource = useAppStore((s) => s.dbSaveEpgSource);
+  const dbRemoveEpgSource = useAppStore((s) => s.dbRemoveEpgSource);
+  const authUser = useAppStore((s) => s.authUser);
 
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [epgUrl, setEpgUrl] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+  const [masterSources, setMasterSources] = useState<MasterSourceDTO[]>([]);
+
+  const isMaster = isMasterEmail(authUser?.email);
+
+  const persistPlaylist = async (
+    entry: PlaylistEntry,
+    channelsToSave: Playlist["channels"],
+  ): Promise<void> => {
+    const saved = await dbSavePlaylist(entry.name, entry.type, entry.location, channelsToSave);
+    if (window.shogun && !saved) {
+      throw new Error("The playlist was parsed but could not be saved to the local database.");
+    }
+    addPlaylist({ ...entry, id: saved?.id ?? entry.id }, channelsToSave);
+  };
+
+  const persistEpg = async (entry: EpgEntry, data: EpgLoadResult): Promise<void> => {
+    const saved = await dbSaveEpgSource(entry.name, entry.type, entry.location, data.programmes);
+    if (window.shogun && !saved) {
+      throw new Error("The guide was parsed but could not be saved to the local database.");
+    }
+    addEpg({ ...entry, id: saved?.id ?? entry.id }, data.programmes, data.index);
+  };
+
+  const deletePlaylist = async (id: string): Promise<void> => {
+    if (window.shogun) await dbRemovePlaylist(id);
+    removePlaylist(id);
+  };
+
+  const deleteEpg = async (id: string): Promise<void> => {
+    if (window.shogun) await dbRemoveEpgSource(id);
+    removeEpg(id);
+  };
 
   // ── Computed stats ──────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -79,7 +132,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addPlaylist(entry, res.data.channels);
+        await persistPlaylist(entry, res.data.channels);
         showToast(
           `${t("library.playlistAdded", locale)} (${res.data.channels.length} ch)`,
           "success",
@@ -114,7 +167,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addPlaylist(entry, res.data.channels);
+        await persistPlaylist(entry, res.data.channels);
         showToast(
           `${t("library.playlistAdded", locale)} (${res.data.channels.length} ch)`,
           "success",
@@ -145,7 +198,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addEpg(entry, res.data.programmes, res.data.index);
+        await persistEpg(entry, res.data);
         showToast(
           `${t("library.epgAdded", locale)} (${res.data.programmes.length} ${t("library.programmes_count", locale)})`,
           "success",
@@ -180,7 +233,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addEpg(entry, res.data.programmes, res.data.index);
+        await persistEpg(entry, res.data);
         showToast(
           `${t("library.epgAdded", locale)} (${res.data.programmes.length} ${t("library.programmes_count", locale)})`,
           "success",
@@ -216,7 +269,7 @@ export function LibraryPage() {
           channelCount: res.data.channels.length,
           addedAt: Date.now(),
         };
-        addEpg(entry, res.data.programmes, res.data.index);
+        await persistEpg(entry, res.data);
         showToast(
           `${t("library.epgAdded", locale)} — ${preset.name} (${res.data.channels.length} ch, ${res.data.programmes.length} prog)`,
           "success",
@@ -231,9 +284,150 @@ export function LibraryPage() {
     }
   };
 
+  const handleLoadMasterSources = async () => {
+    setLoading("master-sources");
+    try {
+      const sourcesRes = await masterSourcesFetch();
+      if (!sourcesRes.ok) {
+        showToast(sourcesRes.error, "error");
+        return;
+      }
+
+      const sources = sourcesRes.data.sources;
+      setMasterSources(sources);
+
+      if (sources.length === 0) {
+        showToast("No Master sources configured yet", "error");
+        return;
+      }
+
+      const loadedPlaylistUrls = new Set(playlistEntries.map((entry) => entry.location));
+      const loadedEpgUrls = new Set(epgEntries.map((entry) => entry.location));
+      let loadedCount = 0;
+      let skippedCount = 0;
+      let failedCount = 0;
+
+      for (const source of sources) {
+        const sourceLocation = source.url ?? `master://${source.id}`;
+
+        if (source.kind === "playlist") {
+          if (loadedPlaylistUrls.has(sourceLocation)) {
+            skippedCount++;
+            continue;
+          }
+
+          const res =
+            source.loadMode === "api"
+              ? await masterSourceLoad(source.id)
+              : source.url
+                ? await loadPlaylistFromUrl(source.url)
+                : { ok: false as const, error: "Master playlist source has no URL" };
+
+          const playlist = res.ok ? resolvePlaylistData(res.data) : null;
+
+          if (res.ok && playlist) {
+            const entry: PlaylistEntry = {
+              id: "",
+              name: source.name,
+              location: sourceLocation,
+              type: "url",
+              channelCount: playlist.channels.length,
+              addedAt: Date.now(),
+            };
+            await persistPlaylist(entry, playlist.channels);
+            loadedPlaylistUrls.add(sourceLocation);
+            loadedCount++;
+          } else {
+            failedCount++;
+          }
+          continue;
+        }
+
+        if (loadedEpgUrls.has(sourceLocation)) {
+          skippedCount++;
+          continue;
+        }
+
+        const res =
+          source.loadMode === "api"
+            ? await masterSourceLoad(source.id)
+            : source.url
+              ? await loadEpgFromUrl(source.url)
+              : { ok: false as const, error: "Master guide source has no URL" };
+
+        const epg = res.ok ? resolveEpgData(res.data) : null;
+
+        if (res.ok && epg) {
+          const entry: EpgEntry = {
+            id: "",
+            name: source.name,
+            location: sourceLocation,
+            type: "url",
+            programmeCount: epg.programmes.length,
+            channelCount: epg.channels.length,
+            addedAt: Date.now(),
+          };
+          await persistEpg(entry, epg);
+          loadedEpgUrls.add(sourceLocation);
+          loadedCount++;
+        } else {
+          failedCount++;
+        }
+      }
+
+      const detail = [
+        `${loadedCount} loaded`,
+        skippedCount ? `${skippedCount} already loaded` : "",
+        failedCount ? `${failedCount} failed` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      showToast(`Master sources: ${detail}`, failedCount ? "error" : "success");
+    } catch (err) {
+      showToast(String(err), "error");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="page page-library">
       <h1 className="page-title">{t("nav.library", locale)}</h1>
+
+      {isMaster && (
+        <section className="card master-sources-card">
+          <div className="master-sources-header">
+            <div className="source-info">
+              <h2>Master Profile</h2>
+              <span className="source-meta">
+                {masterSources.length
+                  ? `${masterSources.length} private source${masterSources.length === 1 ? "" : "s"}`
+                  : "Private sources"}
+              </span>
+            </div>
+            <button className="btn-primary" onClick={handleLoadMasterSources} disabled={!!loading}>
+              {loading === "master-sources" ? "Loading..." : "Load Private Sources"}
+            </button>
+          </div>
+
+          {masterSources.length > 0 && (
+            <ul className="source-list master-source-list">
+              {masterSources.map((source) => (
+                <li key={source.id} className="source-item">
+                  <div className="source-info">
+                    <span className="source-name">{source.name}</span>
+                    <span className="source-meta">
+                      {source.kind === "playlist" ? "Playlist" : "Guide"}
+                      {source.loadMode === "api" ? " - Master API" : ""}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* ── Library Stats Dashboard ──────────────────────── */}
       {(stats.channelCount > 0 || stats.epgSourceCount > 0) && (
@@ -262,8 +456,14 @@ export function LibraryPage() {
       )}
 
       {/* ── Add Playlist ─────────────────────────────────── */}
-      <section className="card">
-        <h2>{t("library.addPlaylist", locale)}</h2>
+      <section className="card library-setup-card library-setup-primary">
+        <div className="library-setup-heading">
+          <span className="library-step">STEP 1</span>
+          <div>
+            <h2>{t("library.addPlaylist", locale)}</h2>
+            <p>Paste an M3U URL or choose a local file. Your source stays under your control.</p>
+          </div>
+        </div>
         <div className="input-row">
           <input
             className="text-input"
@@ -300,7 +500,9 @@ export function LibraryPage() {
                 <button
                   className="btn-danger btn-sm"
                   onClick={() => {
-                    if (window.confirm(t("library.confirmRemove", locale))) removePlaylist(p.id);
+                    if (window.confirm(t("library.confirmRemove", locale))) {
+                      void deletePlaylist(p.id);
+                    }
                   }}
                 >
                   {t("common.remove", locale)}
@@ -312,56 +514,70 @@ export function LibraryPage() {
       )}
 
       {/* ── Add EPG ──────────────────────────────────────── */}
-      <section className="card">
-        <h2>{t("library.addEpg", locale)}</h2>
-
-        {/* ── EPG Presets ── */}
-        <div className="epg-presets">
-          <h3 className="presets-label">{t("library.epgPresets", locale)}</h3>
-          <p className="presets-hint">{t("library.epgPresetsHint", locale)}</p>
-          <div className="preset-grid">
-            {EPG_PRESETS.map((preset) => {
-              const alreadyLoaded = epgEntries.some((e) => e.location === preset.url);
-              const isLoading = loading === `preset-${preset.id}`;
-              return (
-                <button
-                  key={preset.id}
-                  className={`preset-btn${alreadyLoaded ? " preset-loaded" : ""}`}
-                  disabled={!!loading || alreadyLoaded}
-                  onClick={() => handleLoadPreset(preset.id)}
-                  title={preset.url}
-                >
-                  <span className="preset-flag">{preset.flag}</span>
-                  <span className="preset-name">{isLoading ? "…" : preset.name}</span>
-                  <span className="preset-region">{preset.region}</span>
-                  {alreadyLoaded && <span className="preset-check">✓</span>}
-                </button>
-              );
-            })}
+      <details
+        className="card library-setup-card library-epg-setup"
+        open={playlistEntries.length > 0}
+      >
+        <summary className="library-setup-heading">
+          <span className="library-step">STEP 2</span>
+          <div>
+            <h2>{t("library.addEpg", locale)}</h2>
+            <p>Optional: connect XMLTV guide data after your channels are loaded.</p>
           </div>
-        </div>
+          <span className="library-summary-action">
+            {playlistEntries.length > 0 ? "Configure" : "Set up later"}
+          </span>
+        </summary>
 
-        <hr className="card-divider" />
+        <div className="library-epg-content">
+          {/* ── EPG Presets ── */}
+          <div className="epg-presets">
+            <h3 className="presets-label">{t("library.epgPresets", locale)}</h3>
+            <p className="presets-hint">{t("library.epgPresetsHint", locale)}</p>
+            <div className="preset-grid">
+              {EPG_PRESETS.map((preset) => {
+                const alreadyLoaded = epgEntries.some((e) => e.location === preset.url);
+                const isLoading = loading === `preset-${preset.id}`;
+                return (
+                  <button
+                    key={preset.id}
+                    className={`preset-btn${alreadyLoaded ? " preset-loaded" : ""}`}
+                    disabled={!!loading || alreadyLoaded}
+                    onClick={() => handleLoadPreset(preset.id)}
+                    title={preset.url}
+                  >
+                    <span className="preset-flag">{preset.flag}</span>
+                    <span className="preset-name">{isLoading ? "…" : preset.name}</span>
+                    <span className="preset-region">{preset.region}</span>
+                    {alreadyLoaded && <span className="preset-check">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        {/* ── Manual URL / File ── */}
-        <div className="input-row">
-          <input
-            className="text-input"
-            placeholder={t("library.epgUrl", locale)}
-            aria-label={t("library.epgUrl", locale)}
-            value={epgUrl}
-            onChange={(e) => setEpgUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddEpgUrl()}
-            disabled={loading === "epg-url"}
-          />
-          <button onClick={handleAddEpgUrl} disabled={!!loading || !epgUrl.trim()}>
-            {loading === "epg-url" ? "…" : t("common.add", locale)}
+          <hr className="card-divider" />
+
+          {/* ── Manual URL / File ── */}
+          <div className="input-row">
+            <input
+              className="text-input"
+              placeholder={t("library.epgUrl", locale)}
+              aria-label={t("library.epgUrl", locale)}
+              value={epgUrl}
+              onChange={(e) => setEpgUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddEpgUrl()}
+              disabled={loading === "epg-url"}
+            />
+            <button onClick={handleAddEpgUrl} disabled={!!loading || !epgUrl.trim()}>
+              {loading === "epg-url" ? "…" : t("common.add", locale)}
+            </button>
+          </div>
+          <button className="btn-secondary" onClick={handleAddEpgFile} disabled={!!loading}>
+            {loading === "epg-file" ? "…" : t("library.loadFile", locale)}
           </button>
         </div>
-        <button className="btn-secondary" onClick={handleAddEpgFile} disabled={!!loading}>
-          {loading === "epg-file" ? "…" : t("library.loadFile", locale)}
-        </button>
-      </section>
+      </details>
 
       {/* ── EPG sources ──────────────────────────────────── */}
       {epgEntries.length > 0 && (
@@ -380,7 +596,9 @@ export function LibraryPage() {
                 <button
                   className="btn-danger btn-sm"
                   onClick={() => {
-                    if (window.confirm(t("library.confirmRemove", locale))) removeEpg(e.id);
+                    if (window.confirm(t("library.confirmRemove", locale))) {
+                      void deleteEpg(e.id);
+                    }
                   }}
                 >
                   {t("common.remove", locale)}

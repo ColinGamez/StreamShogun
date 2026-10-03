@@ -5,7 +5,11 @@ declare global {
 }
 
 import type { Playlist, Programme, XmltvChannel, LicenseStatus } from "@stream-shogun/core";
-import type { CloudSyncPayload } from "@stream-shogun/shared";
+import type {
+  CloudSyncPayload,
+  MasterSourceDTO,
+  MasterSourcesResponse,
+} from "@stream-shogun/shared";
 
 // ── IPC response wrapper (mirrors desktop/ipc.ts) ─────────────────────
 export interface IpcOk<T> {
@@ -25,6 +29,12 @@ export interface EpgLoadResult {
   channels: XmltvChannel[];
   programmes: Programme[];
   index: SerializedEpgIndex;
+}
+
+export interface MasterSourceLoadResult {
+  source: MasterSourceDTO;
+  playlist?: Playlist;
+  epg?: EpgLoadResult;
 }
 
 // ── DB row types returned by the persistence IPC ──────────────────────
@@ -58,6 +68,8 @@ export interface DbEpgSourceRow {
 }
 
 export interface DbProgrammeRow {
+  epgSourceId: string;
+  sourceName: string;
   channelId: string;
   start: number;
   stop: number;
@@ -126,6 +138,7 @@ export interface ShogunAPI {
   }) => Promise<IpcResponse<DbEpgSourceRow>>;
   dbListEpgSources: () => Promise<IpcResponse<DbEpgSourceRow[]>>;
   dbRemoveEpgSource: (id: string) => Promise<IpcResponse<null>>;
+  dbListProgrammes: () => Promise<IpcResponse<DbProgrammeRow[]>>;
   dbGetNowNext: (args: {
     channelId: string;
     now?: number;
@@ -208,10 +221,24 @@ export interface ShogunAPI {
       isFoundingMember: boolean;
     }>
   >;
+  masterSourcesFetch: () => Promise<IpcResponse<MasterSourcesResponse>>;
+  masterSourceLoad: (id: string) => Promise<IpcResponse<MasterSourceLoadResult>>;
 
   // Billing
   billingCheckout: (args?: { interval?: string }) => Promise<IpcResponse<{ url: string }>>;
   billingPortal: () => Promise<IpcResponse<{ url: string }>>;
+  billingReconcile: () => Promise<
+    IpcResponse<{
+      matched: boolean;
+      message?: string;
+      subscription?: {
+        plan: string;
+        status: string;
+        billingInterval: string | null;
+        currentPeriodEnd: string | null;
+      };
+    }>
+  >;
 
   // Cloud Sync v1
   cloudSyncPull: () => Promise<IpcResponse<CloudSyncPayload>>;

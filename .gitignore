@@ -24,12 +24,16 @@ generated/
 .eslintcache
 *.tsbuildinfo
 .cache/
+__pycache__/
+*.pyc
 
 # ── Environment ────────────────────────────────────────────────────────
 .env
 .env.local
 .env.*.local
 docker/.env.production
+apps/roku/private/session.json
+apps/roku/private/master-playlist.m3u
 
 # ── OS ─────────────────────────────────────────────────────────────────
 .DS_Store

@@ -5,13 +5,13 @@
   "description": "StreamShōgun — a desktop IPTV player built with Electron, React, and TypeScript. Manage M3U playlists, browse XMLTV programme guides, and watch HLS streams.",
   "author": "StreamShōgun Contributors",
   "license": "MIT",
-  "homepage": "https://github.com/stream-shogun/stream-shogun#readme",
+  "homepage": "https://streamshogun.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/stream-shogun/stream-shogun.git"
+    "url": "https://github.com/ColinGamez/StreamShogun.git"
   },
   "bugs": {
-    "url": "https://github.com/stream-shogun/stream-shogun/issues"
+    "url": "https://github.com/ColinGamez/StreamShogun/issues"
   },
   "keywords": [
     "iptv",
@@ -26,10 +26,12 @@
     "typescript"
   ],
   "scripts": {
-    "dev": "pnpm --filter @stream-shogun/ui dev:electron",
-    "dev:ui": "pnpm --filter @stream-shogun/ui dev",
+    "dev": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui dev:electron",
+    "dev:ui": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui dev",
     "dev:electron": "pnpm --filter @stream-shogun/desktop dev",
     "dev:api": "pnpm --filter @stream-shogun/api dev",
+    "site:css": "tailwindcss -i ./site/src.css -o ./site/styles.css --minify",
+    "site:css:watch": "tailwindcss -i ./site/src.css -o ./site/styles.css --watch",
     "db:up": "docker compose -f docker/docker-compose.yml up -d",
     "db:down": "docker compose -f docker/docker-compose.yml down",
     "db:migrate": "pnpm --filter @stream-shogun/api exec prisma migrate dev",
@@ -41,13 +43,13 @@
     "selfhost:down": "docker compose --env-file docker/.env.production -f docker/docker-compose.production.yml down",
     "selfhost:logs": "docker compose --env-file docker/.env.production -f docker/docker-compose.production.yml logs -f",
     "billing:smoke": "powershell -ExecutionPolicy Bypass -File scripts/billing-smoke.ps1",
-    "build": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/api build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:unpackaged",
+    "build": "pnpm site:css && pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/api build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:unpackaged",
     "build:win": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:win",
     "build:mac": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:mac",
     "build:linux": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm --filter @stream-shogun/ui build && pnpm --filter @stream-shogun/desktop build:linux",
     "build:ui": "pnpm --filter @stream-shogun/ui build",
     "build:desktop": "pnpm --filter @stream-shogun/desktop build",
-    "test": "pnpm --filter @stream-shogun/core test && pnpm --filter @stream-shogun/api test",
+    "test": "pnpm --filter @stream-shogun/core test && pnpm --filter @stream-shogun/ui test && pnpm --filter @stream-shogun/desktop test && pnpm --filter @stream-shogun/api test",
     "prisma:generate": "pnpm --filter @stream-shogun/api exec prisma generate",
     "typecheck": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm prisma:generate && pnpm --filter @stream-shogun/ui exec tsc --noEmit && pnpm --filter @stream-shogun/desktop exec tsc --noEmit && pnpm --filter @stream-shogun/api exec tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --cache",
@@ -71,16 +73,27 @@
       "prisma"
     ],
     "overrides": {
+      "deepmerge-ts": "^8.0.0",
+      "defu": "^6.1.5",
+      "effect": "^3.20.0",
+      "fast-uri@3": "^3.1.7",
+      "fast-uri@4": "^4.1.4",
+      "flatted": "^3.4.2",
+      "js-yaml": "^4.3.0",
+      "picomatch": "^2.3.2",
+      "postcss": "^8.5.18",
       "tar": "^7.5.11"
     }
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.2.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.4.0"
   }
 }

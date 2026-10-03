@@ -22,6 +22,7 @@ export const IpcChannels = {
   DB_SAVE_EPG_SOURCE: "db:save-epg-source",
   DB_LIST_EPG_SOURCES: "db:list-epg-sources",
   DB_REMOVE_EPG_SOURCE: "db:remove-epg-source",
+  DB_LIST_PROGRAMMES: "db:list-programmes",
   DB_GET_NOW_NEXT: "db:get-now-next",
   DB_GET_EPG_RANGE: "db:get-epg-range",
 
@@ -62,9 +63,14 @@ export const IpcChannels = {
   AUTH_REFRESH: "auth:refresh",
   FEATURES_FETCH: "features:fetch",
 
+  // ── Master profile ─────────────────────────────────────────────
+  MASTER_SOURCES_FETCH: "master:sources-fetch",
+  MASTER_SOURCE_LOAD: "master:source-load",
+
   // ── Billing ────────────────────────────────────────────────────
   BILLING_CHECKOUT: "billing:checkout",
   BILLING_PORTAL: "billing:portal",
+  BILLING_RECONCILE: "billing:reconcile",
 
   // ── Cloud Sync (v1) ──────────────────────────────────────────
   CLOUD_SYNC_PULL: "cloud:sync-pull",

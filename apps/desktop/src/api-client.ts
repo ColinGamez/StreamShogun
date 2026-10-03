@@ -218,6 +218,8 @@ interface FeaturesResponse {
   flags: Record<string, boolean>;
 }
 
+import type { MasterSourceContentResponse, MasterSourcesResponse } from "@stream-shogun/shared";
+
 export async function apiGetMe(): Promise<{
   ok: boolean;
   status: number;
@@ -232,6 +234,26 @@ export async function apiGetFeatures(): Promise<{
   data: FeaturesResponse;
 }> {
   return apiFetchWithRefresh<FeaturesResponse>("/v1/features");
+}
+
+// ── Master profile ───────────────────────────────────────────────────
+
+export async function apiGetMasterSources(): Promise<{
+  ok: boolean;
+  status: number;
+  data: MasterSourcesResponse;
+}> {
+  return apiFetchWithRefresh<MasterSourcesResponse>("/v1/master/sources");
+}
+
+export async function apiGetMasterSourceContent(id: string): Promise<{
+  ok: boolean;
+  status: number;
+  data: MasterSourceContentResponse;
+}> {
+  return apiFetchWithRefresh<MasterSourceContentResponse>(
+    `/v1/master/sources/${encodeURIComponent(id)}/content`,
+  );
 }
 
 // ── Billing ───────────────────────────────────────────────────────────
@@ -255,6 +277,32 @@ export async function apiBillingPortal(): Promise<{
   return apiFetchWithRefresh<{ url: string }>("/v1/billing/portal", {
     method: "POST",
   });
+}
+
+export async function apiBillingReconcile(): Promise<{
+  ok: boolean;
+  status: number;
+  data: {
+    matched: boolean;
+    message?: string;
+    subscription?: {
+      plan: string;
+      status: string;
+      billingInterval: string | null;
+      currentPeriodEnd: string | null;
+    };
+  };
+}> {
+  return apiFetchWithRefresh<{
+    matched: boolean;
+    message?: string;
+    subscription?: {
+      plan: string;
+      status: string;
+      billingInterval: string | null;
+      currentPeriodEnd: string | null;
+    };
+  }>("/v1/billing/reconcile", { method: "POST" });
 }
 
 // ── Cloud Sync v1 ─────────────────────────────────────────────────────

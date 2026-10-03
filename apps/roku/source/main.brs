@@ -3,6 +3,7 @@
 ' Entry point for the Roku SceneGraph application.
 ' =============================================================================
 sub Main(args as Dynamic)
+    ImportPrivateBootstrapSession()
     screen = CreateObject("roSGScreen")
     m.port = CreateObject("roMessagePort")
     screen.setMessagePort(m.port)

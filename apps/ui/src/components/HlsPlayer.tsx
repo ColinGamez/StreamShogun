@@ -10,6 +10,11 @@
 
 import { useRef, useEffect, useState, useCallback, type RefObject } from "react";
 import Hls, { type ErrorData, type Events, type HlsConfig } from "hls.js";
+import {
+  MAX_PLAYBACK_RETRIES,
+  classifyPlaybackSource,
+  nextPlaybackRetry,
+} from "../lib/playback-policy";
 
 // ── Public interface ──────────────────────────────────────────────────
 
@@ -48,20 +53,9 @@ interface AudioTrack {
 
 // ── Constants ─────────────────────────────────────────────────────────
 
-const MAX_RETRIES = 4;
-const BASE_BACKOFF_MS = 1_000;
 const OVERLAY_HIDE_DELAY_MS = 4_000;
 
 // ── Helpers ───────────────────────────────────────────────────────────
-
-function isHlsUrl(url: string): boolean {
-  try {
-    const pathname = new URL(url, "http://localhost").pathname;
-    return pathname.endsWith(".m3u8");
-  } catch {
-    return url.includes(".m3u8");
-  }
-}
 
 function formatBitrate(bps: number): string {
   if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(1)} Mbps`;
@@ -333,7 +327,7 @@ export function HlsPlayer({
       video.load();
     };
 
-    if (isHlsUrl(src) && Hls.isSupported()) {
+    if (classifyPlaybackSource(src) === "hls" && Hls.isSupported()) {
       const hlsConfig: Partial<HlsConfig> = {
         enableWorker: true,
         lowLatencyMode: false,
@@ -397,11 +391,12 @@ export function HlsPlayer({
       hls.on(Hls.Events.ERROR, (_event: Events.ERROR, data: ErrorData) => {
         if (!data.fatal) return;
 
-        if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retryCount.current < MAX_RETRIES) {
-          retryCount.current += 1;
-          const delay = BASE_BACKOFF_MS * 2 ** (retryCount.current - 1);
+        const retry = nextPlaybackRetry(retryCount.current);
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retry.retry) {
+          retryCount.current = retry.attempt;
+          const delay = retry.delayMs;
           setErrorMsg(
-            `Network error – retry ${retryCount.current}/${MAX_RETRIES} in ${(delay / 1000).toFixed(0)}s…`,
+            `Network error – retry ${retryCount.current}/${MAX_PLAYBACK_RETRIES} in ${(delay / 1000).toFixed(0)}s…`,
           );
           clearRetryTimer();
           retryTimer.current = setTimeout(() => {
@@ -409,9 +404,9 @@ export function HlsPlayer({
             setErrorMsg("");
             hls.startLoad();
           }, delay);
-        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retryCount.current < MAX_RETRIES) {
-          retryCount.current += 1;
-          setErrorMsg(`Media error – recovering (${retryCount.current}/${MAX_RETRIES})…`);
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retry.retry) {
+          retryCount.current = retry.attempt;
+          setErrorMsg(`Media error – recovering (${retryCount.current}/${MAX_PLAYBACK_RETRIES})…`);
           hls.recoverMediaError();
         } else {
           const msg = `Playback failed: ${data.type} / ${data.details}`;
@@ -433,11 +428,12 @@ export function HlsPlayer({
 
       const onNativeError = () => {
         if (destroyed) return;
-        if (retryCount.current < MAX_RETRIES) {
-          retryCount.current += 1;
-          const delay = BASE_BACKOFF_MS * 2 ** (retryCount.current - 1);
+        const retry = nextPlaybackRetry(retryCount.current);
+        if (retry.retry) {
+          retryCount.current = retry.attempt;
+          const delay = retry.delayMs;
           setErrorMsg(
-            `Playback error – retry ${retryCount.current}/${MAX_RETRIES} in ${(delay / 1000).toFixed(0)}s…`,
+            `Playback error – retry ${retryCount.current}/${MAX_PLAYBACK_RETRIES} in ${(delay / 1000).toFixed(0)}s…`,
           );
           clearRetryTimer();
           retryTimer.current = setTimeout(() => {

@@ -39,9 +39,9 @@ export function SettingsPage() {
   const trialEndsAt = useAppStore((s) => s.trialEndsAt);
   const isFoundingMember = useAppStore((s) => s.isFoundingMember);
   // ── Billing state ──────────────────────────────────────────────────
-  const [billingLoading, setBillingLoading] = useState<"monthly" | "yearly" | "portal" | null>(
-    null,
-  );
+  const [billingLoading, setBillingLoading] = useState<
+    "monthly" | "yearly" | "portal" | "refresh" | null
+  >(null);
   // ── Cloud Sync state ───────────────────────────────────────────────────────
   const canUseCloudSync = useAppStore((s) => s.canUse("cloud_sync"));
   const cloudSyncEnabled = useAppStore((s) => s.cloudSyncEnabled);
@@ -88,6 +88,17 @@ export function SettingsPage() {
     await bridge.refreshTrigger();
     showToast(t("refresh.trigger", locale), "success");
     setTimeout(loadRefreshStatus, 1000);
+  };
+
+  const handleBillingRefresh = async () => {
+    setBillingLoading("refresh");
+    const reconcile = await bridge.billingReconcile();
+    await fetchServerFeatures();
+    setBillingLoading(null);
+    showToast(
+      reconcile.ok ? t("settings.planRefreshed", locale) : t("settings.portalFailed", locale),
+      reconcile.ok ? "success" : "error",
+    );
   };
 
   // ── Render helpers ──────────────────────────────────────────────────
@@ -240,12 +251,13 @@ export function SettingsPage() {
 
               <button
                 className="btn-secondary"
-                onClick={async () => {
-                  await fetchServerFeatures();
-                  showToast(t("settings.planRefreshed", locale), "success");
-                }}
+                disabled={billingLoading !== null}
+                onClick={handleBillingRefresh}
               >
-                🔄 {t("settings.refreshStatus", locale)}
+                🔄{" "}
+                {billingLoading === "refresh"
+                  ? t("settings.opening", locale)
+                  : t("settings.refreshStatus", locale)}
               </button>
             </div>
           </>

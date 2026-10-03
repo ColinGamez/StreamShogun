@@ -306,6 +306,33 @@ function LoadAccountSession() as Object
     }
 end function
 
+sub ImportPrivateBootstrapSession()
+    path = "pkg:/private/session.json"
+    fs = CreateObject("roFileSystem")
+    if not HasAccountSession() and fs.Exists(path)
+        raw = ReadAsciiFile(path)
+        session = ParseJSON(raw)
+        if session <> invalid and session.accessToken <> invalid and session.refreshToken <> invalid
+            SaveAccountSession(session)
+        end if
+    end if
+
+    ' This private sideload is Colin's personal TV build. Provision its sources
+    ' at startup so Roku text input and first-run forms are never required.
+    if fs.Exists("pkg:/private/master-playlist.m3u") and not PlaylistUrlExists("streamshogun:master-playlist")
+        AddPlaylist("Japan + Korea Channels", "streamshogun:master-playlist")
+    end if
+
+    epg = LoadEpgSettings()
+    if epg.url <> "streamshogun:master-japan-korea"
+        SaveEpgSettings({
+            url: "streamshogun:master-japan-korea",
+            ttlHours: 6,
+            lastFetch: 0
+        })
+    end if
+end sub
+
 sub SaveAccountSession(session as Object)
     sec = GetRegistrySection("account")
     sec.Write("apiBaseUrl", IIF(session.apiBaseUrl <> invalid, session.apiBaseUrl, "https://api.streamshogun.com"))

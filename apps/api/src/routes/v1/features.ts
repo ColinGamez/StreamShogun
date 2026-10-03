@@ -9,6 +9,7 @@ import {
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { env } from "../../config/env.js";
+import { isMasterEmail } from "../../lib/master-account.js";
 
 /**
  * Users created before this date are considered "founding members"
@@ -37,10 +38,12 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
 
       const subscription = user?.subscription ?? null;
       const overrides = user?.featureFlags ?? [];
+      const isMasterAccount = isMasterEmail(request.user.email);
 
-      const plan = subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE;
+      const plan = isMasterAccount || subscription?.plan === "PRO" ? Plan.PRO : Plan.FREE;
       const isPro = plan === Plan.PRO;
-      const isActive = subscription?.status === "ACTIVE" || subscription?.status === "TRIALING";
+      const isActive =
+        isMasterAccount || subscription?.status === "ACTIVE" || subscription?.status === "TRIALING";
 
       // Build override map
       const overrideMap = new Map(overrides.map((f) => [f.key, f.enabled]));

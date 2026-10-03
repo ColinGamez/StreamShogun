@@ -11,6 +11,7 @@
   </interface>
 
   <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
   <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
@@ -31,7 +32,11 @@
         return
       end if
 
-      result = HttpGet(url, "", 0) ' No caching for playlists — always fresh
+      if IsMasterPlaylist(url)
+        result = FetchMasterPlaylist()
+      else
+        result = HttpGet(url, "", 0) ' No caching for playlists — always fresh
+      end if
       if not result.ok
         m.top.error = "Failed to download playlist. " + IIF(result.error <> invalid, result.error, "Check URL or network.")
         m.top.state = "error"

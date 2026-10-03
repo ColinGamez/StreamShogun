@@ -5,7 +5,7 @@ import { env } from "../config/env.js";
 
 export const PASSWORD_RESET_TTL_MINUTES = 60;
 
-let transporter: nodemailer.Transporter | null | undefined;
+let transporter: ReturnType<typeof nodemailer.createTransport> | null | undefined;
 
 export function resolvedSmtpUrl(): string | null {
   return env.SMTP_URL ?? null;
@@ -15,7 +15,7 @@ export function isEmailConfigured(): boolean {
   return resolvedSmtpUrl() !== null || Boolean(env.RESEND_API_KEY);
 }
 
-function getTransporter(): nodemailer.Transporter | null {
+function getTransporter(): ReturnType<typeof nodemailer.createTransport> | null {
   if (transporter !== undefined) {
     return transporter;
   }

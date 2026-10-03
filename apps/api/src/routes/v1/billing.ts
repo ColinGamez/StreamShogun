@@ -22,6 +22,10 @@ const checkoutBody = z.object({
   interval: z.enum(["monthly", "yearly"]),
 });
 
+type ReconcileStripeSubscription = Stripe.Subscription & {
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer;
+};
+
 // ── Helpers ─────────────────────────────────────────────────────
 
 /** Return URL base: prefer APP_PUBLIC_URL, fall back to CORS_ORIGIN */
@@ -37,6 +41,43 @@ function priceIdForInterval(interval: "monthly" | "yearly"): string | null {
   return interval === "monthly"
     ? (env.STRIPE_PRICE_ID_PRO_MONTHLY ?? null)
     : (env.STRIPE_PRICE_ID_PRO_YEARLY ?? null);
+}
+
+function customerIdFromSubscription(sub: ReconcileStripeSubscription): string | null {
+  if (typeof sub.customer === "string") return sub.customer;
+  return sub.customer?.id ?? null;
+}
+
+function isUsableStripeSubscription(sub: Stripe.Subscription): boolean {
+  if (isIncompleteStatus(sub.status)) return false;
+  const mappedStatus = mapStripeStatus(sub.status);
+  return derivePlan(mappedStatus) === "PRO";
+}
+
+async function findActiveSubscriptionByEmail(
+  stripe: Stripe,
+  email: string,
+): Promise<ReconcileStripeSubscription | null> {
+  const customers = await stripe.customers.list({
+    email,
+    limit: 10,
+  });
+
+  const subscriptions: ReconcileStripeSubscription[] = [];
+  for (const customer of customers.data) {
+    const customerSubs = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: "all",
+      limit: 10,
+    });
+    subscriptions.push(...(customerSubs.data as ReconcileStripeSubscription[]));
+  }
+
+  return (
+    subscriptions
+      .filter(isUsableStripeSubscription)
+      .sort((a, b) => (b.created ?? 0) - (a.created ?? 0))[0] ?? null
+  );
 }
 
 /**
@@ -211,6 +252,143 @@ export async function billingRoutes(app: FastifyInstance) {
       });
 
       return reply.send({ url: portalSession.url });
+    },
+  );
+
+  // ── POST /reconcile ───────────────────────────────────────────
+  //
+  // Lets an authenticated user refresh billing after paying in Stripe
+  // before the production DB knew about their current user row.
+
+  app.post(
+    "/reconcile",
+    { preHandler: [authenticate], ...billingRateLimit },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if (billingDisabled) {
+        return reply
+          .code(503)
+          .send({ error: "ServiceUnavailable", message: "Billing is temporarily disabled" });
+      }
+
+      if (!env.STRIPE_SECRET_KEY) {
+        return reply
+          .code(501)
+          .send({ error: "NotImplemented", message: "Billing is not configured" });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: request.user.sub },
+        select: { id: true, email: true },
+      });
+      if (!user) {
+        return reply.code(404).send({ error: "NotFound", message: "User not found" });
+      }
+
+      const stripe = getStripe();
+      const stripeSub = await findActiveSubscriptionByEmail(stripe, user.email);
+      if (!stripeSub) {
+        return reply.code(200).send({
+          matched: false,
+          message: "No active Stripe subscription found for this account email",
+        });
+      }
+
+      const stripeCustomerId = customerIdFromSubscription(stripeSub);
+      if (!stripeCustomerId) {
+        return reply.code(502).send({
+          error: "BadGateway",
+          message: "Stripe subscription has no customer ID",
+        });
+      }
+
+      const [subscriptionOwner, customerOwner] = await Promise.all([
+        prisma.subscription.findFirst({
+          where: {
+            stripeSubscriptionId: stripeSub.id,
+            userId: { not: user.id },
+          },
+          include: { user: { select: { email: true } } },
+        }),
+        prisma.subscription.findFirst({
+          where: {
+            stripeCustomerId,
+            userId: { not: user.id },
+          },
+          include: { user: { select: { email: true } } },
+        }),
+      ]);
+
+      const conflictingOwner = subscriptionOwner ?? customerOwner;
+      if (conflictingOwner) {
+        request.log.warn(
+          {
+            userId: user.id,
+            ownerUserId: conflictingOwner.userId,
+            ownerEmail: conflictingOwner.user.email,
+          },
+          "billing.reconcile_conflict",
+        );
+        return reply.code(409).send({
+          error: "Conflict",
+          message: "This Stripe subscription is already linked to another account",
+        });
+      }
+
+      const mappedStatus = mapStripeStatus(stripeSub.status);
+      const billingInterval = extractBillingInterval(stripeSub);
+      const currentPeriodEnd = extractPeriodEnd(stripeSub);
+      const plan = derivePlan(mappedStatus);
+
+      const subscription = await prisma.subscription.upsert({
+        where: { userId: user.id },
+        update: {
+          plan,
+          status: mappedStatus,
+          billingInterval,
+          stripeCustomerId,
+          stripeSubscriptionId: stripeSub.id,
+          currentPeriodEnd,
+        },
+        create: {
+          userId: user.id,
+          plan,
+          status: mappedStatus,
+          billingInterval,
+          stripeCustomerId,
+          stripeSubscriptionId: stripeSub.id,
+          currentPeriodEnd,
+        },
+      });
+
+      await prisma.auditLog
+        .create({
+          data: {
+            admin: "system",
+            action: "billing.reconcile",
+            targetType: "Subscription",
+            targetId: subscription.id,
+            payload: {
+              userId: user.id,
+              email: user.email,
+              stripeCustomerId,
+              stripeSubscriptionId: stripeSub.id,
+              plan,
+              status: mappedStatus,
+              billingInterval,
+            },
+          },
+        })
+        .catch((err) => request.log.warn({ err }, "billing.reconcile_audit_failed"));
+
+      return reply.code(200).send({
+        matched: true,
+        subscription: {
+          plan,
+          status: mappedStatus,
+          billingInterval,
+          currentPeriodEnd: currentPeriodEnd?.toISOString() ?? null,
+        },
+      });
     },
   );
 

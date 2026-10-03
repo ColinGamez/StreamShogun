@@ -4,7 +4,6 @@ import { useAppStore } from "./stores/app-store";
 import { showToast } from "./components/Toast";
 
 import { Sidebar, type Page } from "./components/Sidebar";
-import { Welcome } from "./components/Welcome";
 import { ToastContainer } from "./components/Toast";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoginModal } from "./components/LoginModal";
@@ -14,6 +13,7 @@ import { BillingStateBanner } from "./components/BillingStateBanner";
 import { UpgradeNudgeBanner } from "./components/UpgradeNudgeBanner";
 import { KeyboardShortcuts } from "./components/KeyboardShortcuts";
 import { Skeleton } from "./components/Skeleton";
+import { Welcome } from "./components/Welcome";
 
 // ── Lazy-loaded pages (only the active page is loaded) ─────────────
 const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
@@ -50,14 +50,18 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
   const [page, setPage] = useState<Page>("library");
   const [previousPage, setPreviousPage] = useState<Page>("library");
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const setCurrentChannel = useAppStore((s) => s.setCurrentChannel);
-  const hasPlaylists = useAppStore(
-    (s) => s.playlistEntries.length > 0 || s.channels.length > 0 || s.dbPlaylists.length > 0,
-  );
   const initAuth = useAppStore((s) => s.initAuth);
+  const initFromDb = useAppStore((s) => s.initFromDb);
+  const dbReady = useAppStore((s) => s.dbReady);
+  const playlistEntries = useAppStore((s) => s.playlistEntries);
+  const dbPlaylists = useAppStore((s) => s.dbPlaylists);
 
   const settings = useAppStore((s) => s.settings);
   const incrementAppOpen = useAppStore((s) => s.incrementAppOpen);
+  const showWelcome =
+    dbReady && !welcomeDismissed && playlistEntries.length === 0 && dbPlaylists.length === 0;
 
   // Theme toggle (supports dark / light / system)
   useEffect(() => {
@@ -87,9 +91,10 @@ function App() {
 
   // Silent auth refresh on startup
   useEffect(() => {
+    void initFromDb();
     initAuth();
     incrementAppOpen();
-  }, [initAuth, incrementAppOpen]);
+  }, [initAuth, incrementAppOpen, initFromDb]);
 
   // Global unhandled promise rejection handler
   useEffect(() => {
@@ -180,32 +185,6 @@ function App() {
     );
   }
 
-  // ── First-run: show Welcome when nothing is loaded ──────────────
-  if (!hasPlaylists) {
-    return (
-      <div className="app-shell">
-        <div className="aurora-bg" aria-hidden="true">
-          <div className="aurora-orb aurora-orb-1" />
-          <div className="aurora-orb aurora-orb-2" />
-          <div className="aurora-orb aurora-orb-3" />
-        </div>
-        <a href="#main-content" className="skip-to-content">
-          Skip to content
-        </a>
-        <Sidebar current={page} onChange={handlePageChange} />
-        <main ref={mainRef} id="main-content" tabIndex={-1} className="app-main">
-          <OfflineBanner />
-          <BillingStateBanner />
-          <UpgradeNudgeBanner />
-          <Welcome onGoToLibrary={() => handlePageChange("library")} />
-        </main>
-        <ToastContainer />
-        <LoginModal />
-        <PaywallModal />
-      </div>
-    );
-  }
-
   return (
     <div className="app-shell">
       <div className="aurora-bg" aria-hidden="true">
@@ -219,46 +198,52 @@ function App() {
       <Sidebar current={page} onChange={handlePageChange} />
 
       <main ref={mainRef} id="main-content" tabIndex={-1} className="app-main">
-        <OfflineBanner />
-        <BillingStateBanner />
-        <UpgradeNudgeBanner />
-        <Suspense fallback={<PageSkeleton />}>
-          {page === "library" && (
-            <ErrorBoundary label="Library">
-              <LibraryPage />
-            </ErrorBoundary>
-          )}
-          {page === "channels" && (
-            <ErrorBoundary label="Channels">
-              <ChannelsPage onPlay={handlePlay} />
-            </ErrorBoundary>
-          )}
-          {page === "guide" && (
-            <ErrorBoundary label="Guide">
-              <GuidePage onPlay={handlePlay} />
-            </ErrorBoundary>
-          )}
-          {page === "player" && (
-            <ErrorBoundary label="Player">
-              <PlayerPage onNavigate={(p) => handlePageChange(p)} />
-            </ErrorBoundary>
-          )}
-          {page === "history" && (
-            <ErrorBoundary label="History">
-              <HistoryPage onPlay={handlePlay} />
-            </ErrorBoundary>
-          )}
-          {page === "support" && (
-            <ErrorBoundary label="Support">
-              <SupportPage sourceContext={previousPage} />
-            </ErrorBoundary>
-          )}
-          {page === "settings" && (
-            <ErrorBoundary label="Settings">
-              <SettingsPage />
-            </ErrorBoundary>
-          )}
-        </Suspense>
+        {showWelcome ? (
+          <Welcome onGoToLibrary={() => setWelcomeDismissed(true)} />
+        ) : (
+          <>
+            <OfflineBanner />
+            <BillingStateBanner />
+            <UpgradeNudgeBanner />
+            <Suspense fallback={<PageSkeleton />}>
+              {page === "library" && (
+                <ErrorBoundary label="Library">
+                  <LibraryPage />
+                </ErrorBoundary>
+              )}
+              {page === "channels" && (
+                <ErrorBoundary label="Channels">
+                  <ChannelsPage onPlay={handlePlay} />
+                </ErrorBoundary>
+              )}
+              {page === "guide" && (
+                <ErrorBoundary label="Guide">
+                  <GuidePage onPlay={handlePlay} />
+                </ErrorBoundary>
+              )}
+              {page === "player" && (
+                <ErrorBoundary label="Player">
+                  <PlayerPage onNavigate={(p) => handlePageChange(p)} />
+                </ErrorBoundary>
+              )}
+              {page === "history" && (
+                <ErrorBoundary label="History">
+                  <HistoryPage onPlay={handlePlay} />
+                </ErrorBoundary>
+              )}
+              {page === "support" && (
+                <ErrorBoundary label="Support">
+                  <SupportPage sourceContext={previousPage} />
+                </ErrorBoundary>
+              )}
+              {page === "settings" && (
+                <ErrorBoundary label="Settings">
+                  <SettingsPage />
+                </ErrorBoundary>
+              )}
+            </Suspense>
+          </>
+        )}
       </main>
 
       <ToastContainer />

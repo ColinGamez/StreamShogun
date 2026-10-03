@@ -48,7 +48,9 @@
         SafeLog("EPG", "Using proxy endpoint for EPG fetch")
       end if
 
-      if m.top.useProxy and m.top.proxyToken <> ""
+      if IsMasterJapanKoreaGuide(url)
+        result = FetchMasterJapanKoreaGuide()
+      else if m.top.useProxy and m.top.proxyToken <> ""
         result = HttpGetWithAuth(fetchUrl, cacheKey, ttl, m.top.proxyToken)
       else
         result = HttpGet(fetchUrl, cacheKey, ttl)

@@ -3,7 +3,7 @@
 // Uses fast-xml-parser for high-performance, streaming-friendly parsing.
 // Handles the standard XMLTV DTD elements: <tv>, <channel>, <programme>.
 
-import { XMLParser } from "fast-xml-parser";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import type { XmltvChannel, Programme, XmltvParseResult } from "./xmltv-types.js";
 
 // ── Timestamp handling ────────────────────────────────────────────────
@@ -120,6 +120,12 @@ function iconSrc(node: unknown): string {
  */
 export function parseXmltv(xmlText: string): XmltvParseResult {
   if (!xmlText.trim()) return { channels: [], programmes: [] };
+
+  const validation = XMLValidator.validate(xmlText);
+  if (validation !== true) {
+    const detail = validation.err;
+    throw new Error(`Invalid XMLTV: ${detail.msg} (line ${detail.line}, column ${detail.col})`);
+  }
 
   const doc = xmlParser.parse(xmlText);
   const tv = doc.tv ?? doc.TV ?? doc;

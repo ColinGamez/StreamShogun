@@ -9,6 +9,7 @@
 
 import { BrowserWindow, app } from "electron";
 import { IpcChannels, parseM3U, parseXmltv } from "@stream-shogun/core";
+import { fetchText as fetchNetworkText } from "./network-fetch";
 import {
   getSetting,
   setSetting,
@@ -17,10 +18,6 @@ import {
   savePlaylist,
   saveEpgSource,
 } from "./db";
-import { gunzip } from "zlib";
-import { promisify } from "util";
-
-const gunzipAsync = promisify(gunzip);
 
 // ── State ─────────────────────────────────────────────────────────────
 
@@ -109,12 +106,6 @@ function stopTimer(): void {
 /** Maximum time (ms) a single refresh cycle is allowed to take. */
 const MAX_REFRESH_DURATION_MS = 60_000;
 
-/** Maximum download size per source (25 MB). */
-const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
-
-/** Fetch timeout per source (30 s). */
-const FETCH_TIMEOUT_MS = 30_000;
-
 /**
  * Perform the actual refresh:
  * 1. Notify renderer that refresh has started
@@ -193,6 +184,8 @@ async function doRefresh(): Promise<void> {
 
 /** Fetch a URL with size + timeout enforcement, auto-decompress gzip. */
 async function fetchText(rawUrl: string): Promise<string> {
+  return fetchNetworkText(rawUrl, { userAgent: `StreamShogun/${app.getVersion()}` });
+  /* Legacy implementation retained temporarily for source-map continuity.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -242,6 +235,7 @@ async function fetchText(rawUrl: string): Promise<string> {
   } finally {
     clearTimeout(timer);
   }
+  */
 }
 
 /** Send a refresh event to all renderer windows. */

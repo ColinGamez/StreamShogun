@@ -40,6 +40,17 @@ const envSchema = z
     RESEND_API_KEY: z.string().startsWith("re_").optional(),
     EMAIL_FROM: z.string().min(1).optional(),
 
+    // Private owner-only sources. The API only exposes these to MASTER_EMAIL.
+    MASTER_EMAIL: z.string().email().default("colin.kenny777@gmail.com"),
+    MASTER_PLAYLIST_NAME: z.string().min(1).optional(),
+    MASTER_PLAYLIST_URL: z.string().url().optional(),
+    MASTER_EPG_NAME: z.string().min(1).optional(),
+    MASTER_EPG_URL: z.string().url().optional(),
+    MASTER_JAPAN_BANGUMI_ENABLED: z.string().optional(),
+    MASTER_JAPAN_BANGUMI_NAME: z.string().min(1).optional(),
+    MASTER_KOREA_EPG_NAME: z.string().min(1).optional(),
+    MASTER_KOREA_EPG_URL: z.string().url().optional(),
+
     // Stripe billing (optional — enables /v1/billing endpoints)
     STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
     STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),

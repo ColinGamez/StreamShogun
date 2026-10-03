@@ -1,7 +1,7 @@
 // ── Gzip detection + decompression + XMLTV validation ─────────────
 import { gunzip } from "node:zlib";
 
-const MAX_DECOMPRESSED_SIZE = 10 * 1024 * 1024; // 10 MB
+const DEFAULT_MAX_DECOMPRESSED_SIZE = 10 * 1024 * 1024; // 10 MB
 
 /** Gzip magic bytes: 0x1f 0x8b */
 const GZIP_MAGIC_0 = 0x1f;
@@ -23,15 +23,18 @@ export function isGzipBuffer(url: string, buffer: Buffer): boolean {
 /**
  * Decompress a gzip buffer. Rejects if result exceeds MAX_DECOMPRESSED_SIZE.
  */
-export function decompressGzip(buffer: Buffer): Promise<Buffer> {
+export function decompressGzip(
+  buffer: Buffer,
+  maxOutputLength = DEFAULT_MAX_DECOMPRESSED_SIZE,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    gunzip(buffer, { maxOutputLength: MAX_DECOMPRESSED_SIZE }, (err, result) => {
+    gunzip(buffer, { maxOutputLength }, (err, result) => {
       if (err) {
         reject(new Error(`Gzip decompression failed: ${err.message}`));
         return;
       }
-      if (result.length > MAX_DECOMPRESSED_SIZE) {
-        reject(new Error(`Decompressed size exceeds ${MAX_DECOMPRESSED_SIZE} bytes`));
+      if (result.length > maxOutputLength) {
+        reject(new Error(`Decompressed size exceeds ${maxOutputLength} bytes`));
         return;
       }
       resolve(result);
@@ -48,19 +51,22 @@ export function decompressGzip(buffer: Buffer): Promise<Buffer> {
 export async function processEpgBuffer(
   url: string,
   buffer: Buffer,
+  options: { maxDecompressedBytes?: number } = {},
 ): Promise<{ ok: true; xml: string } | { ok: false; reason: string }> {
+  const maxDecompressedBytes = options.maxDecompressedBytes ?? DEFAULT_MAX_DECOMPRESSED_SIZE;
+
   // Enforce raw download size limit
-  if (buffer.length > MAX_DECOMPRESSED_SIZE) {
+  if (buffer.length > maxDecompressedBytes) {
     return {
       ok: false,
-      reason: `Download size exceeds ${MAX_DECOMPRESSED_SIZE / 1024 / 1024}MB limit`,
+      reason: `Download size exceeds ${maxDecompressedBytes / 1024 / 1024}MB limit`,
     };
   }
 
   let data: Buffer;
   try {
     if (isGzipBuffer(url, buffer)) {
-      data = await decompressGzip(buffer);
+      data = await decompressGzip(buffer, maxDecompressedBytes);
     } else {
       data = buffer;
     }

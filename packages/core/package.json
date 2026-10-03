@@ -23,9 +23,9 @@
     "@types/node": "^25.3.3",
     "tsx": "^4.21.0",
     "typescript": "^5.4.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
-    "fast-xml-parser": "^5.5.9"
+    "fast-xml-parser": "^5.10.1"
   }
 }

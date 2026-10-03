@@ -8,6 +8,7 @@
   </interface>
 
   <script type="text/brightscript" uri="pkg:/source/api/http.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
   <script type="text/brightscript" uri="pkg:/source/parse/m3u_parser.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
@@ -74,7 +75,11 @@
     end sub
 
     sub loadPlaylistIntoLibrary(playlist as Object, playlistIndex as Integer, allChannels as Object, failed as Object)
-      result = HttpGet(playlist.url, "", 0)
+      if IsMasterPlaylist(playlist.url)
+        result = FetchMasterPlaylist()
+      else
+        result = HttpGet(playlist.url, "", 0)
+      end if
       if not result.ok
         failed.Push(playlist.name + ": " + IIF(result.error <> invalid, result.error, "network error"))
         return

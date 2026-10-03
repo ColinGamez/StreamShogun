@@ -26,15 +26,16 @@
              wrap="true" />
 
       <Label text="API"
+             visible="false"
              font="font:SmallBoldSystemFont"
              color="#a1a1aa"
              translation="[0, 130]" />
       <TextEditBox id="apiInput"
+                   visible="false"
                    hintText="https://api.streamshogun.com"
                    translation="[0, 162]"
                    width="760"
                    maxTextLength="500"
-                   cursorColor="#7c5cfc"
                    textColor="#f4f4f5"
                    hintTextColor="#71717a"
                    backgroundUri="" />
@@ -42,61 +43,56 @@
       <Label text="Email"
              font="font:SmallBoldSystemFont"
              color="#a1a1aa"
-             translation="[0, 240]" />
+             translation="[0, 140]" />
       <TextEditBox id="emailInput"
                    hintText="you@example.com"
-                   translation="[0, 272]"
+                   translation="[0, 172]"
                    width="760"
                    maxTextLength="255"
-                   cursorColor="#7c5cfc"
                    textColor="#f4f4f5"
                    hintTextColor="#71717a"
-                   backgroundUri="" />
+                   backgroundUri=""
+                   active="true" />
 
       <Label text="Password"
              font="font:SmallBoldSystemFont"
              color="#a1a1aa"
-             translation="[0, 350]" />
+             translation="[0, 260]" />
       <TextEditBox id="passwordInput"
                    hintText="Account password"
-                   translation="[0, 382]"
+                   translation="[0, 292]"
                    width="760"
                    maxTextLength="128"
                    secureMode="true"
-                   cursorColor="#7c5cfc"
                    textColor="#f4f4f5"
                    hintTextColor="#71717a"
-                   backgroundUri="" />
+                   backgroundUri=""
+                   active="true" />
 
       <LayoutGroup layoutDirection="horiz"
                    itemSpacings="[16]"
-                   translation="[0, 500]">
-        <Button id="signInBtn" text="Sign In"
-                focusedColor="#7c5cfc"
-                minWidth="160" />
-        <Button id="refreshBtn" text="Refresh Pro"
-                focusedColor="#7c5cfc"
-                minWidth="175" />
-        <Button id="rokuPayBtn" text="Roku Pay"
-                focusedColor="#7c5cfc"
-                minWidth="165" />
-        <Button id="signOutBtn" text="Sign Out"
-                focusedColor="#ff6b6b"
-                minWidth="165" />
-        <Button id="closeBtn" text="Close"
-                focusedColor="#a1a1aa"
-                minWidth="135" />
+                   translation="[0, 400]">
+        <Button id="signInBtn" text="Sign In" minWidth="200" />
+        <Button id="refreshBtn" text="Refresh Pro" minWidth="220" />
+      </LayoutGroup>
+
+      <LayoutGroup layoutDirection="horiz"
+                   itemSpacings="[16]"
+                   translation="[0, 480]">
+        <Button id="rokuPayBtn" text="Roku Pay" minWidth="180" />
+        <Button id="signOutBtn" text="Sign Out" minWidth="180" />
+        <Button id="closeBtn" text="Close" minWidth="160" />
       </LayoutGroup>
 
       <Label id="statusMsg" text=""
              font="font:SmallSystemFont"
              color="#a1a1aa"
-             translation="[0, 570]"
+             translation="[0, 560]"
              wrap="true"
              width="900" />
       <BusySpinner id="busySpinner"
                    visible="false"
-                   translation="[920, 562]" />
+                   translation="[920, 552]" />
 
       <Label text="Roku paid releases should use Roku Pay for purchase and upgrade flows. This screen checks an existing StreamShōgun account entitlement."
              font="font:SmallestSystemFont"

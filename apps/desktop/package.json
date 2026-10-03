@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "StreamShōgun desktop app built with Electron.",
-  "author": "StreamShōgun Contributors",
+  "author": {
+    "name": "StreamShōgun Contributors",
+    "email": "support@streamshogun.com"
+  },
+  "homepage": "https://streamshogun.com",
   "license": "MIT",
   "main": "dist/main.mjs",
   "scripts": {
@@ -13,18 +17,21 @@
     "build:mac": "node scripts/build.mjs && node scripts/package.mjs --mac",
     "build:linux": "node scripts/build.mjs && node scripts/package.mjs --linux",
     "build:unpackaged": "node scripts/build.mjs",
+    "test": "vitest run",
     "clean": "node -e \"const fs=require('fs');['dist','out','release'].forEach(d=>{fs.rmSync(d,{recursive:true,force:true})})\""
   },
   "dependencies": {
     "@stream-shogun/core": "workspace:*",
     "@stream-shogun/shared": "workspace:*",
-    "better-sqlite3": "^12.6.2"
+    "better-sqlite3": "^13.0.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-builder-squirrel-windows": "^26.15.3",
     "esbuild": "^0.27.3",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.10"
   }
 }

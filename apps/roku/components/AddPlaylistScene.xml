@@ -60,6 +60,9 @@
       <LayoutGroup layoutDirection="horiz"
                    itemSpacings="[16]"
                    translation="[0, 360]">
+        <Button id="masterBtn" text="My Japan + Korea Channels"
+                focusedColor="#7c5cfc"
+                minWidth="320" />
         <Button id="saveBtn" text="Save Playlist"
                 focusedColor="#7c5cfc"
                 minWidth="220" />
@@ -75,12 +78,12 @@
       <Label id="validationMsg" text=""
              font="font:SmallSystemFont"
              color="#ff6b6b"
-             translation="[0, 430]"
+             translation="[0, 440]"
              wrap="true"
              width="700" />
       <BusySpinner id="validationSpinner"
                    visible="false"
-                   translation="[720, 422]" />
+                   translation="[720, 432]" />
 
       <!-- ── Info ──────────────────────────────────────────────── -->
       <Label text="Your playlist URL is stored locally on this device only."
@@ -95,6 +98,7 @@
   </children>
 
   <script type="text/brightscript" uri="AddPlaylistScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/api/streamshogun_api.brs" />
   <script type="text/brightscript" uri="pkg:/source/storage/registry_store.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/normalize.brs" />
   <script type="text/brightscript" uri="pkg:/source/util/redact.brs" />
