@@ -52,8 +52,8 @@
     "test": "pnpm --filter @stream-shogun/core test && pnpm --filter @stream-shogun/ui test && pnpm --filter @stream-shogun/desktop test && pnpm --filter @stream-shogun/api test",
     "prisma:generate": "pnpm --filter @stream-shogun/api exec prisma generate",
     "typecheck": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm prisma:generate && pnpm --filter @stream-shogun/ui exec tsc --noEmit && pnpm --filter @stream-shogun/desktop exec tsc --noEmit && pnpm --filter @stream-shogun/api exec tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx --cache",
-    "lint:fix": "eslint . --ext .ts,.tsx --cache --fix",
+    "lint": "eslint \"apps/**/*.{ts,tsx}\" \"packages/**/*.ts\" --cache",
+    "lint:fix": "eslint \"apps/**/*.{ts,tsx}\" \"packages/**/*.ts\" --cache --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md,yaml,yml,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md,yaml,yml,css}\"",
     "audit:security": "pnpm audit --audit-level=high",
@@ -86,14 +86,17 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^8.57.1",
     "@tailwindcss/cli": "^4.3.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "globals": "^17.13.0",
     "prettier": "^3.2.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^7.18.0"
   }
 }

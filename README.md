@@ -147,7 +147,7 @@ stream-shogun/
 ├── assets/                      # SVG icon source
 ├── scripts/                     # Build utilities (clean, icon gen)
 ├── .editorconfig
-├── .eslintrc.cjs
+├── eslint.config.js
 ├── .gitattributes
 ├── .gitignore
 ├── .prettierignore
