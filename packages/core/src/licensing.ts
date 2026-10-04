@@ -94,6 +94,20 @@ export const DEFAULT_LICENSE_STATUS: LicenseStatus = {
 };
 
 /**
+ * Whether the stored license actually unlocks Pro: the flag must be set AND
+ * the validation state must agree AND the key must be well-formed. Checking
+ * the flag alone lets any writer of the settings store (or stale state)
+ * unlock paid features.
+ */
+export function isProActive(status: LicenseStatus): boolean {
+  return (
+    status.isProEnabled &&
+    status.validationState === "valid" &&
+    validateLicenseKeyFormat(status.licenseKey)
+  );
+}
+
+/**
  * Check whether a specific feature is available given the current
  * license status.  Currently all gated features require
  * `isProEnabled === true` — per-feature gating can be added here
@@ -103,7 +117,7 @@ export const DEFAULT_LICENSE_STATUS: LicenseStatus = {
  */
 export function isFeatureEnabled(_feature: Feature, status: LicenseStatus): boolean {
   // Future: add per-feature override logic here
-  return status.isProEnabled;
+  return isProActive(status);
 }
 
 /**

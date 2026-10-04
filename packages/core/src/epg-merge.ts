@@ -119,11 +119,9 @@ function resolveOverlaps(
       }
       result.push(prog);
     } else if (progPri === lastPri) {
-      // Same source priority — keep both (natural ordering)
-      if (prog.start >= lastEnd) {
-        result.push(prog);
-      }
-      // If completely overlapping from same source, skip duplicate
+      // Same source priority — overlapping entries are duplicates of the same
+      // feed, so the existing one wins (previously this branch re-tested an
+      // unreachable condition and silently fell through).
     }
     // Lower priority new programme — skip it (existing wins)
   }

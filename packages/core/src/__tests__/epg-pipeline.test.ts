@@ -3,8 +3,10 @@ import {
   createEpgIndex,
   getNowNext,
   getRange,
+  matchChannelsToEpg,
   mergeEpgSources,
   parseXmltv,
+  parseXmltvTimestamp,
   type Programme,
 } from "../index.js";
 
@@ -105,5 +107,38 @@ describe("EPG pipeline", () => {
     expect(index.size).toBe(20_000);
     expect(index.get("channel-0")).toHaveLength(5);
     expect(elapsedMs).toBeLessThan(2_500);
+  });
+
+  it("parses negative-UTC-offset XMLTV timestamps instead of dropping them", () => {
+    // 18:00 at -0500 == 23:00 UTC
+    expect(parseXmltvTimestamp("20260302180000 -0500")).toBe(Date.UTC(2026, 2, 2, 23, 0, 0));
+    expect(parseXmltvTimestamp("20260302180000 +0100")).toBe(Date.UTC(2026, 2, 2, 17, 0, 0));
+    expect(parseXmltvTimestamp("2026-03-02T18:00:00Z")).toBe(Date.UTC(2026, 2, 2, 18, 0, 0));
+  });
+
+  it("includes long-running programmes that started before the window", () => {
+    const base = Date.UTC(2026, 6, 26, 10, 0, 0);
+    const items = [
+      programme("news", base - 3 * 60_000, base + 27 * 60_000, "Morning Show"),
+      programme("news", base + 30_000, base + 90_000, "Flash"),
+      programme("news", base + 60_000, base + 120_000, "Second"),
+    ];
+    const index = createEpgIndex(items);
+
+    expect(
+      getRange(index, "news", new Date(base), new Date(base + 60_000)).map((p) => p.titles[0]),
+    ).toEqual(["Morning Show", "Flash"]);
+  });
+
+  it("never fuzzy-matches nameless channels to nameless guide entries", () => {
+    const matches = matchChannelsToEpg(
+      [{ url: "https://example.test/hd.m3u8", tvgId: "", name: "HD" }],
+      ["HD"],
+      new Map([["HD", ["HD"]]]),
+    );
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0].method).toBe("none");
+    expect(matches[0].epgChannelId).toBe("");
   });
 });

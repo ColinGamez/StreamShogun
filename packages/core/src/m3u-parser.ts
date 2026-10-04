@@ -12,19 +12,21 @@ import type { Channel, Playlist, EpgSource } from "./iptv-types.js";
 // ── Helpers ───────────────────────────────────────────────────────────
 
 /**
- * Extract key="value" or key=value pairs from a string.
- * Supports both double-quoted and unquoted values.
+ * Extract key="value", key='value' or key=value pairs from a string.
+ * Supports double-quoted, single-quoted, and unquoted values.
  */
 function parseAttributes(raw: string): Record<string, string> {
   const attrs: Record<string, string> = {};
-  // Match:  key="value"  or  key=non-whitespace-value
-  const re = /([\w-]+)\s*=\s*"([^"]*)"|([\w-]+)\s*=\s*(\S+)/g;
+  // Match:  key="value"  |  key='value'  |  key=non-whitespace-value
+  const re = /([\w-]+)\s*=\s*"([^"]*)"|([\w-]+)\s*=\s*'([^']*)'|([\w-]+)\s*=\s*(\S+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(raw)) !== null) {
     if (m[1] !== undefined) {
       attrs[m[1].toLowerCase()] = m[2];
     } else if (m[3] !== undefined) {
       attrs[m[3].toLowerCase()] = m[4];
+    } else if (m[5] !== undefined) {
+      attrs[m[5].toLowerCase()] = m[6];
     }
   }
   return attrs;

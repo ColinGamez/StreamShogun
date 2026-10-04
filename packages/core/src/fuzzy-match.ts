@@ -50,7 +50,9 @@ function tokenise(name: string): Set<string> {
 
 /** Jaccard similarity between two token sets (0–1). */
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 1;
+  // Empty token sets (e.g. a name like "HD" that normalises to "") carry no
+  // signal — they must not match, or every nameless entry pairs up.
+  if (a.size === 0 || b.size === 0) return 0;
   let intersection = 0;
   for (const token of a) {
     if (b.has(token)) intersection++;
@@ -90,6 +92,7 @@ export function matchChannelsToEpg(
     for (const [id, names] of epgDisplayNames) {
       for (const name of names) {
         const norm = normaliseChannelName(name);
+        if (!norm) continue; // nameless entries carry no signal (see below)
         normNameToId.set(norm, { id, tokens: tokenise(norm) });
       }
     }
@@ -98,6 +101,7 @@ export function matchChannelsToEpg(
   // Also index by normalised ID as a name
   for (const id of epgChannelIds) {
     const norm = normaliseChannelName(id);
+    if (!norm) continue;
     if (!normNameToId.has(norm)) {
       normNameToId.set(norm, { id, tokens: tokenise(norm) });
     }
@@ -132,8 +136,8 @@ export function matchChannelsToEpg(
       continue;
     }
 
-    // Check normalised display name
-    if (normNameToId.has(normName)) {
+    // Check normalised display name (non-empty only — "" matches nothing)
+    if (normName && normNameToId.has(normName)) {
       results.push({
         channelUrl: ch.url,
         epgChannelId: normNameToId.get(normName)!.id,

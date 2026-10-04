@@ -93,4 +93,21 @@ describe("parseM3U", () => {
     expect(result.channels).toHaveLength(1);
     expect(result.channels[0]).toMatchObject({ tvgId: "news-a", name: "News A" });
   });
+
+  it("parses single-quoted attribute values without the quotes", () => {
+    const result = parseM3U(
+      [
+        "#EXTM3U",
+        "#EXTINF:-1 tvg-id='sq-1' group-title='My Group',Quoted",
+        "https://example.test/q.m3u8",
+      ].join("\n"),
+    );
+
+    expect(result.channels).toHaveLength(1);
+    expect(result.channels[0]).toMatchObject({
+      tvgId: "sq-1",
+      groupTitle: "My Group",
+      name: "Quoted",
+    });
+  });
 });

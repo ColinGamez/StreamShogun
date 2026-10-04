@@ -10,6 +10,29 @@ import type { SupportArticle, SupportArticleMeta, SupportHeading } from "./suppo
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
+/** Split on commas that are not inside single/double quotes. */
+function splitCsvRespectingQuotes(input: string): string[] {
+  const parts: string[] = [];
+  let current = "";
+  let quote: string | null = null;
+  for (const ch of input) {
+    if (quote) {
+      current += ch;
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      current += ch;
+    } else if (ch === ",") {
+      parts.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  parts.push(current);
+  return parts;
+}
+
 function parseFrontmatter(raw: string): { meta: Record<string, unknown>; body: string } {
   const m = FRONTMATTER_RE.exec(raw);
   if (!m) return { meta: {}, body: raw };
@@ -33,12 +56,12 @@ function parseFrontmatter(raw: string): { meta: Record<string, unknown>; body: s
       value = value.slice(1, -1);
     }
 
-    // Array (e.g., [tag1, tag2, tag3])
+    // Array (e.g., [tag1, tag2, tag3]) — split quote-aware so quoted
+    // commas (["a, b", "c"]) survive.
     if (value.startsWith("[") && value.endsWith("]")) {
-      meta[key] = value
-        .slice(1, -1)
-        .split(",")
-        .map((s) => s.trim().replace(/^["']|["']$/g, ""));
+      meta[key] = splitCsvRespectingQuotes(value.slice(1, -1)).map((s) =>
+        s.trim().replace(/^["']|["']$/g, ""),
+      );
     } else {
       meta[key] = value;
     }

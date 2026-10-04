@@ -173,4 +173,11 @@ describe("parseSupportArticles", () => {
   it("returns empty array for empty input", () => {
     expect(parseSupportArticles([])).toEqual([]);
   });
+
+  it("keeps quoted commas inside tag arrays", () => {
+    const result = parseSupportArticle(
+      `---\nid: q\ntitle: Q\ntags: ["news, world", sports]\n---\n\nBody\n`,
+    );
+    expect(result!.meta.tags).toEqual(["news, world", "sports"]);
+  });
 });

@@ -154,8 +154,15 @@ export function getRange(
   //   bit earlier to catch programmes that started before startTs but are still airing).
 
   // Find the latest programme starting at or before startTs — it may still be airing.
-  const anchor = lowerBound(progs, startTs);
-  const scanFrom = Math.max(0, anchor);
+  // Walk back past every earlier programme that is still airing (stop > startTs
+  // or unknown stop): long-running programmes must not be skipped just because
+  // newer ones started after them.
+  let scanFrom = lowerBound(progs, startTs);
+  while (scanFrom > 0) {
+    const prev = progs[scanFrom - 1];
+    if (prev.stop !== 0 && prev.stop <= startTs) break;
+    scanFrom--;
+  }
 
   const results: Programme[] = [];
 

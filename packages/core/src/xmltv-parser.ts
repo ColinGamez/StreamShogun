@@ -23,7 +23,10 @@ export function parseXmltvTimestamp(raw: string | undefined | null): number {
   const s = raw.trim();
 
   // ── ISO 8601 or Date-parseable string ───────────────────────────
-  if (s.includes("T") || s.includes("-")) {
+  // N.B. the native XMLTV branch below also contains "-" (negative UTC
+  // offsets like "20260302180000 -0500"), so only route to Date when the
+  // string actually looks ISO (has a "T" or starts YYYY-MM-DD).
+  if (s.includes("T") || /^\d{4}-\d{2}-\d{2}/.test(s)) {
     const d = new Date(s);
     return Number.isNaN(d.getTime()) ? 0 : d.getTime();
   }
