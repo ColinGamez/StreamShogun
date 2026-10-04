@@ -297,7 +297,7 @@ export function LibraryPage() {
       setMasterSources(sources);
 
       if (sources.length === 0) {
-        showToast("No Master sources configured yet", "error");
+        showToast(t("library.noMasterSources", locale), "error");
         return;
       }
 
@@ -458,10 +458,10 @@ export function LibraryPage() {
       {/* ── Add Playlist ─────────────────────────────────── */}
       <section className="card library-setup-card library-setup-primary">
         <div className="library-setup-heading">
-          <span className="library-step">STEP 1</span>
+          <span className="library-step">{t("library.step1", locale)}</span>
           <div>
             <h2>{t("library.addPlaylist", locale)}</h2>
-            <p>Paste an M3U URL or choose a local file. Your source stays under your control.</p>
+            <p>{t("library.addPlaylistHint", locale)}</p>
           </div>
         </div>
         <div className="input-row">

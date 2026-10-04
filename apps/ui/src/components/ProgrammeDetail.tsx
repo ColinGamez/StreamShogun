@@ -58,7 +58,7 @@ export function ProgrammeDetail({ programme, channel, onClose, onPlay }: Program
       {/* Header */}
       <div className="prog-detail-header">
         <div className="prog-detail-title-row">
-          <h3 className="prog-detail-title">{programme.titles[0] ?? "Untitled"}</h3>
+          <h3 className="prog-detail-title">{programme.titles?.[0] ?? "Untitled"}</h3>
           <button className="prog-detail-close" onClick={onClose} aria-label="Close">
             ✕
           </button>
@@ -83,9 +83,9 @@ export function ProgrammeDetail({ programme, channel, onClose, onPlay }: Program
       )}
 
       {/* Categories */}
-      {programme.categories.length > 0 && (
+      {(programme.categories ?? []).length > 0 && (
         <div className="prog-detail-cats">
-          {programme.categories.map((c) => (
+          {(programme.categories ?? []).map((c) => (
             <span key={c} className="prog-cat-tag">
               {c}
             </span>

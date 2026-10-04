@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_PLAYBACK_RETRIES,
   classifyPlaybackSource,
+  isPlayableMediaUrl,
   nextPlaybackRetry,
 } from "../playback-policy";
 
@@ -40,6 +41,27 @@ describe("playback source classification", () => {
   });
 });
 
+describe("playable media URL gate", () => {
+  it.each([
+    "https://example.com/live/channel.m3u8",
+    "http://192.168.1.10:8080/stream.ts",
+    "blob:https://example.com/uuid-here",
+  ])("accepts browser-playable schemes: %s", (source) => {
+    expect(isPlayableMediaUrl(source)).toBe(true);
+  });
+
+  it.each([
+    "",
+    "rtmp://example.com/live",
+    "rtsp://example.com/live",
+    "udp://239.0.0.1:1234",
+    "javascript:alert(1)",
+    "data:text/html,<p>x</p>",
+    "not a url",
+  ])("rejects non-playable schemes: %s", (source) => {
+    expect(isPlayableMediaUrl(source)).toBe(false);
+  });
+});
 describe("playback retry policy", () => {
   it("uses bounded exponential backoff", () => {
     expect(Array.from({ length: 5 }, (_, attempt) => nextPlaybackRetry(attempt))).toEqual([

@@ -106,6 +106,12 @@ sub onEpgFetchComplete()
 
     if state = "done"
         m.epgData = m.fetchTask.epgData
+        if m.epgData = invalid or m.epgData.channels = invalid
+            m.loadingGroup.visible = false
+            m.errorGroup.visible = true
+            m.errorMsg.text = "Guide data was empty. Try refreshing the EPG source."
+            return
+        end if
         loadChannelsForGuide()
     end if
 end sub

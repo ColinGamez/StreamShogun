@@ -1,6 +1,7 @@
 // ── Auth / SaaS slice (login, registration, server features, entitlements) ──
 import type { StateCreator } from "zustand";
 import type { AppState } from "../app-store";
+import { isProActive } from "@stream-shogun/core";
 import { localStorageAdapter, loadJson, saveJson } from "../../lib/persistence";
 import { logUpgradeIntent, logCheckoutCompleted } from "../../lib/analytics";
 import * as bridge from "../../lib/bridge";
@@ -254,7 +255,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, 
   usingCachedPlan: false,
 
   canUse: (flagKey) => {
-    if (get().license.isProEnabled) return true;
+    if (isProActive(get().license)) return true;
     return get().isServerFeatureEnabled(flagKey);
   },
 

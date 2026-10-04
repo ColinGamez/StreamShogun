@@ -29,6 +29,12 @@ export function SearchInput({
     if (autoFocus) ref.current?.focus();
   }, [autoFocus]);
 
+  // A pending debounce must never fire after unmount (stale callback).
+  useEffect(() => {
+    const timer = timerRef;
+    return () => clearTimeout(timer.current);
+  }, []);
+
   const handleChange = (v: string) => {
     setLocal(v);
     clearTimeout(timerRef.current);

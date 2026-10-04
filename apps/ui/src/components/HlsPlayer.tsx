@@ -13,6 +13,7 @@ import Hls, { type ErrorData, type Events, type HlsConfig } from "hls.js";
 import {
   MAX_PLAYBACK_RETRIES,
   classifyPlaybackSource,
+  isPlayableMediaUrl,
   nextPlaybackRetry,
 } from "../lib/playback-policy";
 
@@ -133,6 +134,11 @@ export function HlsPlayer({
     overlayTimer.current = setTimeout(() => setOverlayVisible(false), OVERLAY_HIDE_DELAY_MS);
   }, []);
 
+  // Latest values for the [src] attach effect below: retries and timers must
+  // observe current prefs/callbacks, not the render that started the stream.
+  const latest = useRef({ volume, muted, autoPlay, onFatalError, flashOverlay });
+  latest.current = { volume, muted, autoPlay, onFatalError, flashOverlay };
+
   const handleMouseMove = useCallback(() => {
     flashOverlay();
   }, [flashOverlay]);
@@ -231,6 +237,16 @@ export function HlsPlayer({
       return;
     }
 
+    // Reject non-playable schemes up front (rtmp://, javascript:, …) with a
+    // clear error instead of a silent black screen.
+    if (!isPlayableMediaUrl(src)) {
+      const msg = "This stream protocol is not supported in the desktop player.";
+      setBuffering(false);
+      setErrorMsg(msg);
+      latest.current.onFatalError?.(msg);
+      return;
+    }
+
     // Reset per-source state
     retryCount.current = 0;
     setErrorMsg("");
@@ -310,8 +326,8 @@ export function HlsPlayer({
     video.addEventListener("play", onPlay);
 
     // Apply persisted volume
-    video.volume = volume;
-    video.muted = muted;
+    video.volume = latest.current.volume;
+    video.muted = latest.current.muted;
 
     const cleanup = () => {
       destroyed = true;
@@ -362,7 +378,7 @@ export function HlsPlayer({
           setAudioTracks(tracks);
         }
 
-        if (autoPlay) {
+        if (latest.current.autoPlay) {
           video.play().catch(() => {
             /* */
           });
@@ -410,8 +426,9 @@ export function HlsPlayer({
           hls.recoverMediaError();
         } else {
           const msg = `Playback failed: ${data.type} / ${data.details}`;
+          setBuffering(false);
           setErrorMsg(msg);
-          onFatalError?.(msg);
+          latest.current.onFatalError?.(msg);
         }
       });
 
@@ -420,7 +437,7 @@ export function HlsPlayer({
     } else {
       // Native playback (Safari HLS or plain mp4/ts URL)
       video.src = src;
-      if (autoPlay) {
+      if (latest.current.autoPlay) {
         video.play().catch(() => {
           /* */
         });
@@ -440,14 +457,15 @@ export function HlsPlayer({
             if (destroyed) return;
             setErrorMsg("");
             video.src = src;
-            if (autoPlay)
+            if (latest.current.autoPlay)
               video.play().catch(() => {
                 /* */
               });
           }, delay);
         } else {
+          setBuffering(false);
           setErrorMsg("Playback failed after maximum retries.");
-          onFatalError?.("Playback failed after maximum retries.");
+          latest.current.onFatalError?.("Playback failed after maximum retries.");
         }
       };
       video.addEventListener("error", onNativeError);
@@ -459,8 +477,7 @@ export function HlsPlayer({
     }
 
     return cleanup;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, videoEl, flashOverlay]);
 
   // Cleanup overlay timer on unmount
   useEffect(() => {
@@ -488,7 +505,7 @@ export function HlsPlayer({
     <div
       ref={containerRef}
       className={`hls-player${isFullscreen ? " hls-fullscreen" : ""}`}
-      tabIndex={-1}
+      tabIndex={0}
       role="region"
       aria-label={channelName ? `Video player — ${channelName}` : "Video player"}
       onMouseMove={handleMouseMove}
@@ -540,6 +557,7 @@ export function HlsPlayer({
             className="hls-ctrl-btn"
             onClick={togglePlay}
             title={isPlaying ? "Pause (Space)" : "Play (Space)"}
+            aria-label={isPlaying ? "Pause (Space)" : "Play (Space)"}
           >
             {isPlaying ? "⏸" : "▶"}
           </button>
@@ -549,6 +567,7 @@ export function HlsPlayer({
             className="hls-ctrl-btn"
             onClick={() => setMuted((p) => !p)}
             title={`${muted ? "Unmute" : "Mute"} (M)`}
+            aria-label={`${muted ? "Unmute" : "Mute"} (M)`}
           >
             {volumeIcon}
           </button>
@@ -586,6 +605,7 @@ export function HlsPlayer({
                   setShowQualityMenu(false);
                 }}
                 title="Audio track"
+                aria-label="Audio track"
               >
                 🎧
               </button>
@@ -618,6 +638,7 @@ export function HlsPlayer({
                   setShowAudioMenu(false);
                 }}
                 title="Quality"
+                aria-label="Quality"
               >
                 ⚙️
               </button>
@@ -646,7 +667,12 @@ export function HlsPlayer({
           )}
 
           {/* Fullscreen */}
-          <button className="hls-ctrl-btn" onClick={toggleFullscreen} title="Fullscreen (F)">
+          <button
+            className="hls-ctrl-btn"
+            onClick={toggleFullscreen}
+            title="Fullscreen (F)"
+            aria-label="Fullscreen (F)"
+          >
             {isFullscreen ? "⊡" : "⛶"}
           </button>
         </div>

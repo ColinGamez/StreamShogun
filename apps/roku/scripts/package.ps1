@@ -38,7 +38,10 @@ foreach ($relativePath in $required) {
 $xmlFiles = Get-ChildItem -LiteralPath (Join-Path $appRoot "components") -Recurse -Filter "*.xml"
 foreach ($xmlFile in $xmlFiles) {
   try {
-    [xml](Get-Content -LiteralPath $xmlFile.FullName -Raw) | Out-Null
+    # Read as UTF-8 explicitly: the component files declare encoding="UTF-8"
+    # and contain non-ASCII glyphs (e.g. ★). The default system-codepage
+    # read mangles them into invalid XML and fails packaging.
+    [xml](Get-Content -LiteralPath $xmlFile.FullName -Raw -Encoding UTF8) | Out-Null
   } catch {
     throw "Invalid XML in $($xmlFile.FullName): $($_.Exception.Message)"
   }

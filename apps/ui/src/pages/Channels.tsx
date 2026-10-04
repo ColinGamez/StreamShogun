@@ -33,11 +33,17 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
   }, [channels]);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
     return channels.filter((ch) => {
       if (showFavsOnly && !favorites.has(ch.url)) return false;
       if (group && ch.groupTitle !== group) return false;
-      if (q && !ch.name.toLowerCase().includes(q) && !ch.groupTitle.toLowerCase().includes(q))
+      if (
+        q &&
+        !ch.name.toLowerCase().includes(q) &&
+        !ch.groupTitle.toLowerCase().includes(q) &&
+        !(ch.tvgId || "").toLowerCase().includes(q) &&
+        !(ch.url || "").toLowerCase().includes(q)
+      )
         return false;
       return true;
     });

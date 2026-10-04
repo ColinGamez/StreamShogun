@@ -27,18 +27,20 @@ try {
     throw "Package must contain exactly one manifest at the ZIP root."
   }
 
+  # NOTE: sideload ZIP entries always use forward slashes (see package.ps1)
+  # because Roku devices cannot load Windows-style paths.
   $requiredEntries = @(
-    "components\MainScene.xml",
-    "components\AccountScene.xml",
-    "components\RokuPayScene.xml",
-    "components\tasks\AccountSessionTask.xml",
-    "components\tasks\ValidateRokuPayTask.xml",
-    "components\ManagePlaylistsScene.xml",
-    "components\tasks\FetchLibraryTask.xml",
-    "components\tasks\ResolveDeepLinkTask.xml",
-    "source\main.brs",
-    "images\icon_focus_fhd.png",
-    "images\splash_fhd.jpg"
+    "components/MainScene.xml",
+    "components/AccountScene.xml",
+    "components/RokuPayScene.xml",
+    "components/tasks/AccountSessionTask.xml",
+    "components/tasks/ValidateRokuPayTask.xml",
+    "components/ManagePlaylistsScene.xml",
+    "components/tasks/FetchLibraryTask.xml",
+    "components/tasks/ResolveDeepLinkTask.xml",
+    "source/main.brs",
+    "images/icon_focus_fhd.png",
+    "images/splash_fhd.jpg"
   )
 
   foreach ($entryName in $requiredEntries) {

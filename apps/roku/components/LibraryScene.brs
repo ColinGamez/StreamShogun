@@ -126,7 +126,11 @@ sub loadPlaylist(idx as Integer)
 end sub
 
 sub onFetchComplete()
+    if m.fetchTask = invalid then return
+
     state = m.fetchTask.state
+    if state = "loading" then return
+
     m.loadingGroup.visible = false
 
     if state = "error"
@@ -139,6 +143,12 @@ sub onFetchComplete()
     if state = "done"
         m.errorGroup.visible = false
         data = m.fetchTask.channels
+        if data = invalid or data.items = invalid
+            m.errorGroup.visible = true
+            m.errorText.text = "No channels found in this playlist."
+            m.channelGrid.visible = false
+            return
+        end if
         m.channels = data.items
         buildGroups()
         m.selectedGroup = "All"

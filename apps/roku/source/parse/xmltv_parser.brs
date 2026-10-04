@@ -166,17 +166,17 @@ function IsLeapYear(y as Integer) as Boolean
     return (y MOD 4 = 0 and y MOD 100 <> 0) or (y MOD 400 = 0)
 end function
 
-' Get programmes for a specific channel, sorted by start time.
+' Get programmes for a specific channel, sorted by start time, capped at maxCount.
 function GetProgrammesForChannel(programmes as Object, channelId as String, maxCount as Integer) as Object
     now = CreateObject("roDateTime")
     nowEpoch = now.AsSeconds()
     result = []
 
     for each prog in programmes
-        if prog.channelId = channelId and prog.stop > nowEpoch
+        ' stop = 0 means "unknown end" — still airing, never drop it here
+        if prog.channelId = channelId and (prog.stop = 0 or prog.stop > nowEpoch)
             result.Push(prog)
         end if
-        if result.Count() >= maxCount then exit for
     end for
 
     ' Sort by start time (simple bubble sort — list is small)
@@ -189,6 +189,11 @@ function GetProgrammesForChannel(programmes as Object, channelId as String, maxC
             end if
         end for
     end for
+
+    ' Truncate AFTER sorting so the cap keeps the earliest programmes
+    while result.Count() > maxCount and maxCount > 0
+        result.Pop()
+    end while
 
     return result
 end function

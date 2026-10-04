@@ -16,6 +16,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **API entitlement hardening** - Roku pay-push mutations require live Roku transaction
+  validation; Stripe checkout derives plan from verified status; invoice.paid restores
+  PRO with the invoice period; multi-cookie auth fixed (only the last cookie survived);
+  invalid Bearer tokens fail closed; feedback validated + rate-limited; profile bios
+  escaped instead of regex-filtered; no PII in mail logs; CORS refuses `*`.
+- **Desktop hardening** - renderer can no longer write license keys; billing URLs
+  restricted to Stripe hosts; capped gzip (100 MB) stops decompression bombs; SaaS
+  calls time out; refresh watchdog can't overlap; window state validated; startup
+  failures surface a dialog; PIP closes on quit; tokens prefer OS vault + 0o600.
+- **Parser correctness** - negative-UTC-offset XMLTV timestamps parse; single-quoted
+  M3U attributes unquoted; nameless fuzzy matches eliminated; long-running EPG
+  programmes included in ranges; quote-aware tag parsing; license gate requires
+  valid state + key format.
+- **Player + guide polish** - no more double-saved watch history; fatal errors clear
+  the spinner; player shortcuts keyboard-reachable with labelled controls;
+  unsupported protocols get a clear error; corrupt storage falls back safely;
+  null-safe guide rendering; trimmed search across ids/URLs; debounced input
+  cleanup; full en/es/ja strings for copy-URL, sleep, and library setup.
+- **Roku packaging + scenes** - sideload QA passes again (UTF-8 validation, forward-slash
+  audit); unknown-stop programmes kept; sort-before-truncate; null-safe scene fetches.
 - **React 19** - `react`/`react-dom` 18.3 to 19.2 with matching types; three v19 type
   fallouts fixed (timer ref initial value, `JSX` namespace import, nullable video ref
   prop). No legacy patterns remained (`createRoot`, no `forwardRef`/string refs).

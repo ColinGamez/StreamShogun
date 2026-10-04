@@ -103,7 +103,7 @@ export function EpgGrid({
       return progs.some((p) => {
         const stop = p.stop || p.start + DEFAULT_DUR_MS;
         if (stop <= windowStart || p.start >= windowEnd) return false;
-        return p.titles.some((t) => t.toLowerCase().includes(needle));
+        return (p.titles ?? []).some((t) => t.toLowerCase().includes(needle));
       });
     });
   }, [channels, epgIndex, search, windowStart, windowEnd]);

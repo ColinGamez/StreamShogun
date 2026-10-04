@@ -35,18 +35,38 @@ export const localStorageAdapter: PersistenceAdapter = {
 };
 
 /** Load a JSON value from the adapter, with a fallback default.
- *  Note: the `as T` cast is intentionally unchecked — localStorage values
- *  are written by our own `saveJson` and schema drift is non-critical.
- *  If stricter validation is needed, pass a Zod schema as a 4th parameter.
+ *
+ *  Corrupt hand-edited storage must not poison the stores: when no explicit
+ *  `validate` predicate is given, the parsed value is still shape-checked
+ *  against the fallback (arrays stay arrays, objects stay objects,
+ *  primitives keep their type) and the fallback wins on mismatch.
  */
-export function loadJson<T>(adapter: PersistenceAdapter, key: string, fallback: T): T {
+export function loadJson<T>(
+  adapter: PersistenceAdapter,
+  key: string,
+  fallback: T,
+  validate?: (value: unknown) => value is T,
+): T {
   const raw = adapter.getItem(key);
   if (raw === null) return fallback;
   try {
-    return JSON.parse(raw) as T;
+    const parsed: unknown = JSON.parse(raw);
+    if (validate) return validate(parsed) ? parsed : fallback;
+    return matchesFallbackShape(parsed, fallback) ? (parsed as T) : fallback;
   } catch {
     return fallback;
   }
+}
+
+function matchesFallbackShape<T>(parsed: unknown, fallback: T): boolean {
+  if (Array.isArray(fallback)) return Array.isArray(parsed);
+  if (fallback !== null && typeof fallback === "object") {
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed);
+  }
+  if (fallback === null || fallback === undefined) {
+    return parsed === null || parsed === undefined || typeof parsed === "object";
+  }
+  return typeof parsed === typeof fallback;
 }
 
 /** Save a JSON-serialisable value through the adapter. */

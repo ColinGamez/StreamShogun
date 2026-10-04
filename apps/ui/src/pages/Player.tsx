@@ -79,33 +79,13 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
     osdTimer.current = setTimeout(() => setOsd(null), OSD_DISPLAY_MS);
   }, []);
 
-  // ── Watch history tracking (BUG-3 FIXED) ───────────────────────────
+  // ── Watch history tracking ──────────────────────────────────────
+  // Saved exactly once per session in the effect cleanup below, which runs
+  // both on channel change (saving the outgoing channel) and on unmount.
+  // (A previous version also saved in the effect body, double-counting
+  // every zap — do not re-add a body save.)
   useEffect(() => {
     if (!effectiveChannel) return;
-
-    const prevObj = prevChannelObjRef.current;
-    const startedAt = watchStartRef.current;
-
-    // If channel changed, save the previous watch session using the stored object
-    if (prevObj && prevObj.url !== effectiveChannel.url) {
-      const stoppedAt = Date.now();
-      const durationSec = Math.round((stoppedAt - startedAt) / 1000);
-      if (durationSec >= 5) {
-        saveWatchRef
-          .current(
-            prevObj.url,
-            prevObj.name,
-            prevObj.tvgLogo || "",
-            prevObj.groupTitle || "",
-            startedAt,
-            stoppedAt,
-            durationSec,
-          )
-          .catch(() => {
-            /* best-effort */
-          });
-      }
-    }
 
     prevChannelObjRef.current = effectiveChannel;
     watchStartRef.current = Date.now();
@@ -292,7 +272,7 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
             if (sleepTimer.current) clearInterval(sleepTimer.current);
             sleepTimer.current = null;
             setSleepMinutes(null);
-            showToast("Sleep timer ended — stopping playback", "success");
+            showToast(t("player.sleepEnded", locale), "success");
             onNavigate("channels");
             return 0;
           }
@@ -300,7 +280,7 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
         });
       }, 1000);
     },
-    [onNavigate],
+    [onNavigate, locale],
   );
 
   const cancelSleep = useCallback(() => {
@@ -437,10 +417,10 @@ export function PlayerPage({ onNavigate, pipUrl, pipName }: PlayerPageProps) {
           <button
             className="btn-copy-url"
             onClick={handleCopyUrl}
-            title="Copy stream URL"
-            aria-label="Copy stream URL"
+            title={t("player.copyUrl", locale)}
+            aria-label={t("player.copyUrl", locale)}
           >
-            {copied ? "✓ Copied" : "🔗 Copy URL"}
+            {copied ? t("player.copied", locale) : `🔗 ${t("player.copyUrl", locale)}`}
           </button>
 
           {/* Sleep timer */}

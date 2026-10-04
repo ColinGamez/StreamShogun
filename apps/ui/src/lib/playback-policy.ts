@@ -19,6 +19,23 @@ export function classifyPlaybackSource(source: string): PlaybackSourceKind {
   }
 }
 
+/**
+ * Whether a stream URL can be handed to <video>/hls.js at all.
+ * Only http(s) and blob: schemes play in the browser — anything else
+ * (rtmp://, rtsp://, udp://, javascript:, data:, …) must surface a clear
+ * error instead of a silent black screen.
+ */
+export function isPlayableMediaUrl(source: string): boolean {
+  const value = source.trim();
+  if (!value) return false;
+  try {
+    const protocol = new URL(value).protocol.toLowerCase();
+    return protocol === "http:" || protocol === "https:" || protocol === "blob:";
+  } catch {
+    return false;
+  }
+}
+
 export function nextPlaybackRetry(completedAttempts: number): RetryDecision {
   const safeAttempts = Number.isFinite(completedAttempts)
     ? Math.max(0, Math.floor(completedAttempts))

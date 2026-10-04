@@ -28,6 +28,10 @@ const translations: Record<string, Record<string, string>> = {
     "library.enterFilePath": "Enter file path:",
     "library.epgSources": "EPG Sources",
     "library.empty": "Add a playlist or EPG source to get started.",
+    "library.noMasterSources": "No Master sources configured yet",
+    "library.step1": "STEP 1",
+    "library.addPlaylistHint":
+      "Paste an M3U URL or choose a local file. Your source stays under your control.",
     "common.add": "Add",
     "channels.title": "Channels",
     "channels.search": "Search channels…",
@@ -121,7 +125,8 @@ const translations: Record<string, Record<string, string>> = {
     "player.sleepTimer": "Sleep Timer",
     "player.sleepEnded": "Sleep timer ended — stopping playback",
     "player.sleepCancel": "Cancel sleep timer",
-    // ── Keyboard Shortcuts ────────────────────────────────────────
+    "player.copyUrl": "Copy stream URL",
+    "player.copied": "✓ Copied", // ── Keyboard Shortcuts ────────────────────────────────────────
     "shortcuts.title": "Keyboard Shortcuts",
     "shortcuts.toggle": "Show keyboard shortcuts",
     // ── Round 3 ───────────────────────────────────────────────────
@@ -228,6 +233,10 @@ const translations: Record<string, Record<string, string>> = {
     "library.enterFilePath": "Introduce la ruta del archivo:",
     "library.epgSources": "Fuentes EPG",
     "library.empty": "Añade una lista o fuente EPG para empezar.",
+    "library.noMasterSources": "Aún no hay fuentes Master configuradas",
+    "library.step1": "PASO 1",
+    "library.addPlaylistHint":
+      "Pega una URL M3U o elige un archivo local. Tu fuente sigue bajo tu control.",
     "common.add": "Añadir",
     "channels.title": "Canales",
     "channels.search": "Buscar canales…",
@@ -314,6 +323,8 @@ const translations: Record<string, Record<string, string>> = {
     "player.sleepTimer": "Temporizador",
     "player.sleepEnded": "Temporizador finalizado — deteniendo reproducción",
     "player.sleepCancel": "Cancelar temporizador",
+    "player.copyUrl": "Copiar URL del stream",
+    "player.copied": "✓ Copiado",
     "shortcuts.title": "Atajos de teclado",
     "shortcuts.toggle": "Mostrar atajos de teclado",
     // ── Round 3 ───────────────────────────────────────────────────
@@ -420,6 +431,10 @@ const translations: Record<string, Record<string, string>> = {
     "library.enterFilePath": "ファイルパスを入力:",
     "library.epgSources": "EPGソース",
     "library.empty": "プレイリストまたはEPGソースを追加して始めましょう。",
+    "library.noMasterSources": "Masterソースがまだ設定されていません",
+    "library.step1": "ステップ 1",
+    "library.addPlaylistHint":
+      "M3UのURLを貼り付けるか、ローカルファイルを選択。ソースはあなたの管理下にあります。",
     "common.add": "追加",
     "channels.title": "チャンネル",
     "channels.search": "チャンネル検索…",
@@ -506,6 +521,8 @@ const translations: Record<string, Record<string, string>> = {
     "player.sleepTimer": "スリープタイマー",
     "player.sleepEnded": "スリープタイマー終了 — 再生を停止",
     "player.sleepCancel": "スリープタイマーをキャンセル",
+    "player.copyUrl": "ストリームURLをコピー",
+    "player.copied": "✓ コピー済み",
     "shortcuts.title": "キーボードショートカット",
     "shortcuts.toggle": "キーボードショートカットを表示",
     // ── Round 3 ───────────────────────────────────────────────────
