@@ -11,6 +11,7 @@ import {
   derivePlan,
   getInvoiceSubscriptionId,
   extractPeriodEnd,
+  extractInvoicePeriodEnd,
   extractBillingInterval,
   resolveStripeId,
   isIncompleteStatus,
@@ -724,7 +725,9 @@ async function handleCheckoutCompleted(
     await tx.subscription.update({
       where: { userId },
       data: {
-        plan: "PRO",
+        // Derive the plan from the verified Stripe status — a completed
+        // checkout with a non-active subscription must not grant PRO.
+        plan: derivePlan(mappedStatus),
         status: mappedStatus,
         billingInterval,
         stripeCustomerId: customerId ?? undefined,
@@ -950,9 +953,16 @@ async function handleInvoicePaid(
       return { outcome: "ignored", reason: "customer_mismatch" };
     }
 
+    // A paid invoice proves an active subscription: restore PRO (e.g. after
+    // past-due recovery) and refresh the period end from the invoice lines.
+    const invoicePeriodEnd = extractInvoicePeriodEnd(invoice);
     await tx.subscription.update({
       where: { id: subscription.id },
-      data: { status: "ACTIVE" },
+      data: {
+        plan: "PRO",
+        status: "ACTIVE",
+        currentPeriodEnd: invoicePeriodEnd ?? undefined,
+      },
     });
 
     await tx.webhookEvent.update({

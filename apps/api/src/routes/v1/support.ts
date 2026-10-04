@@ -1,6 +1,7 @@
 // ── Support routes — codex index + feedback ───────────────────────────
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { z } from "zod";
 import { authenticate } from "../../middleware/authenticate.js";
 import { prisma } from "../../lib/prisma.js";
 
@@ -34,23 +35,31 @@ export async function supportRoutes(app: FastifyInstance): Promise<void> {
 
   // ── POST /v1/support/feedback ───────────────────────────────────
   // Opt-in feedback submission. Requires auth to associate with user.
+  const feedbackBody = z.object({
+    messageId: z.string().max(128).optional(),
+    rating: z.enum(["up", "down"]),
+    comment: z.string().max(2000).optional(),
+    articleIds: z.array(z.string().max(128)).max(20).optional(),
+    appVersion: z.string().max(64).optional(),
+  });
+
   app.post(
     "/feedback",
-    { preHandler: [authenticate] },
+    {
+      preHandler: [authenticate],
+      config: { rateLimit: { max: 20, timeWindow: "1 hour" } },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { sub } = request.user;
-      const body = request.body as {
-        messageId?: string;
-        rating?: string;
-        comment?: string;
-        articleIds?: string[];
-        appVersion?: string;
-      };
-
-      // Validate required fields
-      if (!body.rating || !["up", "down"].includes(body.rating)) {
-        return reply.code(400).send({ error: "rating must be 'up' or 'down'" });
+      const parsed = feedbackBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "BadRequest",
+          message: "Invalid feedback body.",
+          details: parsed.error.flatten().fieldErrors,
+        });
       }
+      const body = parsed.data;
 
       // Strip any URLs from comment to prevent accidental data leakage
       const safeComment = body.comment

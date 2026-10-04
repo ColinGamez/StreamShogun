@@ -167,6 +167,15 @@ function setCookie(reply: FastifyReply, name: string, value: string, opts: Cooki
   if (opts.secure) parts.push("Secure");
   if (opts.domain) parts.push(`Domain=${opts.domain}`);
 
-  // Append to existing Set-Cookie headers (Fastify supports multiple)
-  void reply.header("Set-Cookie", parts.join("; "));
+  // Append without clobbering: reply.header() overwrites, so accumulate
+  // every Set-Cookie value into one array (previously only the last
+  // cookie survived, silently dropping the other auth cookies).
+  const existing = reply.getHeader("Set-Cookie");
+  const values = Array.isArray(existing)
+    ? existing.map(String)
+    : existing === undefined
+      ? []
+      : [String(existing)];
+  values.push(parts.join("; "));
+  void reply.header("Set-Cookie", values);
 }

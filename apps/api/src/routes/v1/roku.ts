@@ -422,6 +422,29 @@ async function processRokuPayEvent(
 
   const expiresAt = parseRokuDate(notification.expirationDate);
   const action = deriveRokuPayPushAction(notification);
+
+  // Push notifications are self-asserted: anyone can POST them. Before
+  // applying any entitlement-changing action, confirm the transaction with
+  // Roku's validator — the same check the authenticated validate-purchase
+  // route performs. A failed confirmation is ignored (no mutation); a
+  // validator outage throws so the event is marked failed and Roku retries
+  // the push. Metadata-only events keep the legacy path (no grant change).
+  const mutatesEntitlement = action !== "metadata_only";
+  if (mutatesEntitlement && notification.transactionId) {
+    let entitled: boolean;
+    try {
+      entitled = isRokuEntitled(await validateRokuPayTransaction(notification.transactionId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Roku Pay validation failed.";
+      log.warn({ transactionId: notification.transactionId }, "roku.pay_push.validation_failed");
+      throw new Error(message, { cause: err });
+    }
+    if (!entitled) {
+      await markRokuPayEvent(eventId, "ignored", "roku_not_entitled");
+      log.warn({ transactionId: notification.transactionId }, "roku.pay_push.not_entitled");
+      return;
+    }
+  }
   const metadata: Prisma.SubscriptionUpdateInput = {
     rokuCustomerId: notification.customerId ?? subscription.rokuCustomerId ?? undefined,
     rokuOriginalTransactionId:

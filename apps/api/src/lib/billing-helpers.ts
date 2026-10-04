@@ -55,6 +55,19 @@ export function extractPeriodEnd(sub: Stripe.Subscription): Date | null {
 }
 
 /**
+ * Extract the period end as a Date from a Stripe invoice's first line item.
+ * Returns null when the invoice carries no usable period (caller keeps the
+ * stored value instead of writing a wrong one).
+ */
+export function extractInvoicePeriodEnd(invoice: Stripe.Invoice): Date | null {
+  const lines = invoice.lines?.data;
+  const periodEnd = lines?.[0]?.period?.end;
+  return typeof periodEnd === "number" && Number.isFinite(periodEnd)
+    ? new Date(periodEnd * 1000)
+    : null;
+}
+
+/**
  * Resolve a Stripe customer or subscription string-or-object to its ID.
  */
 export function resolveStripeId(ref: string | { id: string } | null | undefined): string | null {

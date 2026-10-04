@@ -25,17 +25,14 @@ import { evaluateAchievements } from "../../lib/achievements.js";
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-/** Strip dangerous HTML/script tags from markdown for safe rendering. */
+/** Escape all HTML so bios render as plain text (blocklists miss vectors). */
 function sanitizeBio(raw: string): string {
-  // Remove <script>, <iframe>, <object>, <embed>, <form>, event handlers
   return raw
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
-    .replace(/<object[\s\S]*?<\/object>/gi, "")
-    .replace(/<embed[\s\S]*?\/?>/gi, "")
-    .replace(/<form[\s\S]*?<\/form>/gi, "")
-    .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, "")
-    .replace(/javascript\s*:/gi, "");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 /** Build stats from cloud data. */

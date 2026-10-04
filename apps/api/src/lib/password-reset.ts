@@ -102,7 +102,9 @@ export async function deliverPasswordResetEmail(
       });
       return { delivered: true };
     } catch (error) {
-      logger.error({ err: error, to: input.to }, "Failed to send password reset email");
+      // Never log the recipient address (PII) — domain only for debugging.
+      const domain = input.to.split("@")[1] ?? "invalid";
+      logger.error({ err: error, domain }, "Failed to send password reset email");
       if (env.NODE_ENV !== "production") {
         return { delivered: false, previewUrl: input.resetUrl };
       }
@@ -115,7 +117,8 @@ export async function deliverPasswordResetEmail(
       await sendViaResendApi({ from, to: input.to, subject, text, html });
       return { delivered: true };
     } catch (error) {
-      logger.error({ err: error, to: input.to }, "Failed to send password reset email");
+      const domain = input.to.split("@")[1] ?? "invalid";
+      logger.error({ err: error, domain }, "Failed to send password reset email");
       if (env.NODE_ENV !== "production") {
         return { delivered: false, previewUrl: input.resetUrl };
       }

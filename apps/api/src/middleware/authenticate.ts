@@ -21,7 +21,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       request._authSource = "header";
       return;
     } catch {
-      // Header was present but invalid — fall through to cookie
+      // A present-but-invalid Bearer token fails closed: falling through to
+      // the ambient cookie could silently authenticate as a different
+      // identity. Only a missing/malformed header falls through to cookies.
+      request.log.debug("Invalid Bearer token");
+      reply.code(401).send({ error: "Unauthorized", message: "Invalid or expired token" });
+      return;
     }
   }
 

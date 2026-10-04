@@ -13,6 +13,8 @@ import {
 } from "../../lib/master-epg-providers.js";
 
 function isMasterEmail(email: string | undefined): boolean {
+  // Unset MASTER_EMAIL disables the master profile everywhere (fail closed).
+  if (!env.MASTER_EMAIL) return false;
   return email?.trim().toLowerCase() === env.MASTER_EMAIL.trim().toLowerCase();
 }
 

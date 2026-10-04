@@ -4,6 +4,7 @@ import {
   derivePlan,
   getInvoiceSubscriptionId,
   extractPeriodEnd,
+  extractInvoicePeriodEnd,
   resolveStripeId,
   extractBillingInterval,
   isIncompleteStatus,
@@ -125,6 +126,25 @@ describe("extractPeriodEnd", () => {
   it("returns null when current_period_end is undefined", () => {
     const sub = { items: { data: [{}] } } as any;
     expect(extractPeriodEnd(sub)).toBeNull();
+  });
+});
+
+// ── extractInvoicePeriodEnd ──────────────────────────────────────
+
+describe("extractInvoicePeriodEnd", () => {
+  it("converts the first line period end to Date", () => {
+    const invoice = {
+      lines: { data: [{ period: { end: 1900000000 } }] },
+    } as any;
+    const result = extractInvoicePeriodEnd(invoice);
+    expect(result).toBeInstanceOf(Date);
+    expect(result!.toISOString()).toBe(new Date(1900000000 * 1000).toISOString());
+  });
+
+  it("returns null when lines are missing", () => {
+    expect(extractInvoicePeriodEnd({} as any)).toBeNull();
+    expect(extractInvoicePeriodEnd({ lines: { data: [] } } as any)).toBeNull();
+    expect(extractInvoicePeriodEnd({ lines: { data: [{}] } } as any)).toBeNull();
   });
 });
 

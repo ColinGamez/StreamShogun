@@ -41,7 +41,8 @@ const envSchema = z
     EMAIL_FROM: z.string().min(1).optional(),
 
     // Private owner-only sources. The API only exposes these to MASTER_EMAIL.
-    MASTER_EMAIL: z.string().email().default("colin.kenny777@gmail.com"),
+    // No default: self-hosters opt in explicitly instead of inheriting ours.
+    MASTER_EMAIL: z.string().email().optional(),
     MASTER_PLAYLIST_NAME: z.string().min(1).optional(),
     MASTER_PLAYLIST_URL: z.string().url().optional(),
     MASTER_EPG_NAME: z.string().min(1).optional(),
@@ -73,7 +74,15 @@ const envSchema = z
     FOUNDING_MEMBER_CUTOFF: z.string().datetime().optional(),
   })
   .superRefine((data, ctx) => {
-    // When billing is configured, enforce that essential companion vars are present
+    // A wildcard origin combined with credentials never works in browsers
+    // and widens CSRF-adjacent exposure — require explicit origins.
+    if (data.CORS_ORIGIN.split(",").some((o) => o.trim() === "*")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["CORS_ORIGIN"],
+        message: 'CORS_ORIGIN must list explicit origins, not "*" (credentials are enabled)',
+      });
+    }
     if (data.STRIPE_SECRET_KEY && data.BILLING_DISABLED !== "true") {
       if (!data.STRIPE_WEBHOOK_SECRET) {
         ctx.addIssue({
