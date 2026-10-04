@@ -69,7 +69,6 @@ async function getKeytar(): Promise<KeytarLike | null> {
   if (keytarModule) return keytarModule;
   try {
     // Dynamic import so it's optional — won't crash if not installed
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     keytarModule = (await import(/* webpackIgnore: true */ "keytar" as string)) as KeytarLike;
     return keytarModule;
   } catch {

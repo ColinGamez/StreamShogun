@@ -45,7 +45,12 @@ module.exports = tseslint.config(
       },
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // react-hooks v7's compiler-era rules (purity, set-state-in-effect, …)
+      // are intentionally not enabled yet: 17 pre-existing patterns would
+      // need app-code changes. Keep v4 parity (hooks + exhaustive-deps);
+      // adopt the new rules incrementally.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

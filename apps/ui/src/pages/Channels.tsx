@@ -80,7 +80,7 @@ export function ChannelsPage({ onPlay }: ChannelsPageProps) {
       const firstRect = cards[0].getBoundingClientRect();
       const cols = Math.max(1, Math.round(grid.clientWidth / firstRect.width));
 
-      let next = -1;
+      let next: number;
       switch (e.key) {
         case "ArrowRight":
           next = Math.min(idx + 1, cards.length - 1);

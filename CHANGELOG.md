@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **ESLint 10 toolchain** - `eslint` 8 to 10, TS-ESLint 7 to 8.57, react-hooks 4 to 7 with
+  the config already on the flat format; react-hooks v7 compiler rules stay opt-in (17
+  pre-existing patterns) and one dead assignment in Channels was removed. TypeScript stays
+  on 5.x because ts-eslint 8.57 peers `typescript <6.0`.
 - **Production audit back to green** - Fastify `5.10.0` to `5.12.5`, Nodemailer `9.0.3` to
   `10.0.13`, and `fast-uri` / `deepmerge-ts` workspace pins clear all high production
   advisories; the Nodemailer 10 namespace-type break in password-reset email is fixed without
