@@ -88,8 +88,8 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/cli": "^4.3.3",
-    "@typescript-eslint/eslint-plugin": "^8.57.2",
-    "@typescript-eslint/parser": "^8.57.2",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -97,6 +97,6 @@
     "prettier": "^3.2.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.4.0",
-    "typescript-eslint": "^8.57.2"
+    "typescript-eslint": "^8.71.0"
   }
 }

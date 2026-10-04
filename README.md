@@ -218,17 +218,17 @@ pnpm dev
 pnpm dev:ui
 ```
 
-| Script              | Description                                                |
-| ------------------- | ---------------------------------------------------------- |
-| `pnpm dev`          | Start Vite dev server + Electron                           |
-| `pnpm dev:ui`       | Start Vite dev server only (browser)                       |
-| `pnpm test`         | Run all workspaces (core 47 + ui 94 + desktop 8 + api 181) |
-| `pnpm typecheck`    | TypeScript strict check across all packages                |
-| `pnpm lint`         | ESLint across the monorepo                                 |
-| `pnpm lint:fix`     | ESLint with auto-fix                                       |
-| `pnpm format`       | Prettier format all files                                  |
-| `pnpm format:check` | Prettier check (CI-friendly)                               |
-| `pnpm clean`        | Remove all build artifacts                                 |
+| Script              | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `pnpm dev`          | Start Vite dev server + Electron                                  |
+| `pnpm dev:ui`       | Start Vite dev server only (browser)                              |
+| `pnpm test`         | Run all workspaces (core 58 + ui 104 + desktop 8 + api 192 = 362) |
+| `pnpm typecheck`    | TypeScript strict check across all packages                       |
+| `pnpm lint`         | ESLint across the monorepo                                        |
+| `pnpm lint:fix`     | ESLint with auto-fix                                              |
+| `pnpm format`       | Prettier format all files                                         |
+| `pnpm format:check` | Prettier check (CI-friendly)                                      |
+| `pnpm clean`        | Remove all build artifacts                                        |
 
 ## Production Build
 

@@ -27,10 +27,10 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
       '@typescript-eslint/eslint-plugin':
-        specifier: ^8.57.2
+        specifier: ^8.71.0
         version: 8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/parser':
-        specifier: ^8.57.2
+        specifier: ^8.71.0
         version: 8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
       eslint:
         specifier: ^10.0.2
@@ -54,7 +54,7 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
       typescript-eslint:
-        specifier: ^8.57.2
+        specifier: ^8.71.0
         version: 8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
 
   apps/api:
