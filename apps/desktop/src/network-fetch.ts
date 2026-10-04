@@ -1,10 +1,49 @@
-import { gunzip } from "node:zlib";
-import { promisify } from "node:util";
-
-const gunzipAsync = promisify(gunzip);
+import { createGunzip } from "node:zlib";
 
 export const DEFAULT_MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
 export const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
+
+/** Cap for decompressed gzip output: compressed input is already size-capped,
+ *  but highly compressible data (zip bomb) can expand ~1000x. */
+export const DEFAULT_MAX_DECOMPRESSED_BYTES = 100 * 1024 * 1024;
+
+/**
+ * Gunzip with a hard cap on decompressed output. Rejects instead of
+ * exhausting memory on malicious archives.
+ */
+export function gunzipCapped(
+  data: Buffer,
+  maxBytes: number = DEFAULT_MAX_DECOMPRESSED_BYTES,
+): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    let settled = false;
+    const fail = (err: Error): void => {
+      if (settled) return;
+      settled = true;
+      gunzipStream.destroy();
+      reject(err);
+    };
+    const gunzipStream = createGunzip();
+    const chunks: Buffer[] = [];
+    let total = 0;
+    gunzipStream.on("data", (chunk: Buffer) => {
+      if (settled) return;
+      total += chunk.length;
+      if (total > maxBytes) {
+        fail(new Error(`Decompressed output exceeded ${maxBytes} bytes - aborted`));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    gunzipStream.on("end", () => {
+      if (settled) return;
+      settled = true;
+      resolve(Buffer.concat(chunks, total));
+    });
+    gunzipStream.on("error", (err: Error) => fail(err));
+    gunzipStream.end(data);
+  });
+}
 
 export interface FetchRawOptions {
   timeoutMs?: number;
@@ -75,6 +114,6 @@ export async function fetchText(url: string | URL, options: FetchRawOptions = {}
   const pathname = new URL(String(url)).pathname.toLowerCase();
   const isGzip =
     pathname.endsWith(".gz") || (raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b);
-  const content = isGzip ? await gunzipAsync(raw) : raw;
+  const content = isGzip ? await gunzipCapped(raw) : raw;
   return new TextDecoder("utf-8").decode(content);
 }

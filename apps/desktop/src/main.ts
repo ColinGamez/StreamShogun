@@ -1,9 +1,10 @@
-import { app, BrowserWindow, session } from "electron";
+import { app, BrowserWindow, dialog, session } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { registerIpcHandlers } from "./ipc";
 import { initDatabase, closeDatabase } from "./db";
 import { stopScheduler } from "./scheduler";
+import { closePipWindow } from "./pip";
 import { disconnect as disconnectDiscord } from "./discord";
 
 // ── Determine environment ─────────────────────────────────────────────
@@ -38,7 +39,29 @@ function windowStatePath(): string {
 function loadWindowState(): WindowState {
   try {
     const raw = fs.readFileSync(windowStatePath(), "utf-8");
-    return JSON.parse(raw) as WindowState;
+    const parsed = JSON.parse(raw) as Partial<WindowState>;
+    // A corrupt/hand-edited file must not produce an off-screen or
+    // zero-size window: validate numbers and clamp to sane minimums.
+    const width =
+      typeof parsed.width === "number" && Number.isFinite(parsed.width)
+        ? Math.max(800, Math.min(7680, Math.floor(parsed.width)))
+        : 1200;
+    const height =
+      typeof parsed.height === "number" && Number.isFinite(parsed.height)
+        ? Math.max(600, Math.min(4320, Math.floor(parsed.height)))
+        : 800;
+    const state: WindowState = { width, height };
+    if (
+      typeof parsed.x === "number" &&
+      Number.isFinite(parsed.x) &&
+      typeof parsed.y === "number" &&
+      Number.isFinite(parsed.y)
+    ) {
+      state.x = Math.max(-8000, Math.min(8000, Math.floor(parsed.x)));
+      state.y = Math.max(-8000, Math.min(8000, Math.floor(parsed.y)));
+    }
+    if (parsed.maximized === true) state.maximized = true;
+    return state;
   } catch {
     return { width: 1200, height: 800 };
   }
@@ -86,7 +109,10 @@ function createMainWindow(): BrowserWindow {
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   const debouncedSave = () => {
     if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => saveWindowState(win, restoreBounds), 500);
+    saveTimer = setTimeout(() => {
+      // The timer can fire after the window was destroyed — guard it.
+      if (!win.isDestroyed()) saveWindowState(win, restoreBounds);
+    }, 500);
   };
 
   win.on("resize", () => {
@@ -98,12 +124,19 @@ function createMainWindow(): BrowserWindow {
     debouncedSave();
   });
   win.on("close", () => saveWindowState(win, restoreBounds));
+  win.on("closed", () => {
+    if (saveTimer) clearTimeout(saveTimer);
+  });
 
   if (isDev) {
-    win.loadURL(DEV_SERVER_URL);
+    win.loadURL(DEV_SERVER_URL).catch((err: unknown) => {
+      console.error("[main] dev server load failed", err);
+    });
     win.webContents.openDevTools({ mode: "bottom" });
   } else {
-    win.loadFile(getRendererPath());
+    win.loadFile(getRendererPath()).catch((err: unknown) => {
+      console.error("[main] renderer load failed", err);
+    });
   }
 
   return win;
@@ -164,10 +197,22 @@ process.on("unhandledRejection", (reason) => {
 
 // ── App lifecycle ─────────────────────────────────────────────────────
 app.whenReady().then(() => {
-  installCSP();
-  initDatabase();
-  registerIpcHandlers();
-  createMainWindow();
+  try {
+    installCSP();
+    initDatabase();
+    registerIpcHandlers();
+    createMainWindow();
+  } catch (err) {
+    // A corrupt/locked DB or window failure previously killed startup
+    // silently (only the process guards logged). Surface it loudly.
+    console.error("[main] startup failed", err);
+    dialog.showErrorBox(
+      "StreamShogun failed to start",
+      err instanceof Error ? err.message : String(err),
+    );
+    app.quit();
+    return;
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -178,6 +223,7 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
+    closePipWindow();
     stopScheduler();
     disconnectDiscord();
     closeDatabase();
@@ -187,6 +233,7 @@ app.on("window-all-closed", () => {
 
 // macOS: clean up DB when the user explicitly quits (Cmd+Q)
 app.on("before-quit", () => {
+  closePipWindow();
   stopScheduler();
   disconnectDiscord();
   closeDatabase();

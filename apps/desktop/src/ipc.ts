@@ -7,10 +7,6 @@
 import { ipcMain, app, shell, dialog } from "electron";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { gunzip } from "zlib";
-import { promisify } from "util";
-
-const gunzipAsync = promisify(gunzip);
 import { IpcChannels, parseM3U, parseXmltv, createEpgIndex } from "@stream-shogun/core";
 import type { Playlist, XmltvParseResult, EpgIndex, Channel, Programme } from "@stream-shogun/core";
 import type { MasterSourceDTO } from "@stream-shogun/shared";
@@ -59,7 +55,7 @@ import {
   apiBillingReconcile,
 } from "./api-client";
 import { loadTokens } from "./token-store";
-import { fetchRaw as fetchNetworkRaw } from "./network-fetch";
+import { fetchRaw as fetchNetworkRaw, gunzipCapped } from "./network-fetch";
 
 // ── Security constants ────────────────────────────────────────────────
 
@@ -91,6 +87,20 @@ function validateUrl(raw: unknown): URL {
     throw new Error(`Disallowed protocol "${parsed.protocol}" — only http/https are permitted`);
   }
 
+  // Block cloud instance-metadata endpoints by literal IP. (Private LAN
+  // ranges stay allowed — home IPTV servers commonly live on 192.168.x —
+  // and DNS is intentionally not resolved here to keep validation sync.)
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (
+    host === "169.254.169.254" ||
+    host === "169.254.169.253" ||
+    host === "100.100.100.200" ||
+    host === "fd00:ec2::254" ||
+    host === "[fd00:ec2::254]"
+  ) {
+    throw new Error("Disallowed host: cloud instance metadata is never a playlist source");
+  }
+
   return parsed;
 }
 
@@ -116,61 +126,6 @@ function validateFilePath(raw: unknown, allowedExtensions: Set<string>): string 
 
 async function secureFetchRaw(url: URL): Promise<Buffer> {
   return fetchNetworkRaw(url, { userAgent: `StreamShogun/${app.getVersion()}` });
-  /* Legacy implementation retained temporarily for source-map continuity.
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(url.href, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": `StreamShogun/${app.getVersion()}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} ${response.statusText}`);
-    }
-
-    // ── Check Content-Length if available ────────────────────────
-    const contentLength = response.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) > MAX_DOWNLOAD_BYTES) {
-      throw new Error(`Response too large: ${contentLength} bytes (max ${MAX_DOWNLOAD_BYTES})`);
-    }
-
-    // ── Stream-read with running byte count ─────────────────────
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("Response has no readable body");
-
-    const chunks: Uint8Array[] = [];
-    let totalBytes = 0;
-
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      totalBytes += value.byteLength;
-      if (totalBytes > MAX_DOWNLOAD_BYTES) {
-        reader.cancel();
-        throw new Error(`Download exceeded ${MAX_DOWNLOAD_BYTES} bytes — aborted`);
-      }
-
-      chunks.push(value);
-    }
-
-    // Concatenate into a Buffer
-    const merged = Buffer.alloc(totalBytes);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-
-    return merged;
-  } finally {
-    clearTimeout(timer);
-  }
-  */
 }
 
 /** Fetch a URL and decompress if gzip. */
@@ -179,7 +134,7 @@ async function secureFetchText(url: URL): Promise<string> {
   const isGzip =
     url.pathname.toLowerCase().endsWith(".gz") ||
     (raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b);
-  const content = isGzip ? await gunzipAsync(raw) : raw;
+  const content = isGzip ? await gunzipCapped(raw) : raw;
   return new TextDecoder("utf-8").decode(content);
 }
 
@@ -190,7 +145,12 @@ async function secureReadFile(filePath: string): Promise<string> {
   if (stat.size > MAX_FILE_BYTES) {
     throw new Error(`File too large: ${stat.size} bytes (max ${MAX_FILE_BYTES})`);
   }
-  return fs.readFile(filePath, "utf-8");
+  const text = await fs.readFile(filePath, "utf-8");
+  // Re-check after read: the file may have grown between stat and read.
+  if (Buffer.byteLength(text, "utf-8") > MAX_FILE_BYTES) {
+    throw new Error(`File grew past the ${MAX_FILE_BYTES} byte limit while reading`);
+  }
+  return text;
 }
 
 /** Read a local file and decompress if gzip. */
@@ -202,7 +162,7 @@ async function secureReadFileGz(filePath: string): Promise<string> {
   const raw = await fs.readFile(filePath);
   const isGz = filePath.endsWith(".gz") || (raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b);
   if (isGz) {
-    const decompressed = await gunzipAsync(raw);
+    const decompressed = await gunzipCapped(raw);
     return new TextDecoder("utf-8").decode(decompressed);
   }
   return new TextDecoder("utf-8").decode(raw);
@@ -238,6 +198,9 @@ function requireString(val: unknown, label: string): string {
   }
   return val;
 }
+
+/** Settings keys the renderer must never write directly (license integrity). */
+const PROTECTED_SETTING_KEYS = new Set(["isProEnabled", "licenseKey", "licenseValidationState"]);
 
 /** Validate that a value is a finite non-negative number. */
 function requireFiniteNumber(val: unknown, label: string): number {
@@ -491,6 +454,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IpcChannels.DB_SET_SETTING, (_event, args: { key: string; value: string }) => {
     try {
       requireString(args.key, "settings key");
+      if (PROTECTED_SETTING_KEYS.has(args.key)) {
+        throw new Error(`Setting "${args.key}" is managed internally and cannot be set directly`);
+      }
       if (typeof args.value !== "string") throw new Error("settings value must be a string");
       setSetting(args.key, args.value);
       // Side-effects for certain settings
@@ -576,7 +542,11 @@ export function registerIpcHandlers(): void {
     IpcChannels.REFRESH_SET_INTERVAL,
     (_event, args: { minutes: number; enabled: boolean }) => {
       try {
-        setRefreshInterval(args.minutes, args.enabled);
+        const minutes = requireFiniteNumber(args.minutes, "refresh interval");
+        if (minutes < 5 || minutes > 1440) {
+          throw new Error("refresh interval must be between 5 and 1440 minutes");
+        }
+        setRefreshInterval(minutes, args.enabled === true);
         return ok(null);
       } catch (err) {
         return fail(err);
@@ -840,14 +810,36 @@ export function registerIpcHandlers(): void {
   // ═══════════════════════════════════════════════════════════════
   //  Billing (opens Stripe in system browser)
   // ═══════════════════════════════════════════════════════════════
+  // Only Stripe-hosted https URLs are ever opened: the checkout/portal URL
+  // comes from our API, but a compromised response must not turn into an
+  // arbitrary openExternal (phishing, custom-protocol handlers).
+
+  /** Stripe hosts that may be opened in the system browser. */
+  function requireTrustedBillingUrl(raw: unknown): string {
+    if (typeof raw !== "string" || raw.trim() === "") {
+      throw new Error("Billing did not return a URL");
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      throw new Error("Billing returned an invalid URL");
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== "https:" || !(host === "stripe.com" || host.endsWith(".stripe.com"))) {
+      throw new Error("Refusing to open untrusted billing URL");
+    }
+    return parsed.href;
+  }
 
   ipcMain.handle(IpcChannels.BILLING_CHECKOUT, async (_event, args?: { interval?: string }) => {
     try {
       const interval = args?.interval === "yearly" ? "yearly" : "monthly";
       const result = await apiBillingCheckout(interval);
       if (!result.ok) return fail(new Error("Failed to create checkout session"));
-      await shell.openExternal(result.data.url);
-      return ok({ url: result.data.url });
+      const url = requireTrustedBillingUrl((result.data as { url?: unknown } | null)?.url);
+      await shell.openExternal(url);
+      return ok({ url });
     } catch (err) {
       return fail(err);
     }
@@ -857,8 +849,9 @@ export function registerIpcHandlers(): void {
     try {
       const result = await apiBillingPortal();
       if (!result.ok) return fail(new Error("Failed to create portal session"));
-      await shell.openExternal(result.data.url);
-      return ok({ url: result.data.url });
+      const url = requireTrustedBillingUrl((result.data as { url?: unknown } | null)?.url);
+      await shell.openExternal(url);
+      return ok({ url });
     } catch (err) {
       return fail(err);
     }

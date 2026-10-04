@@ -26,6 +26,8 @@ let intervalMin = 60;
 let enabled = false;
 let lastRefreshAt = 0;
 let refreshing = false;
+/** Set when the watchdog fires while a run is still in flight. */
+let timedOut = false;
 
 // ── Public API (called from ipc.ts) ──────────────────────────────────
 
@@ -51,6 +53,11 @@ export function initScheduler(): void {
 
 /** Set the refresh interval and persist it. */
 export function setRefreshInterval(minutes: number, enable: boolean): void {
+  // Defense in depth: the IPC handler validates first, but never let a NaN
+  // or out-of-range value drive setInterval (NaN fires immediately).
+  if (!Number.isFinite(minutes)) {
+    throw new Error("refresh interval must be a finite number");
+  }
   intervalMin = Math.max(5, Math.min(1440, minutes)); // clamp 5 min – 24 h
   enabled = enable;
 
@@ -115,12 +122,16 @@ const MAX_REFRESH_DURATION_MS = 60_000;
  */
 async function doRefresh(): Promise<void> {
   refreshing = true;
+  timedOut = false;
   notifyRenderer({ type: "start" });
 
   const timeout = setTimeout(() => {
     if (refreshing) {
+      // Flag the timeout but KEEP the guard set: the run is still in flight
+      // and must not be overlapped by a second cycle, nor may its late
+      // completion overwrite the timeout error already reported.
       console.warn("[scheduler] doRefresh timed out — forcing reset");
-      refreshing = false;
+      timedOut = true;
       notifyRenderer({ type: "error", error: "Refresh timed out" });
     }
   }, MAX_REFRESH_DURATION_MS);
@@ -164,18 +175,22 @@ async function doRefresh(): Promise<void> {
 
     lastRefreshAt = Date.now();
 
-    notifyRenderer({
-      type: "complete",
-      lastRefreshAt,
-      playlistIds: playlists.map((p) => p.id),
-      epgSourceIds: epgSources.map((e) => e.id),
-      stats: { playlistOk, playlistFail, epgOk, epgFail },
-    });
+    if (!timedOut) {
+      notifyRenderer({
+        type: "complete",
+        lastRefreshAt,
+        playlistIds: playlists.map((p) => p.id),
+        epgSourceIds: epgSources.map((e) => e.id),
+        stats: { playlistOk, playlistFail, epgOk, epgFail },
+      });
+    }
   } catch (err) {
-    notifyRenderer({
-      type: "error",
-      error: err instanceof Error ? err.message : String(err),
-    });
+    if (!timedOut) {
+      notifyRenderer({
+        type: "error",
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   } finally {
     clearTimeout(timeout);
     refreshing = false;
@@ -185,57 +200,6 @@ async function doRefresh(): Promise<void> {
 /** Fetch a URL with size + timeout enforcement, auto-decompress gzip. */
 async function fetchText(rawUrl: string): Promise<string> {
   return fetchNetworkText(rawUrl, { userAgent: `StreamShogun/${app.getVersion()}` });
-  /* Legacy implementation retained temporarily for source-map continuity.
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(rawUrl, {
-      signal: controller.signal,
-      headers: { "User-Agent": `StreamShogun/${app.getVersion()}` },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} ${response.statusText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("No readable body");
-
-    const chunks: Uint8Array[] = [];
-    let totalBytes = 0;
-
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      totalBytes += value.byteLength;
-      if (totalBytes > MAX_DOWNLOAD_BYTES) {
-        reader.cancel();
-        throw new Error(`Download exceeded ${MAX_DOWNLOAD_BYTES} bytes`);
-      }
-      chunks.push(value);
-    }
-
-    const merged = Buffer.alloc(totalBytes);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-
-    // Auto-decompress gzip
-    const isGz =
-      rawUrl.endsWith(".gz") || (merged.length >= 2 && merged[0] === 0x1f && merged[1] === 0x8b);
-    if (isGz) {
-      const decompressed = await gunzipAsync(merged);
-      return new TextDecoder("utf-8").decode(decompressed);
-    }
-
-    return new TextDecoder("utf-8").decode(merged);
-  } finally {
-    clearTimeout(timer);
-  }
-  */
 }
 
 /** Send a refresh event to all renderer windows. */

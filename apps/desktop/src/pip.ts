@@ -67,12 +67,18 @@ export function openPipWindow(channelUrl: string, channelName: string): void {
   const query = `?pip=true&url=${encodeURIComponent(channelUrl)}&name=${encodeURIComponent(channelName)}`;
 
   if (isDev) {
-    pipWindow.loadURL(`${DEV_SERVER_URL}${query}`);
+    pipWindow.loadURL(`${DEV_SERVER_URL}${query}`).catch((err: unknown) => {
+      console.error("[pip] dev server load failed", err);
+    });
   } else {
     const rendererPath = path.join(process.resourcesPath, "renderer", "index.html");
-    pipWindow.loadFile(rendererPath, {
-      search: query.slice(1), // remove leading '?'
-    });
+    pipWindow
+      .loadFile(rendererPath, {
+        search: query.slice(1), // remove leading '?'
+      })
+      .catch((err: unknown) => {
+        console.error("[pip] renderer load failed", err);
+      });
   }
 
   pipWindow.on("closed", () => {

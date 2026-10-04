@@ -44,14 +44,28 @@ async function apiFetch<T>(
     }
   }
 
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...init,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // SaaS calls previously had no deadline: a hung API hung the IPC handler
+  // (and its renderer) forever. 30s matches the playlist-fetch timeout.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      ...init,
+      signal: init.signal ?? controller.signal,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-  const data = (await response.json().catch(() => ({}))) as T;
-  return { ok: response.ok, status: response.status, data };
+    const data = (await response.json().catch(() => ({}))) as T;
+    return { ok: response.ok, status: response.status, data };
+  } catch (err) {
+    if ((err as Error)?.name === "AbortError") {
+      throw new Error("API request timed out", { cause: err });
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── Auto-refresh wrapper ──────────────────────────────────────────────
