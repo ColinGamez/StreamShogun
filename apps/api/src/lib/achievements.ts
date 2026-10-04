@@ -7,28 +7,96 @@
 import { prisma } from "./prisma.js";
 
 /**
+ * Snapshot of everything the checks need, loaded once per evaluation.
+ * Previously every check re-queried the database (~60 sequential round-trips
+ * per run); now the checks are pure functions over this snapshot.
+ */
+export interface AchievementContext {
+  /** Parsed cloud history entries (empty when missing/corrupt). */
+  history: { channelId?: string; name?: string; watchedAt?: number }[];
+  /** Parsed cloud settings blob (empty object when missing/corrupt). */
+  blob: Record<string, unknown>;
+  /** Parsed cloud favorites (empty when missing/corrupt). */
+  favorites: unknown[];
+  /** Whether any cloud row exists at all. */
+  hasCloud: boolean;
+  /** Account creation date, or null when the user row is missing. */
+  accountCreatedAt: Date | null;
+  username: string | null;
+  displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  website: string | null;
+  location: string | null;
+  subscriptionPlan: string | null;
+  subscriptionStatus: string | null;
+  /** Achievements already owned (grows as this run grants). */
+  ownedCount: number;
+  badgeCount: number;
+}
+
+function parseJsonArray(raw: unknown): unknown[] {
+  if (typeof raw !== "string") return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseJsonObject(raw: unknown): Record<string, unknown> {
+  if (typeof raw !== "string") return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function uniqueChannelCount(history: AchievementContext["history"]): number {
+  return new Set(history.map((h) => h.channelId ?? h.name).filter(Boolean)).size;
+}
+
+function playlistCount(blob: Record<string, unknown>): number {
+  const playlists = blob.playlists;
+  return Array.isArray(playlists) ? playlists.length : 0;
+}
+
+function watchHours(blob: Record<string, unknown>): number {
+  return typeof blob.totalWatchHours === "number" ? blob.totalWatchHours : 0;
+}
+
+function watchedHour(history: AchievementContext["history"], from: number, to: number): boolean {
+  return history.some((h) => {
+    if (!h.watchedAt) return false;
+    const hour = new Date(h.watchedAt).getUTCHours();
+    return hour >= from && hour < to;
+  });
+}
+
+function accountAgeDays(createdAt: Date | null): number {
+  if (!createdAt) return -1;
+  return (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+}
+
+/**
  * Achievement definitions keyed by their unique `key`.
- * The `check` function returns `true` if the user qualifies.
+ * The `check` function is pure over the snapshot context.
  */
 interface AchievementCheck {
   key: string;
-  check: (userId: string) => Promise<boolean>;
+  check: (ctx: AchievementContext) => boolean;
 }
 
 const CHECKS: AchievementCheck[] = [
   // ── Streaming ──
   {
     key: "first_stream",
-    check: async (userId) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const history = JSON.parse(cloud.historyJson) as unknown[];
-        return history.length > 0;
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx) => ctx.hasCloud && ctx.history.length > 0,
   },
   // Milestone: watched N unique channels
   ...[
@@ -41,32 +109,12 @@ const CHECKS: AchievementCheck[] = [
     { key: "stream_1000", n: 1000 },
   ].map(({ key, n }) => ({
     key,
-    check: async (userId: string) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const history = JSON.parse(cloud.historyJson) as { channelId?: string; name?: string }[];
-        const unique = new Set(history.map((h) => h.channelId ?? h.name).filter(Boolean));
-        return unique.size >= n;
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx: AchievementContext) => ctx.hasCloud && uniqueChannelCount(ctx.history) >= n,
   })),
   // ── Playlists ──
   {
     key: "first_playlist",
-    check: async (userId) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const blob = JSON.parse(cloud.blobJson) as Record<string, unknown>;
-        const playlists = blob.playlists;
-        return Array.isArray(playlists) && playlists.length >= 1;
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx) => ctx.hasCloud && playlistCount(ctx.blob) >= 1,
   },
   // Playlist milestones
   ...[
@@ -81,17 +129,7 @@ const CHECKS: AchievementCheck[] = [
     { key: "playlist_100", n: 100 },
   ].map(({ key, n }) => ({
     key,
-    check: async (userId: string) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const blob = JSON.parse(cloud.blobJson) as Record<string, unknown>;
-        const playlists = blob.playlists;
-        return Array.isArray(playlists) && playlists.length >= n;
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx: AchievementContext) => ctx.hasCloud && playlistCount(ctx.blob) >= n,
   })),
   // ── Watch time (from history) ──
   ...[
@@ -105,17 +143,7 @@ const CHECKS: AchievementCheck[] = [
     { key: "marathon_viewer", hrs: 100 },
   ].map(({ key, hrs }) => ({
     key,
-    check: async (userId: string) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const blob = JSON.parse(cloud.blobJson) as Record<string, unknown>;
-        const watchHours = typeof blob.totalWatchHours === "number" ? blob.totalWatchHours : 0;
-        return watchHours >= hrs;
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx: AchievementContext) => ctx.hasCloud && watchHours(ctx.blob) >= hrs,
   })),
   // ── Favorites ──
   ...[
@@ -129,31 +157,16 @@ const CHECKS: AchievementCheck[] = [
     { key: "favorite_500", n: 500 },
   ].map(({ key, n }) => ({
     key,
-    check: async (userId: string) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const favorites = JSON.parse(cloud.favoritesJson) as unknown[];
-        return Array.isArray(favorites) && favorites.length >= n;
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx: AchievementContext) => ctx.hasCloud && ctx.favorites.length >= n,
   })),
   // ── Account & subscription ──
   {
     key: "pro_member",
-    check: async (userId) => {
-      const sub = await prisma.subscription.findUnique({ where: { userId } });
-      return sub?.plan === "PRO" && sub.status === "ACTIVE";
-    },
+    check: (ctx) => ctx.subscriptionPlan === "PRO" && ctx.subscriptionStatus === "ACTIVE",
   },
   {
     key: "account_created",
-    check: async (userId) => {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      return !!user;
-    },
+    check: (ctx) => ctx.accountCreatedAt !== null,
   },
   // Account age milestones
   ...[
@@ -165,102 +178,46 @@ const CHECKS: AchievementCheck[] = [
     { key: "account_2_years", days: 730 },
   ].map(({ key, days }) => ({
     key,
-    check: async (userId: string) => {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) return false;
-      const age = (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-      return age >= days;
-    },
+    check: (ctx: AchievementContext) => accountAgeDays(ctx.accountCreatedAt) >= days,
   })),
   // ── Time-of-day ──
   {
     key: "night_owl",
-    check: async (userId) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const history = JSON.parse(cloud.historyJson) as { watchedAt?: number }[];
-        return history.some((h) => {
-          if (!h.watchedAt) return false;
-          const hour = new Date(h.watchedAt).getUTCHours();
-          return hour >= 0 && hour < 4;
-        });
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx) => ctx.hasCloud && watchedHour(ctx.history, 0, 4),
   },
   {
     key: "watch_morning",
-    check: async (userId) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      if (!cloud) return false;
-      try {
-        const history = JSON.parse(cloud.historyJson) as { watchedAt?: number }[];
-        return history.some((h) => {
-          if (!h.watchedAt) return false;
-          const hour = new Date(h.watchedAt).getUTCHours();
-          return hour >= 5 && hour < 8;
-        });
-      } catch {
-        return false;
-      }
-    },
+    check: (ctx) => ctx.hasCloud && watchedHour(ctx.history, 5, 8),
   },
   // ── Profile & Social ──
   {
     key: "profile_complete",
-    check: async (userId) => {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { profile: true },
-      });
-      if (!user?.profile) return false;
-      return !!(user.username && user.displayName && user.profile.bio && user.profile.avatarUrl);
-    },
+    check: (ctx) => !!(ctx.username && ctx.displayName && ctx.bio && ctx.avatarUrl),
   },
   {
     key: "social_butterfly",
-    check: async (userId) => {
-      const profile = await prisma.profile.findUnique({ where: { userId } });
-      return !!profile?.website;
-    },
+    check: (ctx) => !!ctx.website,
   },
   {
     key: "username_set",
-    check: async (userId) => {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      return !!user?.username;
-    },
+    check: (ctx) => !!ctx.username,
   },
   {
     key: "avatar_set",
-    check: async (userId) => {
-      const profile = await prisma.profile.findUnique({ where: { userId } });
-      return !!profile?.avatarUrl;
-    },
+    check: (ctx) => !!ctx.avatarUrl,
   },
   {
     key: "bio_set",
-    check: async (userId) => {
-      const profile = await prisma.profile.findUnique({ where: { userId } });
-      return !!profile?.bio;
-    },
+    check: (ctx) => !!ctx.bio,
   },
   {
     key: "location_set",
-    check: async (userId) => {
-      const profile = await prisma.profile.findUnique({ where: { userId } });
-      return !!profile?.location;
-    },
+    check: (ctx) => !!ctx.location,
   },
   // ── Cloud sync ──
   {
     key: "cloud_syncer",
-    check: async (userId) => {
-      const cloud = await prisma.appSettingsCloud.findUnique({ where: { userId } });
-      return !!cloud;
-    },
+    check: (ctx) => ctx.hasCloud,
   },
   // ── Achievement meta ──
   ...[
@@ -275,10 +232,9 @@ const CHECKS: AchievementCheck[] = [
     { key: "achievements_1000", n: 1000 },
   ].map(({ key, n }) => ({
     key,
-    check: async (userId: string) => {
-      const count = await prisma.userAchievement.count({ where: { userId } });
-      return count >= n;
-    },
+    // NOTE: evaluated against the running total (owned + granted earlier in
+    // this same run), mirroring the old live-count behaviour.
+    check: (ctx: AchievementContext) => ctx.ownedCount >= n,
   })),
   // ── Grandmaster ranks ──
   ...[
@@ -289,10 +245,7 @@ const CHECKS: AchievementCheck[] = [
     { key: "gm_shogun", n: 800 },
   ].map(({ key, n }) => ({
     key,
-    check: async (userId: string) => {
-      const count = await prisma.userAchievement.count({ where: { userId } });
-      return count >= n;
-    },
+    check: (ctx: AchievementContext) => ctx.ownedCount >= n,
   })),
   // ── Badge meta ──
   ...[
@@ -301,46 +254,96 @@ const CHECKS: AchievementCheck[] = [
     { key: "badges_5", n: 5 },
   ].map(({ key, n }) => ({
     key,
-    check: async (userId: string) => {
-      const count = await prisma.userBadge.count({ where: { userId } });
-      return count >= n;
-    },
+    check: (ctx: AchievementContext) => ctx.badgeCount >= n,
   })),
 ];
+
+/**
+ * Load everything the checks need in a handful of parallel queries.
+ */
+async function loadAchievementContext(userId: string): Promise<{
+  ctx: AchievementContext;
+  owned: Set<string>;
+}> {
+  const [user, cloud, subscription, ownedRows, badgeCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        createdAt: true,
+        username: true,
+        displayName: true,
+        profile: {
+          select: { bio: true, avatarUrl: true, website: true, location: true },
+        },
+      },
+    }),
+    prisma.appSettingsCloud.findUnique({ where: { userId } }),
+    prisma.subscription.findUnique({ where: { userId } }),
+    prisma.userAchievement.findMany({
+      where: { userId },
+      select: { achievement: { select: { key: true } } },
+    }),
+    prisma.userBadge.count({ where: { userId } }),
+  ]);
+
+  const owned = new Set(ownedRows.map((ua) => ua.achievement.key));
+  const ctx: AchievementContext = {
+    history: cloud ? (parseJsonArray(cloud.historyJson) as AchievementContext["history"]) : [],
+    blob: cloud ? parseJsonObject(cloud.blobJson) : {},
+    favorites: cloud ? parseJsonArray(cloud.favoritesJson) : [],
+    hasCloud: !!cloud,
+    accountCreatedAt: user?.createdAt ?? null,
+    username: user?.username ?? null,
+    displayName: user?.displayName ?? null,
+    bio: user?.profile?.bio ?? null,
+    avatarUrl: user?.profile?.avatarUrl ?? null,
+    website: user?.profile?.website ?? null,
+    location: user?.profile?.location ?? null,
+    subscriptionPlan: subscription?.plan ?? null,
+    subscriptionStatus: subscription?.status ?? null,
+    ownedCount: owned.size,
+    badgeCount,
+  };
+  return { ctx, owned };
+}
 
 /**
  * Evaluate all achievement checks for a user and grant any newly qualified ones.
  * Returns the keys of any achievements granted in this run.
  */
 export async function evaluateAchievements(userId: string): Promise<string[]> {
-  // Fetch all achievements the user already has
-  const existing = await prisma.userAchievement.findMany({
-    where: { userId },
-    select: { achievement: { select: { key: true } } },
-  });
-  const owned = new Set(existing.map((ua) => ua.achievement.key));
+  const { ctx, owned } = await loadAchievementContext(userId);
 
   const granted: string[] = [];
 
   for (const { key, check } of CHECKS) {
     if (owned.has(key)) continue; // already unlocked
 
+    let qualifies: boolean;
     try {
-      const qualifies = await check(userId);
-      if (!qualifies) continue;
+      qualifies = check(ctx);
+    } catch {
+      // Individual check failures shouldn't block other checks
+      continue;
+    }
+    if (!qualifies) continue;
 
-      // Look up the achievement definition
-      const achievement = await prisma.achievement.findUnique({ where: { key } });
-      if (!achievement) continue;
+    // Look up the achievement definition
+    const achievement = await prisma.achievement.findUnique({ where: { key } });
+    if (!achievement) continue;
 
-      // Grant it
+    // Grant it (a parallel run racing us hits the unique constraint and
+    // is skipped via the catch below)
+    try {
       await prisma.userAchievement.create({
         data: { userId, achievementId: achievement.id },
       });
-      granted.push(key);
     } catch {
-      // Individual check failures shouldn't block other checks
+      continue;
     }
+    owned.add(key);
+    ctx.ownedCount += 1;
+    granted.push(key);
   }
 
   return granted;

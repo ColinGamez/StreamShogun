@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Batched achievement evaluation** - checks run over one snapshot (~7 queries
+  instead of ~60 sequential round-trips) with identical grant semantics (4 new tests).
 - **API entitlement hardening** - Roku pay-push mutations require live Roku transaction
   validation; Stripe checkout derives plan from verified status; invoice.paid restores
   PRO with the invoice period; multi-cookie auth fixed (only the last cookie survived);
