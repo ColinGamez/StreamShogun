@@ -21,7 +21,7 @@ importers:
   .:
     devDependencies:
       '@eslint/js':
-        specifier: 8.57.1
+        specifier: ^8.57.1
         version: 8.57.1
       '@tailwindcss/cli':
         specifier: ^4.3.3
