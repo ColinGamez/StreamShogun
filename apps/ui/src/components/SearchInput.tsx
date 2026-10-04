@@ -17,7 +17,7 @@ export function SearchInput({
   debounce = 200,
 }: SearchInputProps) {
   const ref = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [local, setLocal] = useState(value);
 
   // Sync external value changes (e.g. "Clear filters" resets search)

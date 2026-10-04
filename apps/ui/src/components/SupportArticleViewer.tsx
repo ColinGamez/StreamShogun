@@ -1,6 +1,7 @@
 // ── Support Article Viewer ────────────────────────────────────────────
 
 import type { SupportArticle } from "@stream-shogun/core";
+import type { JSX } from "react";
 
 interface SupportArticleViewerProps {
   article: SupportArticle;

@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **React 19** - `react`/`react-dom` 18.3 to 19.2 with matching types; three v19 type
+  fallouts fixed (timer ref initial value, `JSX` namespace import, nullable video ref
+  prop). No legacy patterns remained (`createRoot`, no `forwardRef`/string refs).
 - **ESLint 10 toolchain** - `eslint` 8 to 10, TS-ESLint 7 to 8.57, react-hooks 4 to 7 with
   the config already on the flat format; react-hooks v7 compiler rules stay opt-in (17
   pre-existing patterns) and one dead assignment in Channels was removed. TypeScript stays

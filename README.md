@@ -18,7 +18,7 @@
   </a>
   <img src="https://img.shields.io/badge/TypeScript-5.4+-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Electron-31-47848f?logo=electron&logoColor=white" alt="Electron" />
-  <img src="https://img.shields.io/badge/React-18.3-61dafb?logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/version-0.1.0-orange" alt="Version" />
 </p>
 

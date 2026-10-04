@@ -30,7 +30,7 @@ export interface HlsPlayerProps {
   /** Fired when the player encounters a fatal error it can't recover from. */
   onFatalError?: (message: string) => void;
   /** Externally supplied ref so parent can access the <video> element. */
-  videoRef?: RefObject<HTMLVideoElement>;
+  videoRef?: RefObject<HTMLVideoElement | null>;
   /** Auto-play when source changes. @default true */
   autoPlay?: boolean;
 }
