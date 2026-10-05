@@ -485,9 +485,14 @@ export function saveWatchSession(
 
 /** List recent watch sessions. */
 export function listWatchHistory(limit = 50): WatchHistoryRow[] {
+  // Central clamp: LIMIT reaches SQL raw, so never trust the caller.
+  const safeLimit =
+    typeof limit === "number" && Number.isFinite(limit)
+      ? Math.min(500, Math.max(1, Math.floor(limit)))
+      : 50;
   return getDb()
     .prepare("SELECT * FROM watch_history ORDER BY startedAt DESC LIMIT ?")
-    .all(limit) as WatchHistoryRow[];
+    .all(safeLimit) as WatchHistoryRow[];
 }
 
 /** Get the most recently watched channel. */

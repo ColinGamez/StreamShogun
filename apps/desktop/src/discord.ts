@@ -151,8 +151,17 @@ function trySocketIndex(index: number): Promise<boolean> {
         // Send handshake
         sendPacket(OpCode.HANDSHAKE, { v: 1, client_id: CLIENT_ID });
 
+        // The connect timer is cleared — arm a second one for the READY
+        // wait, otherwise a silent peer hangs setActivity IPC forever.
+        const readyTimeout = setTimeout(() => {
+          sock.destroy();
+          socket = null;
+          resolve(false);
+        }, 3000);
+
         // Wait for DISPATCH READY
         sock.once("data", (data) => {
+          clearTimeout(readyTimeout);
           try {
             // Read op code from header (first 4 bytes LE)
             const buf = Buffer.isBuffer(data) ? data : Buffer.from(data as string);
@@ -173,11 +182,13 @@ function trySocketIndex(index: number): Promise<boolean> {
         });
 
         sock.on("close", () => {
+          clearTimeout(readyTimeout);
           connected = false;
           socket = null;
         });
 
         sock.on("error", () => {
+          clearTimeout(readyTimeout);
           connected = false;
           socket = null;
         });

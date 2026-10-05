@@ -7,6 +7,7 @@
  */
 
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -49,6 +50,15 @@ function withExecutablePnpm(env) {
 
 const builderCli = require.resolve("electron-builder/out/cli/cli.js");
 const electronVersion = electronPackage.version;
+
+// Fail fast when the bundles or renderer are missing: electron-builder
+// would otherwise ship an installer that opens a blank window.
+for (const required of ["dist/main.mjs", "dist/preload.js", "../ui/dist/index.html"]) {
+  if (!existsSync(resolve(root, required))) {
+    console.error(`[package] missing required build output: ${required} — run pnpm build first`);
+    process.exit(1);
+  }
+}
 
 const result = spawnSync(
   process.execPath,

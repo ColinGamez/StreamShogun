@@ -54,35 +54,40 @@ const __filename = __fup(import.meta.url);
 const __dirname = __dn(__filename);
 `.trim();
 
-await Promise.all([
-  // ── Main process (ESM) ────────────────────────────────────────────
-  build({
-    bundle: true,
-    platform: "node",
-    format: "esm",
-    target: "node20",
-    sourcemap: true,
-    external,
-    logLevel: "info",
-    banner: { js: esmDirnameBanner },
-    entryPoints: [resolve(root, "src/main.ts")],
-    outfile: resolve(root, "dist/main.mjs"),
-    tsconfig: resolve(root, "tsconfig.json"),
-  }),
+try {
+  await Promise.all([
+    // ── Main process (ESM) ────────────────────────────────────────────
+      build({
+      bundle: true,
+      platform: "node",
+      format: "esm",
+      target: "node20",
+      sourcemap: true,
+      external,
+      logLevel: "info",
+      banner: { js: esmDirnameBanner },
+      entryPoints: [resolve(root, "src/main.ts")],
+      outfile: resolve(root, "dist/main.mjs"),
+      tsconfig: resolve(root, "tsconfig.json"),
+    }),
 
-  // ── Preload (sandboxed, must be CJS) ─────────────────────────────
-  build({
-    bundle: true,
-    platform: "node",
-    format: "cjs",
-    target: "node20",
-    sourcemap: true,
-    external,
-    logLevel: "info",
-    entryPoints: [resolve(root, "src/preload.ts")],
-    outfile: resolve(root, "dist/preload.js"),
-    tsconfig: resolve(root, "tsconfig.json"),
-  }),
-]);
+    // ── Preload (sandboxed, must be CJS) ─────────────────────────────
+    build({
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      target: "node20",
+      sourcemap: true,
+      external,
+      logLevel: "info",
+      entryPoints: [resolve(root, "src/preload.ts")],
+      outfile: resolve(root, "dist/preload.js"),
+      tsconfig: resolve(root, "tsconfig.json"),
+    }),
+  ]);
+} catch (err) {
+  console.error("[desktop] Build failed:", err instanceof Error ? err.message : err);
+  process.exit(1);
+}
 
 console.log("[desktop] Build complete.");

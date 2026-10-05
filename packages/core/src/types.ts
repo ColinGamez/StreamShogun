@@ -3,9 +3,8 @@
 /** IPC channel names shared between main & renderer. */
 export const IpcChannels = {
   GET_APP_INFO: "app:get-info",
-  GET_CONFIG: "config:get",
-  SET_CONFIG: "config:set",
-  STREAM_EVENT: "stream:event",
+  // NOTE: GET_CONFIG/SET_CONFIG/STREAM_EVENT were removed — they never had
+  // a main-process handler or preload exposure, only enum entries.
   PING: "app:ping",
   PLAYLIST_LOAD_FILE: "playlist:load-file",
   PLAYLIST_LOAD_URL: "playlist:load-url",

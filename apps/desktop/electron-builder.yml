@@ -12,8 +12,16 @@ icon: build/icon-1024.png
 
 files:
   - dist/**/*
-  - node_modules/better-sqlite3/**/*
+  - package.json
+  # NOTE: better-sqlite3 lives in the workspace ROOT node_modules (pnpm
+  # hoisting), so the bare `node_modules/better-sqlite3` glob matched nothing
+  # and shipped installers without any SQLite binding. Map it explicitly per
+  # platform (only the matching prebuilds, to keep installers small).
   - "!node_modules/**/*"
+
+# Native bindings cannot load from inside app.asar — unpack them.
+asarUnpack:
+  - "**/*.node"
 
 extraResources:
   - from: ../ui/dist
@@ -25,18 +33,40 @@ mac:
   target:
     - dmg
     - zip
+  files:
+    - from: ../../node_modules/better-sqlite3
+      to: node_modules/better-sqlite3
+      filter:
+        - package.json
+        - lib/**/*
+        - prebuilds/darwin-x64.node
+        - prebuilds/darwin-arm64.node
 
 win:
   icon: build/icon-1024.png
   target:
     - nsis
     - portable
+  files:
+    - from: ../../node_modules/better-sqlite3
+      to: node_modules/better-sqlite3
+      filter:
+        - package.json
+        - lib/**/*
+        - prebuilds/win32-x64.node
+        - prebuilds/win32-arm64.node
 
 nsis:
   oneClick: true
   perMachine: false
   allowToChangeInstallationDirectory: false
   deleteAppDataOnUninstall: false
+  # NOTE: must differ from `portable` — both targets emit `.exe` and the
+  # shared base artifactName let one overwrite the other.
+  artifactName: StreamShogun-${version}-${os}-${arch}-setup.${ext}
+
+portable:
+  artifactName: StreamShogun-${version}-${os}-${arch}-portable.${ext}
 
 linux:
   icon: build/icon-1024.png
@@ -46,3 +76,13 @@ linux:
   category: Utility
   syncDesktopName: true
   maintainer: StreamShōgun Contributors <support@streamshogun.com>
+  files:
+    - from: ../../node_modules/better-sqlite3
+      to: node_modules/better-sqlite3
+      filter:
+        - package.json
+        - lib/**/*
+        - prebuilds/linux-x64.node
+        - prebuilds/linux-arm64.node
+        - prebuilds/linuxmusl-x64.node
+        - prebuilds/linuxmusl-arm64.node

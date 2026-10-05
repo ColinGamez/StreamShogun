@@ -56,6 +56,13 @@ export function runMigrations(database: Database.Database, availableMigrations =
 
   const currentVersion = row.v;
 
+  const maxKnown = Math.max(0, ...availableMigrations.map((m) => m.version));
+  if (currentVersion > maxKnown) {
+    throw new Error(
+      `Database schema v${currentVersion} is newer than this app supports (v${maxKnown}) — update StreamShogun or reset the database`,
+    );
+  }
+
   for (const migration of availableMigrations) {
     if (migration.version > currentVersion) {
       database.transaction(() => {

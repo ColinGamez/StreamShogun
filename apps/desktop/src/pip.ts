@@ -17,6 +17,28 @@ const DEV_SERVER_URL = "http://localhost:5173";
 
 // ── Public API ────────────────────────────────────────────────────────
 
+function buildPipQuery(channelUrl: string, channelName: string): string {
+  return `?pip=true&url=${encodeURIComponent(channelUrl)}&name=${encodeURIComponent(channelName)}`;
+}
+
+function loadPipChannel(win: BrowserWindow, channelUrl: string, channelName: string): void {
+  // The PIP page reads its channel from the query string at load, so both
+  // initial open and later zaps go through (re)load. (A previous
+  // `pip:channel-update` event had no renderer listener, so zapping
+  // silently did nothing.)
+  const query = buildPipQuery(channelUrl, channelName);
+  if (isDev) {
+    void win.loadURL(`${DEV_SERVER_URL}${query}`).catch((err: unknown) => {
+      console.error("[pip] channel load failed", err);
+    });
+  } else {
+    const rendererPath = path.join(process.resourcesPath, "renderer", "index.html");
+    void win.loadFile(rendererPath, { search: query.slice(1) }).catch((err: unknown) => {
+      console.error("[pip] channel load failed", err);
+    });
+  }
+}
+
 /** Open the PIP window for a given channel URL. */
 export function openPipWindow(channelUrl: string, channelName: string): void {
   if (!channelUrl || typeof channelUrl !== "string") {
@@ -24,8 +46,7 @@ export function openPipWindow(channelUrl: string, channelName: string): void {
   }
 
   if (pipWindow && !pipWindow.isDestroyed()) {
-    // Already open — just update the channel
-    pipWindow.webContents.send("pip:channel-update", { channelUrl, channelName });
+    loadPipChannel(pipWindow, channelUrl, channelName);
     pipWindow.focus();
     return;
   }
@@ -64,22 +85,7 @@ export function openPipWindow(channelUrl: string, channelName: string): void {
   });
 
   // Load the same UI with PIP query params
-  const query = `?pip=true&url=${encodeURIComponent(channelUrl)}&name=${encodeURIComponent(channelName)}`;
-
-  if (isDev) {
-    pipWindow.loadURL(`${DEV_SERVER_URL}${query}`).catch((err: unknown) => {
-      console.error("[pip] dev server load failed", err);
-    });
-  } else {
-    const rendererPath = path.join(process.resourcesPath, "renderer", "index.html");
-    pipWindow
-      .loadFile(rendererPath, {
-        search: query.slice(1), // remove leading '?'
-      })
-      .catch((err: unknown) => {
-        console.error("[pip] renderer load failed", err);
-      });
-  }
+  loadPipChannel(pipWindow, channelUrl, channelName);
 
   pipWindow.on("closed", () => {
     pipWindow = null;

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, session } from "electron";
+import { app, BrowserWindow, dialog, session, shell } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { registerIpcHandlers } from "./ipc";
@@ -103,6 +103,22 @@ function createMainWindow(): BrowserWindow {
   });
 
   if (saved.maximized) win.maximize();
+
+  // Never navigate inside the app or open in-app windows: external links go
+  // through the system browser (billing already uses shell.openExternal).
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("https:") || url.startsWith("http:")) void shell.openExternal(url);
+    return { action: "deny" };
+  });
+  win.webContents.on("will-navigate", (event, url) => {
+    const allowed =
+      url.startsWith("file:") ||
+      (isDev && (url === DEV_SERVER_URL || url.startsWith(`${DEV_SERVER_URL}/`)));
+    if (!allowed) {
+      event.preventDefault();
+      if (url.startsWith("https:") || url.startsWith("http:")) void shell.openExternal(url);
+    }
+  });
 
   // Track restore bounds for save when maximized
   let restoreBounds: Electron.Rectangle | null = null;

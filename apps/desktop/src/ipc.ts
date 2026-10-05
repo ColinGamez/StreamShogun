@@ -202,6 +202,14 @@ function requireString(val: unknown, label: string): string {
 /** Settings keys the renderer must never write directly (license integrity). */
 const PROTECTED_SETTING_KEYS = new Set(["isProEnabled", "licenseKey", "licenseValidationState"]);
 
+/** Ensure IPC args arrived as an object (invoke() with no payload sends undefined). */
+function requireArgsObject(val: unknown, label: string): Record<string, unknown> {
+  if (!val || typeof val !== "object") {
+    throw new Error(`${label} must be provided`);
+  }
+  return val as Record<string, unknown>;
+}
+
 /** Validate that a value is a finite non-negative number. */
 function requireFiniteNumber(val: unknown, label: string): number {
   if (typeof val !== "number" || !Number.isFinite(val) || val < 0) {
@@ -299,8 +307,9 @@ export function registerIpcHandlers(): void {
       args: { name: string; sourceType: "url" | "file"; sourceValue: string; channels: unknown[] },
     ) => {
       try {
+        requireArgsObject(args, "playlist");
         const row = savePlaylist(
-          args.name,
+          requireString(args.name, "playlist name"),
           args.sourceType,
           args.sourceValue,
           args.channels as Channel[],
@@ -345,7 +354,8 @@ export function registerIpcHandlers(): void {
     IpcChannels.DB_SET_FAVORITE,
     (_event, args: { channelId: string; isFavorite: boolean }) => {
       try {
-        setFavorite(args.channelId, args.isFavorite);
+        requireArgsObject(args, "favorite");
+        setFavorite(requireString(args.channelId, "channel ID"), args.isFavorite === true);
         return ok(null);
       } catch (err) {
         return fail(err);
@@ -375,8 +385,9 @@ export function registerIpcHandlers(): void {
       },
     ) => {
       try {
+        requireArgsObject(args, "EPG source");
         const row = saveEpgSource(
-          args.name,
+          requireString(args.name, "EPG source name"),
           args.sourceType,
           args.sourceValue,
           args.programmes as Programme[],
@@ -420,7 +431,8 @@ export function registerIpcHandlers(): void {
     IpcChannels.DB_GET_NOW_NEXT,
     (_event, args: { channelId: string; now?: number }) => {
       try {
-        return ok(getNowNext(args.channelId, args.now));
+        requireArgsObject(args, "now/next query");
+        return ok(getNowNext(requireString(args.channelId, "channel ID"), args.now));
       } catch (err) {
         return fail(err);
       }
@@ -432,7 +444,14 @@ export function registerIpcHandlers(): void {
     IpcChannels.DB_GET_EPG_RANGE,
     (_event, args: { channelId: string; start: number; stop: number }) => {
       try {
-        return ok(getEpgRange(args.channelId, args.start, args.stop));
+        requireArgsObject(args, "EPG range query");
+        return ok(
+          getEpgRange(
+            requireString(args.channelId, "channel ID"),
+            requireFiniteNumber(args.start, "range start"),
+            requireFiniteNumber(args.stop, "range stop"),
+          ),
+        );
       } catch (err) {
         return fail(err);
       }
@@ -453,6 +472,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IpcChannels.DB_SET_SETTING, (_event, args: { key: string; value: string }) => {
     try {
+      requireArgsObject(args, "setting");
       requireString(args.key, "settings key");
       if (PROTECTED_SETTING_KEYS.has(args.key)) {
         throw new Error(`Setting "${args.key}" is managed internally and cannot be set directly`);
@@ -511,7 +531,12 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IpcChannels.DB_LIST_WATCH_HISTORY, (_event, limit?: number) => {
     try {
-      return ok(listWatchHistory(limit));
+      // Clamp: a non-numeric/huge limit must not reach SQL unchecked.
+      const safeLimit =
+        typeof limit === "number" && Number.isFinite(limit)
+          ? Math.min(500, Math.max(1, Math.floor(limit)))
+          : 50;
+      return ok(listWatchHistory(safeLimit));
     } catch (err) {
       return fail(err);
     }
@@ -579,7 +604,8 @@ export function registerIpcHandlers(): void {
     IpcChannels.PIP_OPEN,
     (_event, args: { channelUrl: string; channelName: string }) => {
       try {
-        openPipWindow(args.channelUrl, args.channelName);
+        requireArgsObject(args, "PIP args");
+        openPipWindow(requireString(args.channelUrl, "channel URL"), args.channelName ?? "");
         return ok(null);
       } catch (err) {
         return fail(err);
