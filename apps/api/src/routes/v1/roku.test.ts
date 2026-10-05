@@ -2,6 +2,7 @@
 // Covers: URL validation, SSRF blocking, gzip detection/decompression,
 // XMLTV validation, caching, ETag behaviour.
 
+import { performance } from "node:perf_hooks";
 import { describe, it, expect, beforeEach, afterEach, beforeAll, vi } from "vitest";
 import { gzipSync } from "node:zlib";
 import { validateEpgUrl, isPrivateIP, redactUrl } from "../../lib/epg-url-validator.js";

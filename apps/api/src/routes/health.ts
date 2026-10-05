@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { HealthResponse } from "@stream-shogun/shared";
 import { prisma } from "../lib/prisma.js";

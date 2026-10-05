@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TypeScript 6.0** - all six workspaces on TS 6.0.3 (unblocked by ts-eslint 8.71's
+  widened `<6.1` peer). Three migration fallouts fixed: explicit `node:perf_hooks`
+  imports for perf-budget timers, `types: ["node"]` for core, and a documented
+  `ignoreDeprecations` hold on desktop's node10 resolution (tsc is check-only;
+  esbuild owns module semantics).
 - **Batched achievement evaluation** - checks run over one snapshot (~7 queries
   instead of ~60 sequential round-trips) with identical grant semantics (4 new tests).
 - **API entitlement hardening** - Roku pay-push mutations require live Roku transaction

@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // Explicit like apps/api: TS 6 no longer picks up @types/node here
+    // automatically, and the perf-budget tests import node:perf_hooks.
+    "types": ["node"]
   },
   "include": ["src"],
   "exclude": ["src/__demo__"]

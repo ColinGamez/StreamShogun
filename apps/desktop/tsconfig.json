@@ -3,6 +3,11 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "node",
+    // TS 6 deprecates node10 resolution (errors in TS 7). Kept deliberately:
+    // tsc here is check-only and esbuild owns real module semantics, while
+    // Node16 resolution would falsely flag the CJS->ESM workspace imports
+    // that esbuild bundles without issue.
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": false,
