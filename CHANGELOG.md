@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Windows installer actually works** - installers shipped with no SQLite binding
+  (pnpm hoisting defeated the packaging glob) and NSIS/portable overwrote one
+  filename; bindings now map from the workspace root per platform with asar
+  unpacking, and each target gets its own artifact name.
+- **Roku guide + scene fixes** - startup no longer wipes user EPG config; fetch
+  timestamp only on parse success; working pause/resume; registry loaders
+  type-guarded; task observers released; manifest-based API default.
 - **TypeScript 6.0** - all six workspaces on TS 6.0.3 (unblocked by ts-eslint 8.71's
   widened `<6.1` peer). Three migration fallouts fixed: explicit `node:perf_hooks`
   imports for perf-budget timers, `types: ["node"]` for core, and a documented
