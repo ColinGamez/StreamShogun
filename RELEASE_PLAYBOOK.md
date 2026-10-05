@@ -369,7 +369,7 @@ MAJOR.MINOR.PATCH
 
 | File / Config                           | Purpose                                                    |
 | --------------------------------------- | ---------------------------------------------------------- |
-| Root `package.json` → `version`         | Monorepo source of truth (currently `0.1.0`)               |
+| Root `package.json` → `version`         | Monorepo source of truth (currently `0.2.1`)               |
 | `apps/desktop/package.json` → `version` | Electron builder reads this for installer version          |
 | Git tags (`v0.1.0`)                     | Immutable release markers; CI triggers publish on tag push |
 | GitHub Releases                         | Changelog + downloadable desktop installers                |
@@ -405,4 +405,4 @@ v1.2.0           → general availability
 
 ---
 
-_Last updated: 2026-03-02 · StreamShōgun v0.1.0_
+_Last updated: 2026-10-06 · StreamShōgun v0.2.1_

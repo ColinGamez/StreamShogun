@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-06
+
 ### Added
 
 - **Personal Roku Japan + Korea guide** - Master-account users can connect the protected combined
@@ -311,6 +313,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Core shared library with TypeScript types
 - Development tooling (ESLint, Prettier, TypeScript strict mode)
 
-[Unreleased]: https://github.com/stream-shogun/stream-shogun/compare/v0.2.1...HEAD
-[0.2.1]: https://github.com/stream-shogun/stream-shogun/compare/v0.1.0...v0.2.1
-[0.1.0]: https://github.com/stream-shogun/stream-shogun/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ColinGamez/StreamShogun/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/ColinGamez/StreamShogun/compare/v0.1.0...v0.2.1
+[0.1.0]: https://github.com/ColinGamez/StreamShogun/releases/tag/v0.1.0
