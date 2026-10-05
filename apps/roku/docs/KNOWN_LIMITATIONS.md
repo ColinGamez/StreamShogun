@@ -171,4 +171,4 @@ If you encounter a bug:
 3. Open the debug console: `telnet <ROKU_IP> 8085`
 4. Reproduce the issue
 5. Copy the log output (URLs are automatically redacted)
-6. Report at: support@streamshogun.com
+6. Report at: ColinKenny@programmer.net

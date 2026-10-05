@@ -70,4 +70,4 @@ To create an account:
 
 If the app crashes on start-up repeatedly, or if the installer fails, please contact support with your OS version and the error message.
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

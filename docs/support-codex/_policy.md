@@ -110,7 +110,7 @@ When the assistant cannot resolve an issue:
 1. Suggest the most relevant Support Codex article(s).
 2. Offer the user the **"Contact Support"** option.
 3. Suggest copying a **support bundle** (with redacted diagnostics).
-4. Provide the support email: **support@streamshogun.com**
+4. Provide the support email: **ColinKenny@programmer.net**
 
 ## Feedback Handling
 

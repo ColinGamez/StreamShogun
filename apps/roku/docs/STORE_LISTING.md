@@ -133,13 +133,13 @@ CHILDREN'S PRIVACY
 The App does not knowingly collect information from children under 13.
 
 CONTACT
-For questions about this privacy policy: support@streamshogun.com
+For questions about this privacy policy: ColinKenny@programmer.net
 ```
 
 ## Support Email
 
 ```
-support@streamshogun.com
+ColinKenny@programmer.net
 ```
 
 ## Support URL

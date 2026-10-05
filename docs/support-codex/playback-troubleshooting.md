@@ -80,4 +80,4 @@ If multiple channels fail to play and other apps can stream video fine:
 - Include your OS and app version
 - Do NOT include stream URLs
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

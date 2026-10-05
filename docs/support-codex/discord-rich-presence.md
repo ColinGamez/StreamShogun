@@ -57,4 +57,4 @@ If Discord integration consistently fails to connect and your Discord desktop ap
 - Note your OS and Discord install type (standard, Flatpak, Snap, etc.)
 - Include any error messages from the app
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

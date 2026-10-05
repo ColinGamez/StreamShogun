@@ -115,4 +115,4 @@ Then restart the app.
 
 For anything not covered here:
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

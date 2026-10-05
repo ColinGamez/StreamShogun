@@ -18,7 +18,7 @@ describe("password-reset transport config", () => {
         RESEND_API_KEY: resendTestKey,
         APP_PUBLIC_URL: "https://streamshogun.com",
         CORS_ORIGIN: "https://streamshogun.com",
-        SUPPORT_EMAIL: "support@streamshogun.com",
+        SUPPORT_EMAIL: "ColinKenny@programmer.net",
         EMAIL_FROM: undefined,
         NODE_ENV: "development",
       },
@@ -36,7 +36,7 @@ describe("password-reset transport config", () => {
         RESEND_API_KEY: resendTestKey,
         APP_PUBLIC_URL: "https://streamshogun.com",
         CORS_ORIGIN: "https://streamshogun.com",
-        SUPPORT_EMAIL: "support@streamshogun.com",
+        SUPPORT_EMAIL: "ColinKenny@programmer.net",
         EMAIL_FROM: undefined,
         NODE_ENV: "development",
       },
@@ -54,7 +54,7 @@ describe("password-reset transport config", () => {
         RESEND_API_KEY: undefined,
         APP_PUBLIC_URL: "https://streamshogun.com",
         CORS_ORIGIN: "https://streamshogun.com",
-        SUPPORT_EMAIL: "support@streamshogun.com",
+        SUPPORT_EMAIL: "ColinKenny@programmer.net",
         EMAIL_FROM: undefined,
         NODE_ENV: "development",
       },
@@ -79,7 +79,7 @@ describe("password-reset transport config", () => {
         RESEND_API_KEY: resendTestKey,
         APP_PUBLIC_URL: "https://streamshogun.com",
         CORS_ORIGIN: "https://streamshogun.com",
-        SUPPORT_EMAIL: "support@streamshogun.com",
+        SUPPORT_EMAIL: "ColinKenny@programmer.net",
         EMAIL_FROM: "StreamShogun <no-reply@streamshogun.com>",
         NODE_ENV: "production",
       },
@@ -111,6 +111,6 @@ describe("password-reset transport config", () => {
         }),
       }),
     );
-    expect(fetchMock.mock.calls[0]?.[1]?.body).toContain('"reply_to":"support@streamshogun.com"');
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toContain('"reply_to":"ColinKenny@programmer.net"');
   });
 });

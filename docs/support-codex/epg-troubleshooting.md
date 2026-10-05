@@ -81,4 +81,4 @@ If you've followed all steps above and EPG still doesn't work:
 - Note how many channels you have loaded
 - Include your OS and app version
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

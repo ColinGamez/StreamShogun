@@ -60,7 +60,7 @@ Check that your system volume is not muted.
 
 ## When to Contact Support
 
-If none of the above steps help, contact support@streamshogun.com.
+If none of the above steps help, contact ColinKenny@programmer.net.
 `,
   headings: [
     { level: 1, text: "Playback Troubleshooting", offset: 0 },
@@ -148,7 +148,7 @@ describe("extractSection", () => {
 
   it("extracts the last section correctly", () => {
     const section = extractSection(ARTICLE_PLAYBACK.body, "When to Contact Support");
-    expect(section).toContain("contact support@streamshogun.com");
+    expect(section).toContain("contact ColinKenny@programmer.net");
   });
 });
 

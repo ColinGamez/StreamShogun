@@ -75,7 +75,7 @@ linux:
     - deb
   category: Utility
   syncDesktopName: true
-  maintainer: StreamShōgun Contributors <support@streamshogun.com>
+  maintainer: StreamShōgun Contributors <ColinKenny@programmer.net>
   files:
     - from: ../../node_modules/better-sqlite3
       to: node_modules/better-sqlite3

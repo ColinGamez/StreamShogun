@@ -71,4 +71,4 @@ If you believe you have a valid M3U file that StreamShōgun refuses to parse, pl
 - The error message shown in the app
 - The first 5 lines of the M3U file (redact any private URLs or tokens)
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

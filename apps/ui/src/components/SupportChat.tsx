@@ -371,7 +371,7 @@ export function SupportChat({ onOpenArticle, sourceContext }: SupportChatProps) 
         >
           💾 Export bundle
         </button>
-        <a href="mailto:support@streamshogun.com" className="support-contact-link">
+        <a href="mailto:ColinKenny@programmer.net" className="support-contact-link">
           📧 Contact Support
         </a>
       </div>

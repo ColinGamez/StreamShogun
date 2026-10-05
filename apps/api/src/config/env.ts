@@ -35,7 +35,7 @@ const envSchema = z
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
 
     // Transactional email
-    SUPPORT_EMAIL: z.string().email().default("support@streamshogun.com"),
+    SUPPORT_EMAIL: z.string().email().default("ColinKenny@programmer.net"),
     SMTP_URL: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().startsWith("re_").optional(),
     EMAIL_FROM: z.string().min(1).optional(),

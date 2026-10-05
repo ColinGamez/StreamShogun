@@ -81,4 +81,4 @@ Please contact support for refund requests within 14 days of purchase.
 
 For billing issues that can't be resolved through the Stripe portal:
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

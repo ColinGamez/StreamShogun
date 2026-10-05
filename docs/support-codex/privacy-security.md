@@ -69,4 +69,4 @@ When using the **"Copy Support Bundle"** feature:
 
 For data deletion requests or privacy questions:
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

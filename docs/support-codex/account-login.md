@@ -61,4 +61,4 @@ Password reset is handled via the web portal:
 
 If you're locked out of your account and password reset doesn't work:
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

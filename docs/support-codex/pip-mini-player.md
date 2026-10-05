@@ -50,4 +50,4 @@ If PIP fails to launch despite having a Pro subscription, please include:
 - Your OS and version
 - Whether any error message appears
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

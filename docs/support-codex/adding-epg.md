@@ -55,4 +55,4 @@ EPG data is refreshed automatically based on your settings. To manually refresh:
 
 If EPG data never appears after adding a valid XMLTV source and your channels have correct `tvg-id` values, contact support.
 
-📧 **support@streamshogun.com**
+📧 **ColinKenny@programmer.net**

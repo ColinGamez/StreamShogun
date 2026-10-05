@@ -65,7 +65,7 @@ vi.mock("../../config/env.js", () => ({
     CORS_ORIGIN: "https://streamshogun.com",
     APP_PUBLIC_URL: "https://streamshogun.com",
     GOOGLE_CLIENT_ID: "google-client-id.apps.googleusercontent.com",
-    SUPPORT_EMAIL: "support@streamshogun.com",
+    SUPPORT_EMAIL: "ColinKenny@programmer.net",
     SMTP_URL: undefined,
     EMAIL_FROM: undefined,
   },
