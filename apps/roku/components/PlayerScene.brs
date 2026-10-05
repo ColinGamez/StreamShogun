@@ -295,8 +295,15 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
         return true
     end if
 
-    if key = "pause" or key = "play"
-        ' For live streams, pause isn't useful — show overlay instead
+    if key = "pause"
+        ' Actually pause/resume the stream (previously this only flashed the
+        ' overlay, and the `play` half of the branch was unreachable dead code
+        ' since the OK/play branch above returns first).
+        if m.isPlaying
+            m.videoPlayer.control = "pause"
+        else
+            m.videoPlayer.control = "resume"
+        end if
         showOverlay()
         return true
     end if

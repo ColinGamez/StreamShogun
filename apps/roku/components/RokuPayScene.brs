@@ -305,11 +305,15 @@ sub onValidationComplete()
     state = m.validationTask.state
     if state = "loading" then return
 
+    task = m.validationTask
+    task.UnobserveField("state")
+    m.validationTask = invalid
+
     finishBusy()
     renderSummary()
 
     if state = "error"
-        showError(m.validationTask.error)
+        showError(task.error)
         return
     end if
 

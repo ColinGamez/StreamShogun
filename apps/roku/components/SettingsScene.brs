@@ -338,6 +338,7 @@ function getDiagnosticsInfo() as String
     rokuPay = LoadRokuPayState()
     fs = CreateObject("roFileSystem")
     cacheFiles = fs.GetDirectoryListing("tmp:/")
+    if cacheFiles = invalid then cacheFiles = []
 
     text = "APP" + chr(10)
     text = text + "Version: 1.0.19" + chr(10)

@@ -396,6 +396,12 @@ sub onSearchDialogButton()
     else
         m.searchQuery = ""
     end if
+    ' Release the observer and return focus: the discarded dialog node kept
+    ' its callback alive and left focus nowhere.
+    dialog.UnobserveField("buttonSelected")
     m.top.GetScene().dialog = invalid
     applyFilters()
+    if m.channelGrid <> invalid and m.channelGrid.visible
+        m.channelGrid.SetFocus(true)
+    end if
 end sub

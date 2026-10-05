@@ -252,9 +252,15 @@ sub onDeepLinkResolved()
     state = m.deepLinkTask.state
     if state = "loading" then return
 
-    if state = "done" and m.deepLinkTask.channel <> invalid
+    ' Release the observer: relaunching only stops the old node leaves a
+    ' stale callback that can fire into a torn-down scene.
+    task = m.deepLinkTask
+    task.UnobserveField("state")
+    m.deepLinkTask = invalid
+
+    if state = "done" and task.channel <> invalid
         hideStatus()
-        playChannel(m.deepLinkTask.channel)
+        playChannel(task.channel)
     else
         showTab(0)
         showStatus("Linked channel was not found in your saved playlists.")

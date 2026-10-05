@@ -23,7 +23,7 @@ function LoadPlaylists() as Object
         return []
     end if
     parsed = ParseJSON(raw)
-    if parsed = invalid then return []
+    if parsed = invalid or Type(parsed) <> "roArray" then return []
     return parsed
 end function
 
@@ -95,7 +95,7 @@ function LoadFavoriteChannels() as Object
     raw = sec.Read("favorites")
     if raw = invalid or raw = "" then return []
     parsed = ParseJSON(raw)
-    if parsed = invalid then return []
+    if parsed = invalid or Type(parsed) <> "roArray" then return []
     return parsed
 end function
 
@@ -110,7 +110,7 @@ function LoadRecentChannels() as Object
     raw = sec.Read("recent")
     if raw = invalid or raw = "" then return []
     parsed = ParseJSON(raw)
-    if parsed = invalid then return []
+    if parsed = invalid or Type(parsed) <> "roArray" then return []
     return parsed
 end function
 
@@ -271,6 +271,15 @@ sub ClearEpgSettings()
 end sub
 
 ' ── StreamShōgun Account / Pro Entitlements ─────────────────────────
+' Manifest default, kept local: registry_store.brs is imported by scenes
+' that do NOT import streamshogun_api.brs, so it must not call across.
+function GetRegistryApiBaseDefault() as String
+    info = CreateObject("roAppInfo")
+    apiBase = info.GetValue("api_base_url")
+    if apiBase = invalid or apiBase = "" then apiBase = "https://api.streamshogun.com"
+    return apiBase
+end function
+
 function LoadAccountSession() as Object
     sec = GetRegistrySection("account")
     flagsRaw = sec.Read("flags")
@@ -281,7 +290,7 @@ function LoadAccountSession() as Object
     end if
 
     apiBase = sec.Read("apiBaseUrl")
-    if apiBase = invalid or apiBase = "" then apiBase = "https://api.streamshogun.com"
+    if apiBase = invalid or apiBase = "" then apiBase = GetRegistryApiBaseDefault()
 
     email = sec.Read("email")
     accessToken = sec.Read("accessToken")
@@ -323,8 +332,11 @@ sub ImportPrivateBootstrapSession()
         AddPlaylist("Japan + Korea Channels", "streamshogun:master-playlist")
     end if
 
+    ' Only provision the bundled guide when the user has NO EPG configured.
+    ' (Previously any non-master URL was overwritten here on every launch,
+    ' wiping a user-added EPG source.)
     epg = LoadEpgSettings()
-    if epg.url <> "streamshogun:master-japan-korea"
+    if epg.url = invalid or epg.url = ""
         SaveEpgSettings({
             url: "streamshogun:master-japan-korea",
             ttlHours: 6,
@@ -335,7 +347,7 @@ end sub
 
 sub SaveAccountSession(session as Object)
     sec = GetRegistrySection("account")
-    sec.Write("apiBaseUrl", IIF(session.apiBaseUrl <> invalid, session.apiBaseUrl, "https://api.streamshogun.com"))
+    sec.Write("apiBaseUrl", IIF(session.apiBaseUrl <> invalid, session.apiBaseUrl, GetRegistryApiBaseDefault()))
     sec.Write("email", IIF(session.email <> invalid, session.email, ""))
     sec.Write("accessToken", IIF(session.accessToken <> invalid, session.accessToken, ""))
     sec.Write("refreshToken", IIF(session.refreshToken <> invalid, session.refreshToken, ""))

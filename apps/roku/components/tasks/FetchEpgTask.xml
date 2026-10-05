@@ -40,11 +40,12 @@
       ttl = settings.ttlHours * 3600
 
       ' ── Proxy mode: route through StreamShōgun API for .gz support ──
+      ' Single cache key covering both paths: separate keys served stale
+      ' alternate-path bodies for a full TTL after toggling the proxy.
       fetchUrl = url
       cacheKey = "epg_data"
       if m.top.useProxy and m.top.proxyBaseUrl <> "" and m.top.proxyToken <> ""
         fetchUrl = BuildEpgProxyUrl(m.top.proxyBaseUrl, m.top.url)
-        cacheKey = "epg_proxy"
         SafeLog("EPG", "Using proxy endpoint for EPG fetch")
       end if
 
@@ -61,10 +62,6 @@
         return
       end if
 
-      ' Update last fetch time
-      settings.lastFetch = CreateObject("roDateTime").AsSeconds()
-      SaveEpgSettings(settings)
-
       epgData = ParseXMLTV(result.body)
       if epgData.channels.Count() = 0
         errorMsg = "No EPG data found. Check that the URL points to valid XMLTV data."
@@ -75,6 +72,11 @@
         m.top.state = "error"
         return
       end if
+
+      ' Stamp lastFetch only on real success: stamping before the parse
+      ' hid failures behind a fresh timestamp with empty guide data.
+      settings.lastFetch = CreateObject("roDateTime").AsSeconds()
+      SaveEpgSettings(settings)
 
       m.top.epgData = epgData
       m.top.state = "done"

@@ -46,7 +46,9 @@ sub populate()
     if session.email <> invalid and session.email <> ""
         m.emailInput.text = session.email
     else
-        m.emailInput.text = "colin.kenny777@gmail.com"
+        ' No baked-in default: a personal address here shipped PII in a
+        ' tracked file and masked the empty-state focus path.
+        m.emailInput.text = ""
     end if
     updateSummary(session)
 end sub
