@@ -1,6 +1,9 @@
 param(
   [string]$OutputDir = "$PSScriptRoot\..\dist",
-  [switch]$SkipAssetGeneration
+  [switch]$SkipAssetGeneration,
+  # Store submissions must not contain personal bootstrap material.
+  # Personal sideloads keep the default (include when present).
+  [switch]$ExcludePrivate
 )
 
 $ErrorActionPreference = "Stop"
@@ -61,12 +64,12 @@ try {
   Copy-Item -LiteralPath (Join-Path $appRoot "components") -Destination $tempRoot -Recurse
   Copy-Item -LiteralPath (Join-Path $appRoot "images") -Destination $tempRoot -Recurse
   $privateSession = Join-Path $appRoot "private\session.json"
-  if (Test-Path -LiteralPath $privateSession) {
+  if (-not $ExcludePrivate -and (Test-Path -LiteralPath $privateSession)) {
     [System.IO.Directory]::CreateDirectory((Join-Path $tempRoot "private")) | Out-Null
     Copy-Item -LiteralPath $privateSession -Destination (Join-Path $tempRoot "private\session.json")
   }
   $privatePlaylist = Join-Path $appRoot "private\master-playlist.m3u"
-  if (Test-Path -LiteralPath $privatePlaylist) {
+  if (-not $ExcludePrivate -and (Test-Path -LiteralPath $privatePlaylist)) {
     [System.IO.Directory]::CreateDirectory((Join-Path $tempRoot "private")) | Out-Null
     Copy-Item -LiteralPath $privatePlaylist -Destination (Join-Path $tempRoot "private\master-playlist.m3u")
   }

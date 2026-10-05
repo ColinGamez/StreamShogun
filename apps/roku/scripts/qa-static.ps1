@@ -2,7 +2,8 @@ param(
   [switch]$KeepCompilerPackage,
   # CI (Linux) runners cannot run the System.Drawing asset generator —
   # images/ is committed, so packaging can skip regeneration there.
-  [switch]$SkipAssetGeneration
+  [switch]$SkipAssetGeneration,
+  [switch]$ExcludePrivate
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,11 +19,10 @@ if ((Test-Path -LiteralPath $bscPackage) -and -not $KeepCompilerPackage) {
 }
 
 Write-Host "Building sideload package..."
-if ($SkipAssetGeneration) {
-  & (Join-Path $PSScriptRoot "package.ps1") -SkipAssetGeneration
-} else {
-  & (Join-Path $PSScriptRoot "package.ps1")
-}
+$packageArgs = @{}
+if ($SkipAssetGeneration) { $packageArgs["SkipAssetGeneration"] = $true }
+if ($ExcludePrivate) { $packageArgs["ExcludePrivate"] = $true }
+& (Join-Path $PSScriptRoot "package.ps1") @packageArgs
 
 $package = Join-Path $appRoot "dist\StreamShogun-roku.zip"
 Add-Type -AssemblyName System.IO.Compression.FileSystem

@@ -318,7 +318,12 @@ end function
 sub ImportPrivateBootstrapSession()
     path = "pkg:/private/session.json"
     fs = CreateObject("roFileSystem")
-    if not HasAccountSession() and fs.Exists(path)
+    ' Store builds ship no private/ directory: without the personal
+    ' bootstrap there is nothing to provision, and public users must get
+    ' a clean first-run (no master sources) instead of Colin's defaults.
+    if not fs.Exists(path) then return
+
+    if not HasAccountSession()
         raw = ReadAsciiFile(path)
         session = ParseJSON(raw)
         if session <> invalid and session.accessToken <> invalid and session.refreshToken <> invalid
