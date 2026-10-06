@@ -1995,6 +1995,35 @@ button:disabled {
   justify-content: flex-start;
 }
 
+/* ── Accepted payment-method badges (billing) ────────────────────── */
+.pay-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pay-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.22rem 0.42rem;
+  line-height: 0;
+}
+
+.pay-badge svg {
+  height: 1.05rem;
+  width: auto;
+  display: block;
+}
+
+.pay-badges-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
 .toggle-btn {
   padding: 0.3rem 0.9rem;
   border-radius: var(--radius-sm);

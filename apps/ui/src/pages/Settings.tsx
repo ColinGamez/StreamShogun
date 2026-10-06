@@ -3,6 +3,7 @@ import { useAppStore } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import * as bridge from "../lib/bridge";
 import { showToast } from "../components/Toast";
+import { PaymentBadges } from "../components/PaymentBadges";
 import { logCheckoutStarted } from "../lib/analytics";
 import {
   MONTHLY_LABEL,
@@ -259,6 +260,14 @@ export function SettingsPage() {
                   ? t("settings.opening", locale)
                   : t("settings.refreshStatus", locale)}
               </button>
+            </div>
+
+            {/* ── Accepted payment methods ─────────────────── */}
+            <div className="settings-row">
+              <div>
+                <div className="pay-badges-label">{t("settings.acceptedMethods", locale)}</div>
+                <PaymentBadges label={t("settings.acceptedMethods", locale)} />
+              </div>
             </div>
           </>
         ) : (

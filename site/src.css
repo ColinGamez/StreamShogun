@@ -58,6 +58,20 @@
   .surface {
     @apply border border-white/10 bg-slate-900/55 shadow-[0_30px_100px_rgba(0,0,0,.35)];
   }
+  /* Payment-method badges: white pills keep brand marks legible on dark. */
+  .pay-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px 8px;
+    line-height: 0;
+  }
+  .pay-badge img {
+    height: 18px;
+    width: auto;
+    display: block;
+  }
   .reveal {
     opacity: 1;
     transform: none;
