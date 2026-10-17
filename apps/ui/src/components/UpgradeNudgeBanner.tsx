@@ -39,8 +39,10 @@ export function UpgradeNudgeBanner() {
   const appOpenCount = useAppStore((s) => s.appOpenCount);
   const license = useAppStore((s) => s.license);
 
-  // Only show for logged-in FREE users who have opened the app > 5 times
-  const isPro = authPlan === "PRO" || license.isProEnabled;
+  // Only show for logged-in FREE users who have opened the app > 5 times.
+  // Local license state only counts in dev builds — it is a format-only
+  // offline check that production builds must not treat as entitlement.
+  const isPro = authPlan === "PRO" || (import.meta.env.DEV && license.isProEnabled);
   const shouldShow = !isPro && !dismissed && !!authUser && appOpenCount > 5;
 
   // Fire analytics once when banner becomes visible (in useEffect, not render)

@@ -46,7 +46,7 @@ export function PaywallModal() {
   const fetchServerFeatures = useAppStore((s) => s.fetchServerFeatures);
   const license = useAppStore((s) => s.license);
   const activateLicenseKey = useAppStore((s) => s.activateLicenseKey);
-  const isPro = authPlan === "PRO" || license.isProEnabled;
+  const isPro = authPlan === "PRO" || (import.meta.env.DEV && license.isProEnabled);
 
   // ── Listen for both paywall and legacy upgrade events ───────────────
   useEffect(() => {
@@ -62,7 +62,7 @@ export function PaywallModal() {
       const detail = (e as CustomEvent<{ feature?: Feature }>).detail;
       setHighlightFeature(detail?.feature ?? null);
       setKeyError("");
-      setTab(authUser ? "saas" : "license");
+      setTab(authUser || !import.meta.env.DEV ? "saas" : "license");
       setOpen(true);
       logPaywallViewed(detail?.feature ?? null);
     };
@@ -193,7 +193,9 @@ export function PaywallModal() {
               })}
             </div>
 
-            {/* Tab switcher */}
+            {/* Tab switcher — the license-key tab is dev-only: local key
+                validation is offline/format-based and disabled in packaged
+                builds, where Pro comes from the server entitlement. */}
             <div className="paywall-tabs" role="tablist">
               <button
                 role="tab"
@@ -203,14 +205,16 @@ export function PaywallModal() {
               >
                 {t("paywall.subscribe", locale)}
               </button>
-              <button
-                role="tab"
-                aria-selected={tab === "license"}
-                className={`paywall-tab${tab === "license" ? " active" : ""}`}
-                onClick={() => setTab("license")}
-              >
-                {t("paywall.licenseKey", locale)}
-              </button>
+              {import.meta.env.DEV && (
+                <button
+                  role="tab"
+                  aria-selected={tab === "license"}
+                  className={`paywall-tab${tab === "license" ? " active" : ""}`}
+                  onClick={() => setTab("license")}
+                >
+                  {t("paywall.licenseKey", locale)}
+                </button>
+              )}
             </div>
 
             {/* SaaS checkout */}
@@ -276,8 +280,8 @@ export function PaywallModal() {
               </div>
             )}
 
-            {/* License key activation */}
-            {tab === "license" && (
+            {/* License key activation (dev builds only) */}
+            {tab === "license" && import.meta.env.DEV && (
               <div className="paywall-license">
                 <form className="paywall-license-form" onSubmit={handleActivateKey}>
                   <label htmlFor="paywall-key-input">{t("paywall.licenseKey", locale)}</label>

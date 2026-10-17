@@ -60,6 +60,11 @@ const envSchema = z
 
     // Roku Pay (optional — enables Roku purchase validation)
     ROKU_PAY_API_KEY: z.string().min(1).optional(),
+    // Shared secret embedded in the pay-push listener URL
+    // (POST /v1/roku/pay-push/<secret>). Required in production: without it
+    // the listener cannot verify that a push really comes from Roku, so the
+    // ApiKey echo is withheld unless the transaction is confirmed with Roku.
+    ROKU_PAY_PUSH_SECRET: z.string().min(16).optional(),
     ROKU_PRODUCT_ID_PRO_MONTHLY: z.string().min(1).optional(),
     ROKU_PRODUCT_ID_PRO_YEARLY: z.string().min(1).optional(),
 

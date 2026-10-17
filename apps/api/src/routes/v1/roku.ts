@@ -5,6 +5,7 @@
 // and returns plain UTF-8 XML. PRO-gated with SSRF protections.
 
 import type { FastifyInstance, FastifyRequest, FastifyReply, FastifyBaseLogger } from "fastify";
+import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 import type { Prisma } from "../../../generated/prisma/index.js";
 import { authenticate } from "../../middleware/authenticate.js";
@@ -47,54 +48,29 @@ type RokuPayPushAction =
   | "metadata_only";
 
 export async function rokuRoutes(app: FastifyInstance): Promise<void> {
-  // ── POST /v1/roku/pay-push ──────────────────────────────────
+  // ── POST /v1/roku/pay-push[/<secret>] ───────────────────────
   // Roku Pay notifications are unauthenticated by design. Roku requires
-  // the publisher listener to echo the responseKey and ApiKey header.
-  app.post(
-    "/pay-push",
-    {
-      config: {
-        rateLimit: {
-          max: 300,
-          timeWindow: "1 minute",
-        },
+  // the publisher listener to echo the responseKey and ApiKey header —
+  // but the ApiKey is the publisher secret, so it must only be echoed to
+  // callers we have verified:
+  //  - Production path: ROKU_PAY_PUSH_SECRET is set and the listener URL
+  //    configured in the Roku dashboard embeds it as a path segment
+  //    (/v1/roku/pay-push/<secret>). A matching secret proves the caller
+  //    knows the unguessable URL, so the ApiKey is always echoed.
+  //  - Legacy path (no secret configured): the ApiKey is only echoed when
+  //    this push's transaction was confirmed with Roku's validator during
+  //    processing. Garbage pushes still get a 200 (so retries stop) but
+  //    never see the key.
+  const payPushConfig = {
+    config: {
+      rateLimit: {
+        max: 300,
+        timeWindow: "1 minute",
       },
     },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const parsed = rokuPayNotificationBody.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.code(400).send({
-          error: "BadRequest",
-          message: "Body must include a Roku Pay responseKey.",
-          details: parsed.error.flatten().fieldErrors,
-        });
-      }
-
-      if (!env.ROKU_PAY_API_KEY) {
-        return reply.code(501).send({
-          error: "NotImplemented",
-          message: "Roku Pay push notifications are not configured.",
-        });
-      }
-
-      try {
-        await handleRokuPayNotification(parsed.data, request.log);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Roku Pay push processing failed.";
-        request.log.error({ err: message }, "roku.pay_push.failed");
-        return reply.code(500).send({
-          error: "InternalServerError",
-          message: "Roku Pay push processing failed.",
-        });
-      }
-
-      return reply
-        .code(200)
-        .header("ApiKey", env.ROKU_PAY_API_KEY)
-        .type("text/plain")
-        .send(parsed.data.responseKey);
-    },
-  );
+  };
+  app.post("/pay-push", payPushConfig, handlePayPushRequest);
+  app.post("/pay-push/:secret", payPushConfig, handlePayPushRequest);
 
   // ── POST /v1/roku/validate-purchase ─────────────────────────
   app.post(
@@ -317,10 +293,88 @@ export async function rokuRoutes(app: FastifyInstance): Promise<void> {
 
 // ── Roku Pay push notification handling ───────────────────────────
 
+async function handlePayPushRequest(request: FastifyRequest, reply: FastifyReply) {
+  const parsed = rokuPayNotificationBody.safeParse(request.body);
+  if (!parsed.success) {
+    return reply.code(400).send({
+      error: "BadRequest",
+      message: "Body must include a Roku Pay responseKey.",
+      details: parsed.error.flatten().fieldErrors,
+    });
+  }
+
+  if (!env.ROKU_PAY_API_KEY) {
+    return reply.code(501).send({
+      error: "NotImplemented",
+      message: "Roku Pay push notifications are not configured.",
+    });
+  }
+
+  // Verify the caller before deciding whether the ApiKey may be echoed.
+  const configuredSecret = env.ROKU_PAY_PUSH_SECRET;
+  let echoApiKey = false;
+  if (configuredSecret) {
+    const { secret } = request.params as { secret?: string };
+    if (!secret || !safeEqual(secret, configuredSecret)) {
+      request.log.warn({ reqId: request.id }, "roku.pay_push.secret_rejected");
+      return reply.code(401).send({
+        error: "Unauthorized",
+        message: "Invalid or missing Roku Pay push secret.",
+      });
+    }
+    echoApiKey = true;
+  }
+
+  let verifiedWithRoku = false;
+  try {
+    verifiedWithRoku = await handleRokuPayNotification(parsed.data, request.log);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Roku Pay push processing failed.";
+    request.log.error({ err: message }, "roku.pay_push.failed");
+    return reply.code(500).send({
+      error: "InternalServerError",
+      message: "Roku Pay push processing failed.",
+    });
+  }
+
+  if (!configuredSecret) {
+    echoApiKey = verifiedWithRoku;
+    if (!verifiedWithRoku) {
+      request.log.warn(
+        { reqId: request.id },
+        "roku.pay_push.api_key_echo_withheld — set ROKU_PAY_PUSH_SECRET and use the /v1/roku/pay-push/<secret> listener URL",
+      );
+    }
+  }
+
+  const response = reply.code(200).type("text/plain");
+  if (echoApiKey) {
+    response.header("ApiKey", env.ROKU_PAY_API_KEY);
+  }
+  return response.send(parsed.data.responseKey);
+}
+
+/** Constant-time string comparison to prevent timing attacks. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) {
+    // Compare against self to keep constant time, then return false
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Process one Roku Pay push notification.
+ * Returns true when the transaction was confirmed with Roku's validator
+ * during processing (used to decide whether the ApiKey echo is safe).
+ */
 async function handleRokuPayNotification(
   notification: RokuPayNotification,
   log: FastifyBaseLogger,
-): Promise<void> {
+): Promise<boolean> {
   const transactionId = notification.transactionId ?? notification.responseKey;
   const transactionType = notification.transactionType ?? "Unknown";
 
@@ -334,7 +388,7 @@ async function handleRokuPayNotification(
       { transactionId, transactionType, outcome: "duplicate_skipped", priorStatus: prior.status },
       "roku.pay_push.duplicate",
     );
-    return;
+    return false;
   }
 
   if (prior) {
@@ -364,13 +418,13 @@ async function handleRokuPayNotification(
         { transactionId, transactionType, outcome: "duplicate_race" },
         "roku.pay_push.duplicate",
       );
-      return;
+      return false;
     }
     throw err;
   }
 
   try {
-    await processRokuPayEvent(eventId, notification, log);
+    return await processRokuPayEvent(eventId, notification, log);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await prisma.rokuPayEvent
@@ -393,7 +447,7 @@ async function processRokuPayEvent(
   eventId: string,
   notification: RokuPayNotification,
   log: FastifyBaseLogger,
-): Promise<void> {
+): Promise<boolean> {
   const productCode = notification.productCode ?? "";
   const billingInterval = billingIntervalForRokuProduct(productCode);
 
@@ -403,7 +457,7 @@ async function processRokuPayEvent(
       { transactionId: notification.transactionId, productCode },
       "roku.pay_push.unknown_product",
     );
-    return;
+    return false;
   }
 
   const subscription = await findSubscriptionForRokuPayNotification(notification);
@@ -417,7 +471,7 @@ async function processRokuPayEvent(
       },
       "roku.pay_push.no_matching_subscription",
     );
-    return;
+    return false;
   }
 
   const expiresAt = parseRokuDate(notification.expirationDate);
@@ -430,6 +484,7 @@ async function processRokuPayEvent(
   // validator outage throws so the event is marked failed and Roku retries
   // the push. Metadata-only events keep the legacy path (no grant change).
   const mutatesEntitlement = action !== "metadata_only";
+  let verifiedWithRoku = false;
   if (mutatesEntitlement && notification.transactionId) {
     let entitled: boolean;
     try {
@@ -442,8 +497,9 @@ async function processRokuPayEvent(
     if (!entitled) {
       await markRokuPayEvent(eventId, "ignored", "roku_not_entitled");
       log.warn({ transactionId: notification.transactionId }, "roku.pay_push.not_entitled");
-      return;
+      return false;
     }
+    verifiedWithRoku = true;
   }
   const metadata: Prisma.SubscriptionUpdateInput = {
     rokuCustomerId: notification.customerId ?? subscription.rokuCustomerId ?? undefined,
@@ -505,6 +561,7 @@ async function processRokuPayEvent(
     },
     "roku.pay_push.processed",
   );
+  return verifiedWithRoku;
 }
 
 async function markRokuPayEvent(

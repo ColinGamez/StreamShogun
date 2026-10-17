@@ -682,8 +682,19 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  // Local license overrides (SS-XXXX key format, manual Pro toggle) are a
+  // development aid only. Validation is offline and format-based, so any
+  // renderer could mint "valid" keys — in packaged builds Pro entitlement
+  // comes exclusively from the server (/v1/features via FEATURES_FETCH).
+  const devOnlyLicenseOverride = () => {
+    if (app.isPackaged) {
+      throw new Error("Local license overrides are disabled in production builds.");
+    }
+  };
+
   ipcMain.handle(IpcChannels.LICENSE_SET_KEY, (_event, args: { key: string }) => {
     try {
+      devOnlyLicenseOverride();
       requireString(args.key, "license key");
       return ok(setLicenseKey(args.key));
     } catch (err) {
@@ -693,6 +704,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IpcChannels.LICENSE_SET_PRO_ENABLED, (_event, args: { enabled: boolean }) => {
     try {
+      devOnlyLicenseOverride();
       return ok(setProEnabled(args.enabled));
     } catch (err) {
       return fail(err);

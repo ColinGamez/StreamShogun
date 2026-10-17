@@ -1,1 +1,5 @@
 /dist/
+
+# Local credentials and private sideload data (tokens, private playlists).
+# Never commit anything under here.
+/private/

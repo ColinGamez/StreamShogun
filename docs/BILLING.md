@@ -37,18 +37,23 @@ StreamShōgun account, gates Roku Pro features from the returned entitlement,
 and includes a ChannelStore shell for catalog, RFI, order, and restore. Roku Pay
 purchase IDs are not trusted locally; `/v1/roku/validate-purchase` validates
 them with Roku's `validate-transaction` API before granting Pro. Roku Pay
-push notifications should be configured to `POST /v1/roku/pay-push`; the
-listener echoes Roku's `responseKey`, records a `RokuPayEvent`, and reconciles
+push notifications should be configured to `POST /v1/roku/pay-push/<secret>`
+where `<secret>` matches `ROKU_PAY_PUSH_SECRET`; the listener echoes Roku's
+`responseKey`, records a `RokuPayEvent`, and reconciles
 matched subscription lifecycle events such as renewal, cancellation, grace,
-hold, upgrade, and downgrade.
+hold, upgrade, and downgrade. The `ApiKey` response header Roku requires is
+only sent to verified callers: requests bearing the push secret, or (legacy,
+no secret configured) pushes whose transaction was confirmed with Roku's
+validator during processing.
 
 Roku Pay environment variables:
 
-| Variable                      | Description                                              |
-| ----------------------------- | -------------------------------------------------------- |
-| `ROKU_PAY_API_KEY`            | Partner API key used server-side for Roku Pay validation |
-| `ROKU_PRODUCT_ID_PRO_MONTHLY` | Monthly Pro in-app product identifier                    |
-| `ROKU_PRODUCT_ID_PRO_YEARLY`  | Yearly Pro in-app product identifier                     |
+| Variable                      | Description                                                       |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `ROKU_PAY_API_KEY`            | Partner API key used server-side for Roku Pay validation          |
+| `ROKU_PRODUCT_ID_PRO_MONTHLY` | Monthly Pro in-app product identifier                             |
+| `ROKU_PRODUCT_ID_PRO_YEARLY`  | Yearly Pro in-app product identifier                              |
+| `ROKU_PAY_PUSH_SECRET`        | Shared secret embedded in the pay-push listener URL (min 16 chars) |
 
 ---
 

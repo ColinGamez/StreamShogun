@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
+import { env } from "../../config/env.js";
 
 const prismaMock = {
   rokuPayEvent: {
@@ -164,6 +165,99 @@ describe("roku pay-push verification", () => {
 
     expect(response.statusCode).toBe(200);
     expect(fetchMock).not.toHaveBeenCalled();
+    await app.close();
+  });
+});
+
+describe("roku pay-push ApiKey echo protection", () => {
+  const envMock = env as { ROKU_PAY_PUSH_SECRET?: string };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete envMock.ROKU_PAY_PUSH_SECRET;
+    prismaMock.rokuPayEvent.findUnique.mockResolvedValue(null);
+    prismaMock.rokuPayEvent.create.mockResolvedValue({ id: "evt_1" });
+    prismaMock.rokuPayEvent.update.mockResolvedValue({ id: "evt_1" });
+    prismaMock.subscription.findFirst.mockResolvedValue({
+      id: "sub_1",
+      userId: "user_1",
+      billingInterval: "MONTHLY",
+      currentPeriodEnd: null,
+    });
+    prismaMock.subscription.update.mockResolvedValue({ id: "sub_1" });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete envMock.ROKU_PAY_PUSH_SECRET;
+  });
+
+  it("echoes the ApiKey only after Roku verification in legacy mode (no secret)", async () => {
+    mockValidator({ ok: true, entitled: true });
+    const app = await buildTestApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/roku/pay-push",
+      payload: pushBody(),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["apikey"]).toBe("rk_test_key");
+    await app.close();
+  });
+
+  it("withholds the ApiKey from unverified pushes in legacy mode", async () => {
+    const fetchMock = mockValidator({ ok: true, entitled: true });
+    const app = await buildTestApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/roku/pay-push",
+      payload: pushBody({ transactionType: "UpgradeCancel" }), // metadata-only: never verified
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe("rk_response_1");
+    expect(response.headers["apikey"]).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it("echoes the ApiKey when the push secret matches, without extra verification", async () => {
+    envMock.ROKU_PAY_PUSH_SECRET = "test-push-secret-0123456789";
+    const fetchMock = mockValidator({ ok: true, entitled: true });
+    const app = await buildTestApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/roku/pay-push/test-push-secret-0123456789",
+      payload: pushBody({ transactionType: "UpgradeCancel" }), // metadata-only event
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["apikey"]).toBe("rk_test_key");
+    expect(fetchMock).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it("rejects a wrong or missing secret with 401 and never processes or echoes", async () => {
+    envMock.ROKU_PAY_PUSH_SECRET = "test-push-secret-0123456789";
+    const app = await buildTestApp();
+
+    const wrong = await app.inject({
+      method: "POST",
+      url: "/v1/roku/pay-push/wrong-secret",
+      payload: pushBody(),
+    });
+    const missing = await app.inject({
+      method: "POST",
+      url: "/v1/roku/pay-push",
+      payload: pushBody(),
+    });
+
+    expect(wrong.statusCode).toBe(401);
+    expect(missing.statusCode).toBe(401);
+    expect(wrong.headers["apikey"]).toBeUndefined();
+    expect(missing.headers["apikey"]).toBeUndefined();
+    expect(prismaMock.rokuPayEvent.create).not.toHaveBeenCalled();
     await app.close();
   });
 });
