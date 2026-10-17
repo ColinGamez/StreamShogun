@@ -10,9 +10,19 @@
 import * as net from "net";
 
 // ── Discord Application ID ────────────────────────────────────────────
-// Set DISCORD_CLIENT_ID in env.  If missing, RPC is disabled (fail-closed).
-const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? "";
-const PLACEHOLDER_CLIENT_ID = "YOUR_DISCORD_CLIENT_ID";
+// Resolution order:
+//   1. DISCORD_CLIENT_ID env var (dev machines / local overrides)
+//   2. Build-time constant baked in by esbuild (scripts/build.mjs reads
+//      DISCORD_CLIENT_ID at packaging time and inlines it here, so
+//      production installers carry the ID without any runtime env)
+// If neither is set, RPC is disabled (fail-closed, one warning).
+//
+// The client ID is a public identifier (every Discord client sees it),
+// not a secret — baking it into the binary is the intended design.
+declare const __SHOGUN_DISCORD_CLIENT_ID__: string | undefined;
+const BAKED_CLIENT_ID =
+  typeof __SHOGUN_DISCORD_CLIENT_ID__ !== "undefined" ? __SHOGUN_DISCORD_CLIENT_ID__ : "";
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID || BAKED_CLIENT_ID;
 
 // ── IPC protocol types ────────────────────────────────────────────────
 
@@ -119,8 +129,8 @@ function getSocketPathForIndex(index: number): string {
 }
 
 async function tryConnect(): Promise<boolean> {
-  if (CLIENT_ID === PLACEHOLDER_CLIENT_ID) {
-    console.warn("[discord] DISCORD_CLIENT_ID not configured — skipping RPC connection");
+  if (!CLIENT_ID) {
+    console.warn("[discord] no client ID configured (env or build-time) — skipping RPC connection");
     return false;
   }
   lastConnectAttempt = Date.now();

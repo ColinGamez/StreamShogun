@@ -46,6 +46,16 @@ const external = [
   "querystring",
 ];
 
+// Discord Rich Presence client ID is baked into the main-process bundle at
+// build time (see src/discord.ts). Set DISCORD_CLIENT_ID in the environment
+// when packaging releases; the value is a public identifier, not a secret.
+const discordClientId = process.env.DISCORD_CLIENT_ID ?? "";
+if (!discordClientId) {
+  console.warn(
+    "[desktop] DISCORD_CLIENT_ID not set — Discord Rich Presence will be disabled in this build.",
+  );
+}
+
 // import.meta.dirname is Node 22+; keep the shim for portability.
 const esmDirnameBanner = `
 import { fileURLToPath as __fup } from "node:url";
@@ -66,6 +76,9 @@ try {
       external,
       logLevel: "info",
       banner: { js: esmDirnameBanner },
+      define: {
+        __SHOGUN_DISCORD_CLIENT_ID__: JSON.stringify(discordClientId),
+      },
       entryPoints: [resolve(root, "src/main.ts")],
       outfile: resolve(root, "dist/main.mjs"),
       tsconfig: resolve(root, "tsconfig.json"),

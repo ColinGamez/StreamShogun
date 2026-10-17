@@ -2,6 +2,23 @@ packages:
   - apps/*
   - packages/*
 
-ignoredBuiltDependencies:
-  - electron
-  - esbuild
+allowBuilds:
+  better-sqlite3: true
+  '@prisma/client': true
+  '@prisma/engines': true
+  bcrypt: true
+  prisma: true
+  electron: false
+  esbuild: false
+
+overrides:
+  deepmerge-ts: ^8.0.0
+  defu: ^6.1.5
+  effect: ^3.20.0
+  fast-uri@3: ^3.1.7
+  fast-uri@4: ^4.1.4
+  flatted: ^3.4.2
+  js-yaml: ^4.3.0
+  picomatch: ^2.3.2
+  postcss: ^8.5.18
+  tar: ^7.5.11
