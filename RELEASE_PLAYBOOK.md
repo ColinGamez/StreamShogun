@@ -59,39 +59,39 @@ A missing or invalid value crashes the process immediately — no silent misconf
 
 ### API (`apps/api/.env`)
 
-| Variable                      | Required | Default                     | Notes                                                                     |
-| ----------------------------- | -------- | --------------------------- | ------------------------------------------------------------------------- |
-| `PORT`                        | No       | `8787`                      | API listen port                                                           |
-| `HOST`                        | No       | `0.0.0.0`                   | Bind address                                                              |
-| `DATABASE_URL`                | **Yes**  | —                           | Full Postgres connection string incl. `?schema=public`                    |
-| `JWT_SECRET`                  | **Yes**  | —                           | ≥ 16 chars, use ≥ 64 in prod                                              |
-| `JWT_ACCESS_TTL`              | No       | `15m`                       | Access token lifetime                                                     |
-| `JWT_REFRESH_TTL`             | No       | `7d`                        | Refresh token lifetime                                                    |
-| `CORS_ORIGIN`                 | No       | `http://localhost:5173`     | Allowed origin(s)                                                         |
-| `COOKIE_DOMAIN`               | No       | —                           | Set to `.streamshogun.com` when web + API share cookies across subdomains |
-| `APP_PUBLIC_URL`              | No       | —                           | Public site URL used for password reset links and Stripe return URLs      |
-| `SUPPORT_EMAIL`               | No       | `ColinKenny@programmer.net` | User-facing support address shown in emails                               |
-| `SMTP_URL`                    | No       | —                           | SMTP connection string for transactional email                            |
-| `RESEND_API_KEY`              | No       | —                           | Easier Resend setup; the API sends through Resend directly                |
-| `EMAIL_FROM`                  | No       | —                           | Branded sender address for transactional email                            |
-| `SENTRY_DSN`                  | No       | —                           | Sentry ingest URL; omit to disable                                        |
-| `ADMIN_KEY`                   | No       | —                           | ≥ 16 chars; enables `/v1/admin` endpoints                                 |
-| `STRIPE_SECRET_KEY`           | No       | —                           | Must start with `sk_`; enables `/v1/billing`                              |
-| `STRIPE_WEBHOOK_SECRET`       | No       | —                           | Must start with `Stripe webhook secret prefix`                            |
-| `STRIPE_PRICE_ID_PRO_MONTHLY` | No       | —                           | Must start with `price_`                                                  |
-| `STRIPE_PRICE_ID_PRO_YEARLY`  | No       | —                           | Must start with `price_`                                                  |
-| `STRIPE_PORTAL_RETURN_URL`    | No       | `APP_PUBLIC_URL`            | Customer portal return URL                                                |
-| `BILLING_DISABLED`            | No       | —                           | Set to `"true"` for an emergency billing kill-switch                      |
+| Variable                      | Required | Default                     | Notes                                                                                                                                                                                |
+| ----------------------------- | -------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`                        | No       | `8787`                      | API listen port                                                                                                                                                                      |
+| `HOST`                        | No       | `0.0.0.0`                   | Bind address                                                                                                                                                                         |
+| `DATABASE_URL`                | **Yes**  | —                           | Full Postgres connection string incl. `?schema=public`                                                                                                                               |
+| `JWT_SECRET`                  | **Yes**  | —                           | ≥ 16 chars, use ≥ 64 in prod                                                                                                                                                         |
+| `JWT_ACCESS_TTL`              | No       | `15m`                       | Access token lifetime                                                                                                                                                                |
+| `JWT_REFRESH_TTL`             | No       | `7d`                        | Refresh token lifetime                                                                                                                                                               |
+| `CORS_ORIGIN`                 | No       | `http://localhost:5173`     | Allowed origin(s)                                                                                                                                                                    |
+| `COOKIE_DOMAIN`               | No       | —                           | Set to `.streamshogun.com` when web + API share cookies across subdomains                                                                                                            |
+| `APP_PUBLIC_URL`              | No       | —                           | Public site URL used for password reset links and Stripe return URLs                                                                                                                 |
+| `SUPPORT_EMAIL`               | No       | `ColinKenny@programmer.net` | User-facing support address shown in emails                                                                                                                                          |
+| `SMTP_URL`                    | No       | —                           | SMTP connection string for transactional email                                                                                                                                       |
+| `RESEND_API_KEY`              | No       | —                           | Easier Resend setup; the API sends through Resend directly                                                                                                                           |
+| `EMAIL_FROM`                  | No       | —                           | Branded sender address for transactional email                                                                                                                                       |
+| `SENTRY_DSN`                  | No       | —                           | Sentry ingest URL; omit to disable                                                                                                                                                   |
+| `ADMIN_KEY`                   | No       | —                           | ≥ 16 chars; enables `/v1/admin` endpoints                                                                                                                                            |
+| `STRIPE_SECRET_KEY`           | No       | —                           | Must start with `sk_`; enables `/v1/billing`                                                                                                                                         |
+| `STRIPE_WEBHOOK_SECRET`       | No       | —                           | Must start with `Stripe webhook secret prefix`                                                                                                                                       |
+| `STRIPE_PRICE_ID_PRO_MONTHLY` | No       | —                           | Must start with `price_`                                                                                                                                                             |
+| `STRIPE_PRICE_ID_PRO_YEARLY`  | No       | —                           | Must start with `price_`                                                                                                                                                             |
+| `STRIPE_PORTAL_RETURN_URL`    | No       | `APP_PUBLIC_URL`            | Customer portal return URL                                                                                                                                                           |
+| `BILLING_DISABLED`            | No       | —                           | Set to `"true"` for an emergency billing kill-switch                                                                                                                                 |
+| `ROKU_PAY_API_KEY`            | No       | —                           | Roku Pay partner key; enables `/v1/roku` purchase validation                                                                                                                         |
+| `ROKU_PRODUCT_ID_PRO_MONTHLY` | No       | —                           | Monthly Pro in-app product identifier                                                                                                                                                |
+| `ROKU_PRODUCT_ID_PRO_YEARLY`  | No       | —                           | Yearly Pro in-app product identifier                                                                                                                                                 |
+| `ROKU_PAY_PUSH_SECRET`        | No       | —                           | ≥ 16 chars; embed in the pay-push listener URL (`/v1/roku/pay-push/<secret>`). Required in prod — without it the `ApiKey` echo is withheld unless the transaction verifies with Roku |
 
-### Backend (`apps/backend/.env`)
+### Desktop build (`apps/desktop`)
 
-| Variable       | Required | Default                 | Notes                                                   |
-| -------------- | -------- | ----------------------- | ------------------------------------------------------- |
-| `PORT`         | No       | `3001`                  | Backend listen port                                     |
-| `HOST`         | No       | `0.0.0.0`               | Bind address                                            |
-| `DATABASE_URL` | **Yes**  | —                       | Postgres connection string                              |
-| `JWT_SECRET`   | **Yes**  | —                       | Must match the API secret if both services share tokens |
-| `CORS_ORIGIN`  | No       | `http://localhost:5173` |                                                         |
+| Variable            | Required | Default                            | Notes                                                                                                                                            |
+| ------------------- | -------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DISCORD_CLIENT_ID` | No       | `1561156552117854228` (production) | Public Discord application ID baked into packaged builds at build time (`scripts/build.mjs`) — not a secret. Override only for self-hosted forks |
 
 ### Secrets Management Rules
 

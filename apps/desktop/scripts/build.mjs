@@ -47,14 +47,11 @@ const external = [
 ];
 
 // Discord Rich Presence client ID is baked into the main-process bundle at
-// build time (see src/discord.ts). Set DISCORD_CLIENT_ID in the environment
-// when packaging releases; the value is a public identifier, not a secret.
-const discordClientId = process.env.DISCORD_CLIENT_ID ?? "";
-if (!discordClientId) {
-  console.warn(
-    "[desktop] DISCORD_CLIENT_ID not set — Discord Rich Presence will be disabled in this build.",
-  );
-}
+// build time (see src/discord.ts). The production application ID below is a
+// public identifier (not a secret), so release builds get working Rich
+// Presence with zero setup; self-hosters can override via DISCORD_CLIENT_ID.
+const PRODUCTION_DISCORD_CLIENT_ID = "1561156552117854228";
+const discordClientId = process.env.DISCORD_CLIENT_ID || PRODUCTION_DISCORD_CLIENT_ID;
 
 // import.meta.dirname is Node 22+; keep the shim for portability.
 const esmDirnameBanner = `
@@ -67,7 +64,7 @@ const __dirname = __dn(__filename);
 try {
   await Promise.all([
     // ── Main process (ESM) ────────────────────────────────────────────
-      build({
+    build({
       bundle: true,
       platform: "node",
       format: "esm",
