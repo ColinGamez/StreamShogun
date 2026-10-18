@@ -65,6 +65,16 @@ nsis:
   # shared base artifactName let one overwrite the other.
   artifactName: StreamShogun-${version}-${os}-${arch}-setup.${ext}
 
+# Auto-update feed (electron-updater): latest*.yml metadata is generated
+# next to the installers and attached to each GitHub Release by
+# .github/workflows/release.yml. Publishing itself stays manual (the
+# packaging script passes --publish never).
+publish:
+  provider: github
+  owner: ColinGamez
+  repo: StreamShogun
+  releaseType: release
+
 portable:
   artifactName: StreamShogun-${version}-${os}-${arch}-portable.${ext}
 

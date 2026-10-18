@@ -6,6 +6,7 @@ import { initDatabase, closeDatabase } from "./db";
 import { stopScheduler } from "./scheduler";
 import { closePipWindow } from "./pip";
 import { disconnect as disconnectDiscord } from "./discord";
+import { initAutoUpdater } from "./updater";
 
 // ── Determine environment ─────────────────────────────────────────────
 // process.defaultApp is set by Electron when launched in dev mode (electron .)
@@ -218,6 +219,7 @@ app.whenReady().then(() => {
     initDatabase();
     registerIpcHandlers();
     createMainWindow();
+    initAutoUpdater(() => BrowserWindow.getAllWindows()[0] ?? null);
   } catch (err) {
     // A corrupt/locked DB or window failure previously killed startup
     // silently (only the process guards logged). Surface it loudly.

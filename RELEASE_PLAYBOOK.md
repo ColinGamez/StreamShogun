@@ -194,6 +194,18 @@ prisma migrate diff --from-schema-datasource prisma/schema.prisma \
   that reverts the offending change — the updater will push it to all clients.
 - Never delete a published release; instead, mark it as a draft and publish the fix.
 
+### Desktop Auto-Update (electron-updater)
+
+- Clients check GitHub Releases ~10 s after launch and every 4 h while running;
+  updates download in the background and install on restart (or on quit if the
+  user picks "Later"). Packaged NSIS builds only — dev and portable are excluded.
+- **Release requirement:** every GitHub Release must carry `latest.yml` /
+  `latest-mac.yml` / `latest-linux.yml` and the `*.blockmap` files next to the
+  installers. `release.yml` already uploads them — never strip them from the
+  draft release before publishing.
+- macOS auto-update additionally requires Apple code signing; unsigned mac
+  builds skip the update dialog (zip target stays manual).
+
 ### Feature Flag Kill-Switch
 
 Feature flags (`FeatureFlag` model, `cloud_sync` key, etc.) can disable a feature

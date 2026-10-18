@@ -19,21 +19,31 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # latest*.yml + *.blockmap must ship with the installers —
+          # electron-updater reads them from the GitHub Release to find
+          # and delta-download updates.
           - os: windows-latest
             build-cmd: pnpm build:win
-            artifact-pattern: "apps/desktop/release/*.exe"
+            artifact-pattern: |
+              apps/desktop/release/*.exe
+              apps/desktop/release/*.blockmap
+              apps/desktop/release/latest.yml
             artifact-name: windows
           - os: macos-latest
             build-cmd: pnpm build:mac
             artifact-pattern: |
               apps/desktop/release/*.dmg
               apps/desktop/release/*.zip
+              apps/desktop/release/*.blockmap
+              apps/desktop/release/latest-mac.yml
             artifact-name: macos
           - os: ubuntu-latest
             build-cmd: pnpm build:linux
             artifact-pattern: |
               apps/desktop/release/*.AppImage
               apps/desktop/release/*.deb
+              apps/desktop/release/*.blockmap
+              apps/desktop/release/latest-linux.yml
             artifact-name: linux
 
     steps:
