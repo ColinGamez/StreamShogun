@@ -1,6 +1,6 @@
 param(
   [string]$AppDomain = "streamshogun.com",
-  [string]$SupportEmail = "colin.kenny777@gmail.com",
+  [string]$SupportEmail = "ColinKenny@programmer.net",
   [string]$EmailFrom = "StreamShogun <no-reply@streamshogun.com>",
   [string]$ResendApiKey = "",
   [switch]$StartStack,

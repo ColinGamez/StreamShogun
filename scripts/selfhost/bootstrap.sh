@@ -11,7 +11,7 @@ REPO_REF="${REPO_REF:-main}"
 
 APP_DOMAIN="${APP_DOMAIN:-streamshogun.com}"
 API_DOMAIN="${API_DOMAIN:-api.streamshogun.com}"
-SUPPORT_EMAIL="${SUPPORT_EMAIL:-colin.kenny777@gmail.com}"
+SUPPORT_EMAIL="${SUPPORT_EMAIL:-ColinKenny@programmer.net}"
 EMAIL_FROM="${EMAIL_FROM:-StreamShogun <no-reply@streamshogun.com>}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 
