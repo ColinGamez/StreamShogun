@@ -2,11 +2,19 @@ packages:
   - apps/*
   - packages/*
 
+# Electron requires a flat node_modules layout so its built-in module
+# interception can find "electron" without pnpm's isolated .pnpm symlinks.
+# (Was node-linker=hoisted in .npmrc; pnpm 11+ only reads settings here.)
+nodeLinker: hoisted
+
+# Dependency install-script approvals (pnpm 11+). better-sqlite3 and bcrypt
+# ship N-API prebuilds for every platform, so their node-gyp fallback never
+# needs to run — keep them false to avoid requiring C++ build tools.
 allowBuilds:
-  better-sqlite3: true
+  better-sqlite3: false
+  bcrypt: false
   "@prisma/client": true
   "@prisma/engines": true
-  bcrypt: true
   prisma: true
   electron: false
   esbuild: false
