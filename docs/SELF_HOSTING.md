@@ -96,7 +96,7 @@ powershell -ExecutionPolicy Bypass -File scripts/selfhost/bootstrap-local.ps1 -F
 If you want the VPS to install Docker, clone the repo, generate secrets, write the env file, and start the stack in one go, use:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/stream-shogun/stream-shogun/main/scripts/selfhost/bootstrap.sh -o bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/ColinGamez/StreamShogun/main/scripts/selfhost/bootstrap.sh -o bootstrap.sh
 chmod +x bootstrap.sh
 sudo SUPPORT_EMAIL="colin.kenny777@gmail.com" RESEND_API_KEY="<resend-api-key>" ./bootstrap.sh
 ```
@@ -106,7 +106,7 @@ That script lives at [scripts/selfhost/bootstrap.sh](../scripts/selfhost/bootstr
 For later updates on the server:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/stream-shogun/stream-shogun/main/scripts/selfhost/update.sh -o update.sh
+curl -fsSL https://raw.githubusercontent.com/ColinGamez/StreamShogun/main/scripts/selfhost/update.sh -o update.sh
 chmod +x update.sh
 sudo ./update.sh
 ```

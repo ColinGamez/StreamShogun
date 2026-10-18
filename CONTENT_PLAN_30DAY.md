@@ -195,13 +195,13 @@ Our `cloudPull()` and `cloudPush()` are wrapped in try/catch that swallows error
 
 5/ Typecheck is the gate. `pnpm typecheck` builds shared + core, generates Prisma clients, then runs `tsc --noEmit` across all four apps. If any fail, nothing ships. `pnpm lint` runs ESLint across the entire monorepo. Both are CI checks on every PR.
 
-6/ The honest part: we don't have full CI yet. Typecheck and lint run locally before every push. 96 tests cover the core parsers. The API and UI don't have integration tests yet. Shipping > perfection, but we know where the gaps are.
+6/ The honest part: CI runs typecheck, lint, format, tests and a full build on Ubuntu/Windows/macOS for every PR. 366 tests across all four workspaces — parsers, API routes, billing helpers. Component-level UI tests are still thin. Shipping > perfection, but we know where the gaps are.
 
 ---
 
 ## Week 5 (Days 29–30) — Reflections
 
-### Tue 29 · Post: What actually matters at 0.1.0
+### Tue 29 · Post: What actually matters at 0.2.1
 
 30 days of building in public. Here's what shipped:
 
@@ -213,16 +213,16 @@ None of it is novel. All of it works. The hard part was never the tech — it wa
 
 ### Thu 31 · Post: The stack, final count
 
-StreamShōgun 0.1.0 stack:
+StreamShōgun 0.2.1 stack:
 
-- Electron 33 + React 19 + Zustand + Tailwind
+- Electron 43 + React 19 + Zustand + Tailwind
 - Fastify + Prisma + PostgreSQL
 - Stripe Checkout + Customer Portal
 - pnpm monorepo, 2 shared packages, 4 apps
 - TypeScript everywhere, Zod at every boundary
-- 96 tests, 0 lint errors, 0 type errors
+- 366 tests, 0 lint errors, 0 type errors
 
-Next: CI pipeline, integration tests, and the beta launch.
+Next: the founder beta, then the paid launch.
 
 > 📸 Screenshot: terminal showing `pnpm typecheck` and `pnpm test` both passing green
 
@@ -248,7 +248,7 @@ Next: CI pipeline, integration tests, and the beta launch.
 | Thu 24     | Post       | Merging favorites              |
 | Sat 26     | Post       | Sync never blocks playback     |
 | **Sun 27** | **Thread** | **Monorepo deployment**        |
-| Tue 29     | Post       | What matters at 0.1.0          |
+| Tue 29     | Post       | What matters at 0.2.1          |
 | Thu 31     | Post       | The stack, final count         |
 
 **Total: 13 posts + 4 threads = 17 pieces over 30 days.**

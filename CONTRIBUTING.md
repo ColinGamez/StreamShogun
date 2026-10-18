@@ -127,5 +127,5 @@ stream-shogun/
 
 ## Questions?
 
-Open a [Discussion](https://github.com/stream-shogun/stream-shogun/discussions)
-or file an [Issue](https://github.com/stream-shogun/stream-shogun/issues).
+Open a [Discussion](https://github.com/ColinGamez/StreamShogun/discussions)
+or file an [Issue](https://github.com/ColinGamez/StreamShogun/issues).

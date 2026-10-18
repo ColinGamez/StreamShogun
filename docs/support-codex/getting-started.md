@@ -22,7 +22,7 @@ StreamShōgun uses **Electron** under the hood, so any modern 64-bit OS should w
 
 ## Installing
 
-1. Download the latest installer from [GitHub Releases](https://github.com/stream-shogun/stream-shogun/releases).
+1. Download the latest installer from [GitHub Releases](https://github.com/ColinGamez/StreamShogun/releases).
 2. Run the installer for your platform (.exe, .dmg, or .AppImage).
 3. Launch **StreamShōgun** — you'll see the Welcome screen.
 

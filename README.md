@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/stream-shogun/stream-shogun/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/stream-shogun/stream-shogun/ci.yml?branch=main&label=CI&logo=github" alt="CI" />
+  <a href="https://github.com/ColinGamez/StreamShogun/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/ColinGamez/StreamShogun/ci.yml?branch=main&label=CI&logo=github" alt="CI" />
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
   </a>
-  <img src="https://img.shields.io/badge/TypeScript-5.4+-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Electron-31-47848f?logo=electron&logoColor=white" alt="Electron" />
+  <img src="https://img.shields.io/badge/TypeScript-6-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Electron-43-47848f?logo=electron&logoColor=white" alt="Electron" />
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/version-0.2.1-orange" alt="Version" />
 </p>
@@ -40,11 +40,9 @@
 
 ## Screenshots
 
-> **Coming soon** — replace these placeholders with actual screenshots.
-
-| Library                                                             | Channels                                                              | Guide                                                           | Player                                                            |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ![Library](https://placehold.co/400x260/1a1a2e/e4e4ef?text=Library) | ![Channels](https://placehold.co/400x260/1a1a2e/e4e4ef?text=Channels) | ![Guide](https://placehold.co/400x260/1a1a2e/e4e4ef?text=Guide) | ![Player](https://placehold.co/400x260/1a1a2e/e4e4ef?text=Player) |
+| Library                                   | Channels                                       | Guide                                    | Player                                      |
+| ----------------------------------------- | ---------------------------------------------- | ---------------------------------------- | ------------------------------------------- |
+| ![Library](site/screenshots/playlist.png) | ![Channels](site/screenshots/app-overview.png) | ![Guide](site/screenshots/epg-guide.png) | ![Player](site/screenshots/now-playing.png) |
 
 ## Architecture
 
@@ -68,7 +66,7 @@
 │               Renderer Process (sandboxed)                       │
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────────┐ │
-│  │  React 18 + Vite 5                                         │ │
+│  │  React 19 + Vite 7                                         │ │
 │  │                                                             │ │
 │  │  ┌──────────┐ ┌───────────┐ ┌─────────┐ ┌──────────────┐  │ │
 │  │  │ Library  │ │ Channels  │ │  Guide  │ │   Player     │  │ │
@@ -87,8 +85,8 @@
 │                    @stream-shogun/core                            │
 │  ┌────────────┐ ┌───────────────┐ ┌───────────┐ ┌────────────┐ │
 │  │  types.ts  │ │ m3u-parser.ts │ │ xmltv-    │ │ epg-       │ │
-│  │  (IPC ch., │ │ (39 tests)    │ │ parser.ts │ │ index.ts   │ │
-│  │   iptv,    │ │               │ │ (57 tests)│ │            │ │
+│  │  (IPC ch., │ │               │ │ parser.ts │ │ index.ts   │ │
+│  │   iptv,    │ │               │ │           │ │            │ │
 │  │   xmltv)   │ │               │ │           │ │            │ │
 │  └────────────┘ └───────────────┘ └───────────┘ └────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
@@ -201,7 +199,7 @@ npm install -g windows-build-tools
 
 ```bash
 # Clone the repository
-git clone https://github.com/stream-shogun/stream-shogun.git
+git clone https://github.com/ColinGamez/StreamShogun.git
 cd stream-shogun
 
 # Install all dependencies (including native modules)

@@ -4,7 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| 0.2.x   | :white_check_mark: |
+| 0.1.x   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -12,8 +13,8 @@
 
 Instead, please report them responsibly:
 
-1. Email: **security@stream-shogun.dev** (or open a
-   [private security advisory](https://github.com/stream-shogun/stream-shogun/security/advisories/new)
+1. Email: **ColinKenny@programmer.net** (or open a
+   [private security advisory](https://github.com/ColinGamez/StreamShogun/security/advisories/new)
    on GitHub).
 2. Include a description of the vulnerability, steps to reproduce, and any
    potential impact.
