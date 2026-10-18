@@ -4,7 +4,7 @@
 
 FROM node:22-slim
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
 WORKDIR /app
 
 # ── 1. Install ALL deps (need devDeps for tsc + prisma) ────────────

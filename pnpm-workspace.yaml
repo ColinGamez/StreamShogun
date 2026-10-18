@@ -18,6 +18,13 @@ allowBuilds:
   prisma: true
   electron: false
   esbuild: false
+  # Neither needs its install script: @parcel/watcher ships N-API prebuilds
+  # and electron-winstaller only runs on the Windows packaging host.
+  # Listed explicitly because pnpm 12 errors (ERR_PNPM_IGNORED_BUILDS) on
+  # unlisted build scripts during frozen-lockfile installs (CI, Vercel,
+  # Render Docker builds).
+  "@parcel/watcher": false
+  electron-winstaller: false
 
 overrides:
   deepmerge-ts: ^8.0.0
