@@ -65,7 +65,7 @@ DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 
 ```env
 DATABASE_URL=<your Neon pooled connection string>
-SUPPORT_EMAIL=colin.kenny777@gmail.com
+SUPPORT_EMAIL=<your-support-inbox>
 ```
 
 Render will generate `JWT_SECRET` automatically from the Blueprint.
@@ -97,7 +97,7 @@ MASTER_JAPAN_BANGUMI_ENABLED=true
 MASTER_KOREA_EPG_URL=https://raw.githubusercontent.com/ColinGamez/StreamShogun/epg-output/epg/korea-naver.xml.gz
 ```
 
-`MASTER_PLAYLIST_URL`, `MASTER_EPG_URL`, the generated Bangumi Japan guide, and `MASTER_KOREA_EPG_URL` are only returned or loaded by the API when the signed-in user email is `colin.kenny777@gmail.com`. Do not paste private IPTV URLs into frontend code or docs.
+`MASTER_PLAYLIST_URL`, `MASTER_EPG_URL`, the generated Bangumi Japan guide, and `MASTER_KOREA_EPG_URL` are only returned or loaded by the API when the signed-in user email matches the `MASTER_EMAIL` env var (set it in the Render dashboard). Do not paste private IPTV URLs into frontend code or docs.
 
 The Japan Master guide is generated from `bangumi.org` and cached by the API. Korea uses the scheduled NAVER-all epg2xml workflow documented in [KOREA_EPG.md](KOREA_EPG.md); the desktop app loads it through the authenticated Master bridge.
 

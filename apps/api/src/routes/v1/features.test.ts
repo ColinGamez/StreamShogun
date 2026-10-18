@@ -15,7 +15,7 @@ vi.mock("../../lib/prisma.js", () => ({
 
 vi.mock("../../config/env.js", () => ({
   env: {
-    MASTER_EMAIL: "colin.kenny777@gmail.com",
+    MASTER_EMAIL: "master@example.com",
     FOUNDING_MEMBER_CUTOFF: "2026-06-01T00:00:00Z",
   },
 }));
@@ -50,7 +50,7 @@ describe("features routes", () => {
     const response = await app.inject({
       method: "GET",
       url: "/v1/features",
-      headers: authHeader(app, "COLIN.KENNY777@gmail.com"),
+      headers: authHeader(app, "MASTER@example.com"),
     });
 
     expect(response.statusCode).toBe(200);

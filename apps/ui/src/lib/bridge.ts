@@ -312,6 +312,7 @@ export async function featuresFetch(): Promise<
     currentPeriodEnd: string | null;
     trialEndsAt: string | null;
     isFoundingMember: boolean;
+    isMasterAccount: boolean;
   }>
 > {
   if (hasBridge()) return window.shogun!.featuresFetch();

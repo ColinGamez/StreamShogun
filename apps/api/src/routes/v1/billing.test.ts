@@ -55,7 +55,7 @@ async function buildTestApp() {
 }
 
 function authHeader(app: Awaited<ReturnType<typeof buildTestApp>>) {
-  const token = app.jwt.sign({ sub: "user_123", email: "colin.kenny777@gmail.com" });
+  const token = app.jwt.sign({ sub: "user_123", email: "master@example.com" });
   return { authorization: `Bearer ${token}` };
 }
 
@@ -64,7 +64,7 @@ describe("billing reconcile route", () => {
     vi.clearAllMocks();
     prismaMock.user.findUnique.mockResolvedValue({
       id: "user_123",
-      email: "colin.kenny777@gmail.com",
+      email: "master@example.com",
     });
     prismaMock.subscription.findFirst.mockResolvedValue(null);
     prismaMock.subscription.upsert.mockResolvedValue({ id: "subscription_123" });

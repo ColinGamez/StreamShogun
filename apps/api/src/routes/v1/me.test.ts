@@ -8,7 +8,7 @@ const prismaMock = {
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: prismaMock }));
 vi.mock("../../config/env.js", () => ({
-  env: { MASTER_EMAIL: "colin.kenny777@gmail.com" },
+  env: { MASTER_EMAIL: "master@example.com" },
 }));
 
 const jwtSecretForTest = ["me", "routes", "jwt", "test", "secret"].join("-");
@@ -26,7 +26,7 @@ describe("me route master entitlement", () => {
     vi.clearAllMocks();
     prismaMock.user.findUnique.mockResolvedValue({
       id: "user_master",
-      email: "colin.kenny777@gmail.com",
+      email: "master@example.com",
       username: "colin",
       displayName: "Colin",
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -43,7 +43,7 @@ describe("me route master entitlement", () => {
 
   it("reports Pro to the website for the configured master account", async () => {
     const app = await buildTestApp();
-    const token = app.jwt.sign({ sub: "user_master", email: "colin.kenny777@gmail.com" });
+    const token = app.jwt.sign({ sub: "user_master", email: "master@example.com" });
     const response = await app.inject({
       method: "GET",
       url: "/v1/me",

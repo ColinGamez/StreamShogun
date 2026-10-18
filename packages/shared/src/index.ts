@@ -257,6 +257,9 @@ export interface FeaturesResponse {
   currentPeriodEnd: string | null;
   trialEndsAt: string | null;
   isFoundingMember: boolean;
+  /** True when the account matches the server's MASTER_EMAIL env — lets
+   *  clients unlock owner-only UI without hardcoding the email. */
+  isMasterAccount: boolean;
 }
 
 export type MasterSourceKind = "playlist" | "epg";

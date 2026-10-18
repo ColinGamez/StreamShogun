@@ -16,6 +16,7 @@ export interface AuthSlice {
   currentPeriodEnd: string | null;
   trialEndsAt: string | null;
   isFoundingMember: boolean;
+  isMasterAccount: boolean;
   serverFlags: Record<string, boolean>;
   serverFlagsTimestamp: number;
   authLoading: boolean;
@@ -50,6 +51,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, 
   currentPeriodEnd: loadJson<string | null>(P, "shogun:current-period-end", null) ?? null,
   trialEndsAt: loadJson<string | null>(P, "shogun:trial-ends-at", null) ?? null,
   isFoundingMember: loadJson<boolean>(P, "shogun:founding-member", false),
+  isMasterAccount: loadJson<boolean>(P, "shogun:master-account", false),
   serverFlags: loadJson<Record<string, boolean>>(P, "shogun:server-flags", {}),
   serverFlagsTimestamp: loadJson<number>(P, "shogun:server-flags-ts", 0) ?? 0,
   authLoading: false,
@@ -189,6 +191,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, 
       currentPeriodEnd: null,
       trialEndsAt: null,
       isFoundingMember: false,
+      isMasterAccount: false,
       serverFlags: {},
       serverFlagsTimestamp: 0,
       authError: null,
@@ -200,6 +203,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, 
     saveJson(P, "shogun:current-period-end", null);
     saveJson(P, "shogun:trial-ends-at", null);
     saveJson(P, "shogun:founding-member", false);
+    saveJson(P, "shogun:master-account", false);
     saveJson(P, "shogun:server-flags", {});
     saveJson(P, "shogun:server-flags-ts", 0);
   },
@@ -217,6 +221,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, 
           currentPeriodEnd: res.data.currentPeriodEnd ?? null,
           trialEndsAt: res.data.trialEndsAt ?? null,
           isFoundingMember: res.data.isFoundingMember ?? false,
+          isMasterAccount: res.data.isMasterAccount ?? false,
           serverFlags: res.data.flags,
           serverFlagsTimestamp: now,
           isOffline: false,
@@ -228,6 +233,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, 
         saveJson(P, "shogun:current-period-end", res.data.currentPeriodEnd ?? null);
         saveJson(P, "shogun:trial-ends-at", res.data.trialEndsAt ?? null);
         saveJson(P, "shogun:founding-member", res.data.isFoundingMember ?? false);
+        saveJson(P, "shogun:master-account", res.data.isMasterAccount ?? false);
         saveJson(P, "shogun:server-flags", res.data.flags);
         saveJson(P, "shogun:server-flags-ts", now);
         if (prevPlan === "FREE" && res.data.plan === "PRO") {

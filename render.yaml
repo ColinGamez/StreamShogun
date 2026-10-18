@@ -34,13 +34,15 @@ services:
       - key: COOKIE_DOMAIN
         value: .streamshogun.com
       - key: SUPPORT_EMAIL
-        value: colin.kenny777@gmail.com
+        # Personal inbox — set in the Render dashboard, not the repo.
+        sync: false
       - key: EMAIL_FROM
         value: StreamShogun <no-reply@mail.streamshogun.com>
       - key: RESEND_API_KEY
         sync: false
       - key: MASTER_EMAIL
-        value: colin.kenny777@gmail.com
+        # Owner account email — set in the Render dashboard, not the repo.
+        sync: false
       - key: MASTER_PLAYLIST_NAME
         value: Colin's Private Playlist
       - key: MASTER_PLAYLIST_URL

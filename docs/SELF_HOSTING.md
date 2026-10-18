@@ -98,7 +98,7 @@ If you want the VPS to install Docker, clone the repo, generate secrets, write t
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ColinGamez/StreamShogun/main/scripts/selfhost/bootstrap.sh -o bootstrap.sh
 chmod +x bootstrap.sh
-sudo SUPPORT_EMAIL="colin.kenny777@gmail.com" RESEND_API_KEY="<resend-api-key>" ./bootstrap.sh
+sudo SUPPORT_EMAIL="<your-support-inbox>" RESEND_API_KEY="<resend-api-key>" ./bootstrap.sh
 ```
 
 That script lives at [scripts/selfhost/bootstrap.sh](../scripts/selfhost/bootstrap.sh).
@@ -118,7 +118,7 @@ At minimum set:
 ```env
 POSTGRES_PASSWORD=...
 JWT_SECRET=...
-SUPPORT_EMAIL=colin.kenny777@gmail.com
+SUPPORT_EMAIL=<your-support-inbox>
 RESEND_API_KEY=<resend-api-key>
 EMAIL_FROM=StreamShogun <no-reply@mail.streamshogun.com>
 ```

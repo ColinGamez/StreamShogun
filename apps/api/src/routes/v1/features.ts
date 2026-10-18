@@ -84,6 +84,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() ?? null,
         trialEndsAt,
         isFoundingMember: user ? user.createdAt < FOUNDING_MEMBER_CUTOFF : false,
+        isMasterAccount,
       };
       return reply.code(200).send(response);
     },

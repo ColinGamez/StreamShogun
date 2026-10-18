@@ -14,7 +14,6 @@ import {
 } from "../lib/bridge";
 import { showToast } from "../components/Toast";
 import { EPG_PRESETS } from "../lib/epg-presets";
-import { isMasterEmail } from "../lib/master-profile";
 
 /** Open a native file dialog (Electron) or an HTML <input type="file"> fallback. */
 function pickFilePath(accept: string): Promise<string | null> {
@@ -66,14 +65,14 @@ export function LibraryPage() {
   const removeEpg = useAppStore((s) => s.removeEpg);
   const dbSaveEpgSource = useAppStore((s) => s.dbSaveEpgSource);
   const dbRemoveEpgSource = useAppStore((s) => s.dbRemoveEpgSource);
-  const authUser = useAppStore((s) => s.authUser);
 
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [epgUrl, setEpgUrl] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
   const [masterSources, setMasterSources] = useState<MasterSourceDTO[]>([]);
 
-  const isMaster = isMasterEmail(authUser?.email);
+  // Server-computed via /v1/features — no owner email hardcoded client-side.
+  const isMaster = useAppStore((s) => s.isMasterAccount);
 
   const persistPlaylist = async (
     entry: PlaylistEntry,

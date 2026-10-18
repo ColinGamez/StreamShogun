@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../config/env.js", () => ({
-  env: { MASTER_EMAIL: "colin.kenny777@gmail.com" },
+  env: { MASTER_EMAIL: "master@example.com" },
 }));
 
 import { effectiveSubscription, isMasterEmail } from "./master-account.js";
 
 describe("master account entitlement", () => {
   it("matches the configured email case-insensitively", () => {
-    expect(isMasterEmail(" COLIN.KENNY777@gmail.com ")).toBe(true);
+    expect(isMasterEmail(" MASTER@example.com ")).toBe(true);
     expect(isMasterEmail("viewer@example.com")).toBe(false);
   });
 
   it("returns a permanent active Pro entitlement even when the database row is Free", () => {
     expect(
-      effectiveSubscription("colin.kenny777@gmail.com", {
+      effectiveSubscription("master@example.com", {
         plan: "FREE",
         status: "CANCELED",
         billingInterval: null,

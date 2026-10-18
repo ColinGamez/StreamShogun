@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../config/env.js", () => ({
   env: {
-    MASTER_EMAIL: "colin.kenny777@gmail.com",
+    MASTER_EMAIL: "master@example.com",
     MASTER_PLAYLIST_NAME: "Private Channels",
     MASTER_PLAYLIST_URL: "https://private.example.com/channels.m3u8",
     MASTER_EPG_NAME: "Private Guide",
@@ -46,7 +46,7 @@ describe("master routes", () => {
 
   it("returns private sources to the configured master email", async () => {
     const app = await buildTestApp();
-    const token = app.jwt.sign({ sub: "user_master", email: "COLIN.KENNY777@gmail.com" });
+    const token = app.jwt.sign({ sub: "user_master", email: "MASTER@example.com" });
 
     const response = await app.inject({
       method: "GET",
@@ -86,7 +86,7 @@ describe("master routes", () => {
 
   it("does not proxy URL-backed sources through the generated content route", async () => {
     const app = await buildTestApp();
-    const token = app.jwt.sign({ sub: "user_master", email: "colin.kenny777@gmail.com" });
+    const token = app.jwt.sign({ sub: "user_master", email: "master@example.com" });
 
     const response = await app.inject({
       method: "GET",

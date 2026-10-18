@@ -219,6 +219,7 @@ export interface ShogunAPI {
       currentPeriodEnd: string | null;
       trialEndsAt: string | null;
       isFoundingMember: boolean;
+      isMasterAccount: boolean;
     }>
   >;
   masterSourcesFetch: () => Promise<IpcResponse<MasterSourcesResponse>>;

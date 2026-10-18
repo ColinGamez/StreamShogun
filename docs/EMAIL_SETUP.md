@@ -25,7 +25,7 @@ Set these in the API service:
 
 ```env
 APP_PUBLIC_URL="https://streamshogun.com"
-SUPPORT_EMAIL="colin.kenny777@gmail.com"
+SUPPORT_EMAIL="<your-support-inbox>"
 RESEND_API_KEY="<resend-api-key>"
 EMAIL_FROM="StreamShogun <no-reply@mail.streamshogun.com>"
 COOKIE_DOMAIN=".streamshogun.com"
