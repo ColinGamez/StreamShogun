@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Discord Rich Presence reconnect delay** - after Discord quit or the RPC socket dropped,
+  the app stayed silent for up to 15 s because the anti-spam cooldown also throttled the
+  first reconnect after a *successful* connection. The cooldown now only applies to failed
+  connection rounds, so presence resumes on the next activity update.
+
 ## [0.2.1] - 2026-10-06
 
 ### Added

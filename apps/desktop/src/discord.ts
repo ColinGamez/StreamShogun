@@ -133,13 +133,16 @@ async function tryConnect(): Promise<boolean> {
     console.warn("[discord] no client ID configured (env or build-time) — skipping RPC connection");
     return false;
   }
-  lastConnectAttempt = Date.now();
 
   // Try socket indices 0–9 to handle multiple Discord instances
   for (let i = 0; i < 10; i++) {
     const ok = await trySocketIndex(i);
     if (ok) return true;
   }
+  // Only failed rounds arm the backoff: a socket that connected but later
+  // dropped (Discord restarted) must reconnect on the next activity update,
+  // not sit silent for the remainder of the cooldown.
+  lastConnectAttempt = Date.now();
   return false;
 }
 
