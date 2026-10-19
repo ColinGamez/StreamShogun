@@ -1,5 +1,5 @@
 import { useAppStore } from "../stores/app-store";
-import { t } from "../lib/i18n";
+import { t, type Locale } from "../lib/i18n";
 
 const APP_VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "0.1.0";
 
@@ -170,12 +170,13 @@ export function Sidebar({ current, onChange }: SidebarProps) {
         <select
           className="locale-select"
           value={locale}
-          onChange={(e) => setLocale(e.target.value as "en" | "es" | "ja")}
+          onChange={(e) => setLocale(e.target.value as Locale)}
           aria-label="Language"
         >
           <option value="en">EN</option>
           <option value="es">ES</option>
           <option value="ja">JA</option>
+          <option value="ko">KO</option>
         </select>
       </div>
 

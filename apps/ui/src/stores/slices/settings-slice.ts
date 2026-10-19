@@ -1,11 +1,16 @@
 // ── Settings slice (locale + DB-backed settings) ─────────────────────
 import type { StateCreator } from "zustand";
 import type { AppState } from "../app-store";
-import type { Locale } from "../../lib/i18n";
+import { SUPPORTED_LOCALES, type Locale } from "../../lib/i18n";
 import { localStorageAdapter, loadJson, saveJson } from "../../lib/persistence";
 import * as bridge from "../../lib/bridge";
 
 const P = localStorageAdapter;
+
+/** Accept only locales the UI actually ships (guards against stale DB values). */
+function isSupportedLocale(value: string): value is Locale {
+  return SUPPORTED_LOCALES.some((l) => l.code === value);
+}
 
 export interface SettingsSlice {
   locale: Locale;
@@ -31,8 +36,8 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
     if (res.ok) {
       set({ settings: res.data });
       const savedLocale = res.data.locale;
-      if (savedLocale && (savedLocale === "en" || savedLocale === "es" || savedLocale === "ja")) {
-        set({ locale: savedLocale as Locale });
+      if (savedLocale && isSupportedLocale(savedLocale)) {
+        set({ locale: savedLocale });
       }
     }
   },
@@ -42,8 +47,8 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
     const current = get().settings;
     set({ settings: { ...current, [key]: value } });
 
-    if (key === "locale" && (value === "en" || value === "es" || value === "ja")) {
-      set({ locale: value as Locale });
+    if (key === "locale" && isSupportedLocale(value)) {
+      set({ locale: value });
       saveJson(P, "shogun:locale", value);
     }
   },

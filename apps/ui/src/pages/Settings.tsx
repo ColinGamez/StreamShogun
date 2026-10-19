@@ -310,6 +310,7 @@ export function SettingsPage() {
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
           </select>
         </div>
       </section>

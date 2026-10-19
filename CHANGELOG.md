@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Korean UI language** - 한국어 is now available in the language selectors
+  (Settings and sidebar), with a full translation of every UI string. A new
+  locale-parity test keeps all languages in sync as keys are added.
+
 ### Fixed
 
 - **Discord Rich Presence reconnect delay** - after Discord quit or the RPC socket dropped,
