@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Master account gated out of Pro features** - the server-side `requirePro` gate
+  (cloud sync, Roku EPG proxy) read only the raw subscription row, so the master
+  account got 403 ProRequired even though the API reports it as Pro. The gate now
+  honors the same master-account rule as `effectiveSubscription()`.
 - **Discord Rich Presence reconnect delay** - after Discord quit or the RPC socket dropped,
   the app stayed silent for up to 15 s because the anti-spam cooldown also throttled the
   first reconnect after a *successful* connection. The cooldown now only applies to failed

@@ -1,5 +1,6 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../lib/prisma.js";
+import { isMasterEmail } from "../lib/master-account.js";
 
 /**
  * Fastify preHandler factory — returns a hook that verifies the
@@ -21,10 +22,15 @@ export function requirePro(featureKey: string) {
     const user = await prisma.user.findUnique({
       where: { id: sub },
       select: {
+        email: true,
         subscription: true,
         featureFlags: { where: { key: featureKey }, take: 1 },
       },
     });
+
+    // Master account is always Pro, matching effectiveSubscription() so
+    // server-side gates agree with what the client is told.
+    if (isMasterEmail(user?.email)) return;
 
     const subscription = user?.subscription ?? null;
     const override = user?.featureFlags?.[0] ?? null;
