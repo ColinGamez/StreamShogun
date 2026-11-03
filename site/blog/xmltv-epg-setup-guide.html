@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" class="bg-ink">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XMLTV EPG Setup Guide: From Empty Guide to Full Schedule | StreamShōgun</title>
+  <meta name="description" content="A practical XMLTV tutorial: what the format is, where guide data comes from, how tvg-id and channel-name matching work, and how to merge multiple EPG sources into one reliable TV guide.">
+  <meta name="keywords" content="XMLTV EPG setup, EPG guide empty, XMLTV tutorial, add EPG to M3U, tvg-id matching, merge EPG sources, IPTV programme guide">
+  <meta name="author" content="StreamShōgun">
+  <meta name="theme-color" content="#070812">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://streamshogun.com/blog/xmltv-epg-setup-guide">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://streamshogun.com/blog/xmltv-epg-setup-guide">
+  <meta property="og:title" content="XMLTV EPG Setup Guide: From Empty Guide to Full Schedule">
+  <meta property="og:description" content="Understand the XMLTV format, connect a guide source, fix channel matching, and merge multiple EPG feeds into one timeline.">
+  <meta property="og:image" content="https://streamshogun.com/og-image.png">
+  <meta property="article:published_time" content="2026-11-04T00:00:00+09:00">
+  <meta property="article:section" content="EPG Fundamentals">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Article","headline":"XMLTV EPG Setup Guide: From Empty Guide to Full Schedule","description":"A practical XMLTV tutorial: the format, guide sources, tvg-id and channel-name matching, merging multiple EPG feeds, and fixing an empty guide.","datePublished":"2026-11-04","dateModified":"2026-11-04","author":{"@type":"Organization","name":"StreamShōgun"},"publisher":{"@type":"Organization","name":"StreamShōgun","url":"https://streamshogun.com"},"mainEntityOfPage":"https://streamshogun.com/blog/xmltv-epg-setup-guide","image":"https://streamshogun.com/og-image.png"}
+  </script>
+</head>
+<body class="min-w-0 overflow-x-hidden bg-ink font-sans text-slate-100 antialiased">
+  <a href="#article" class="fixed top-3 left-3 z-[100] -translate-y-20 rounded-lg bg-white px-4 py-2 font-semibold text-slate-950 transition focus:translate-y-0">Skip to article</a>
+  <header class="sticky inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-ink/85 backdrop-blur-xl">
+    <nav class="page-shell flex h-16 items-center justify-between" aria-label="Primary navigation">
+      <a href="/" class="flex items-center gap-2.5 font-semibold tracking-[-0.025em] text-white" aria-label="StreamShōgun home"><span class="logo-mark grid size-8 place-items-center bg-violet-brand text-sm font-bold shadow-[0_0_25px_rgba(124,92,255,.35)]">S</span><span>StreamShōgun</span></a>
+      <div class="hidden items-center gap-7 text-sm text-slate-400 md:flex"><a class="transition hover:text-white" href="/#features">Features</a><a class="text-white" href="/blog/">Guides</a><a class="transition hover:text-white" href="/#downloads">Downloads</a><a class="transition hover:text-white" href="/#pricing">Pricing</a></div>
+      <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary min-h-10 px-4 py-2" target="_blank" rel="noopener">Download free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="relative overflow-hidden border-b border-white/[0.07] py-20 sm:py-28">
+      <div class="bg-grid pointer-events-none absolute inset-0"></div><div class="hero-glow pointer-events-none absolute -top-72 left-[35%] h-[650px] w-[750px]"></div>
+      <div class="page-shell relative">
+        <nav aria-label="Breadcrumb" class="font-mono text-[10px] tracking-widest text-slate-500 uppercase"><a class="hover:text-violet-300" href="/">Home</a><span class="mx-2">/</span><a class="hover:text-violet-300" href="/blog/">Guides</a><span class="mx-2">/</span><span class="text-slate-400">XMLTV EPG</span></nav>
+        <div class="mt-9 flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-widest text-violet-300 uppercase"><span>EPG fundamentals</span><span class="text-slate-700">•</span><time datetime="2026-11-04" class="text-slate-500">November 4, 2026</time><span class="text-slate-700">•</span><span class="text-slate-500">11 min read</span></div>
+        <h1 class="mt-6 max-w-5xl text-[clamp(2.7rem,6.5vw,5.4rem)] leading-[1.02] font-semibold tracking-[-0.06em] text-white">XMLTV EPG Setup Guide: From Empty Guide to Full Schedule</h1>
+        <p class="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">A playlist without guide data is just a wall of channel names. XMLTV is the format that adds "what's on"—this guide explains the format, how channels get matched, and how to build one reliable guide from several sources.</p>
+        <div class="mt-8 flex flex-wrap gap-3 text-xs text-slate-500"><span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">XMLTV format</span><span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">tvg-id matching</span><span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">Multi-source merge</span></div>
+      </div>
+    </section>
+
+    <div class="page-shell grid items-start gap-12 py-14 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16 lg:py-20">
+      <article id="article" class="min-w-0">
+        <div class="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-sm leading-6 text-slate-400"><strong class="text-slate-200">A quick boundary:</strong> StreamShōgun ships with no guide data. You connect XMLTV sources you are authorized to use, and everything is processed on your desktop. Still choosing stream sources? Read <a class="font-medium text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/the-legal-guide-to-free-iptv">the legal guide to free IPTV</a> first.</div>
+
+        <div class="mt-12 space-y-7 text-[17px] leading-8 text-slate-300">
+          <p>EPG—electronic programme guide—is the schedule layer: titles, start times, descriptions, and episode information for each channel. The de facto standard format for exchanging it is <strong class="font-semibold text-white">XMLTV</strong>, an XML dialect that has been around since the early 2000s and is understood by nearly every serious player and guide tool.</p>
+          <p>The good news: the format is simple and you can read it in a text editor. The bad news: a playlist and a guide only connect when their channel identifiers agree, and that agreement is where most setups break down.</p>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">What an XMLTV file actually contains</h2>
+        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+          <p>An XMLTV document has two kinds of records. <strong class="font-semibold text-white">Channels</strong> declare who the guide knows about, and <strong class="font-semibold text-white">programmes</strong> attach schedule entries to those channel IDs:</p>
+          <div class="overflow-x-auto rounded-xl border border-white/10 bg-black/35 p-4"><pre class="font-mono text-sm leading-7 whitespace-pre text-cyan-300">&lt;tv&gt;
+  &lt;channel id="BBCOne.uk"&gt;
+    &lt;display-name&gt;BBC One&lt;/display-name&gt;
+    &lt;icon src="https://example.com/bbc1.png"/&gt;
+  &lt;/channel&gt;
+  &lt;programme channel="BBCOne.uk" start="20261104200000 +0000"
+             stop="20261104210000 +0000"&gt;
+    &lt;title&gt;Evening News&lt;/title&gt;
+    &lt;desc&gt;The day's top stories.&lt;/desc&gt;
+    &lt;category&gt;News&lt;/category&gt;
+    &lt;episode-num system="xmltv_ns"&gt;0.4.0/1&lt;/episode-num&gt;
+  &lt;/programme&gt;
+&lt;/tv&gt;</pre></div>
+          <p>Details worth knowing when troubleshooting:</p>
+          <ul class="space-y-4 pl-1"><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">Timestamps</strong> use <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">YYYYMMDDhhmmss</code> plus a UTC offset like <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">+0900</code>. A correct parser converts everything to UTC—if your guide appears shifted by whole hours, the source's offsets are wrong or missing.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">Channel IDs are arbitrary strings</strong> chosen by the guide publisher. There is no global registry, which is exactly why matching to your playlist matters.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">Files are often gzipped</strong> (a <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">.xml.gz</code> URL) because a week of schedules for hundreds of channels compresses extremely well. A good player detects and decompresses gzip automatically.</span></li></ul>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Where guide data comes from</h2>
+        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+          <p>XMLTV files are produced by <em>grabbers</em>—tools that collect schedules from broadcasters or listings services—or published directly by guide providers. Common legitimate origins include a broadcaster's own published feed, a listings service your subscription entitles you to, community-maintained open guide projects for public channels, and grabbers you run yourself against sources you may access.</p>
+          <p>Whatever the source, treat a guide like any other data feed: prefer publishers that document their coverage and update cadence, check that the channels you actually watch are included, and confirm the schedule timezone behavior before trusting it for recordings or reminders.</p>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">How playlist channels connect to guide channels</h2>
+        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+          <p>The bridge between your M3U playlist and an XMLTV guide is one attribute in the playlist: <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">tvg-id</code>. When a playlist entry's <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">tvg-id</code> equals a channel <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">id</code> in the guide, matching is exact and immediate.</p>
+          <p>Real playlists rarely cooperate. IDs are missing, or the playlist publisher and the guide publisher chose different ID schemes. Then matching falls back to names—and <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">NEWS 24 | HD</code> does not equal <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">News 24</code> until something normalizes case, punctuation, quality tokens, and country prefixes. That normalization is what Smart Channel Matching does, with a confidence score so you can review the suggestions that are merely plausible rather than obvious.</p>
+          <p>If your guide is empty after setup, this matching step is almost always the reason: the guide loaded fine, but no playlist channel could be confidently linked to a guide channel.</p>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Setting up your first guide in StreamShōgun</h2>
+        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+          <ol class="space-y-6"><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 01</span><h3 class="mt-3 text-xl font-semibold text-white">Add the XMLTV source</h3><p class="mt-3 text-base leading-7 text-slate-400">In StreamShōgun, open your EPG sources and add the guide URL you are authorized to use—plain <code class="font-mono text-sm text-cyan-300">.xml</code> and gzipped <code class="font-mono text-sm text-cyan-300">.xml.gz</code> endpoints both work. Name it after its coverage, e.g. "UK free-to-air — weekly".</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 02</span><h3 class="mt-3 text-xl font-semibold text-white">Let it parse, then check coverage</h3><p class="mt-3 text-base leading-7 text-slate-400">After the first fetch, confirm the guide actually contains the channels you watch. Coverage problems are source problems—no amount of local tweaking fixes a guide that simply doesn't list your channels.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 03</span><h3 class="mt-3 text-xl font-semibold text-white">Run channel matching</h3><p class="mt-3 text-base leading-7 text-slate-400">Open the matching view. Exact <code class="font-mono text-sm text-cyan-300">tvg-id</code> hits attach automatically; name-based suggestions arrive with confidence scores. Approve the obvious ones in bulk and reserve your attention for the low-confidence tail.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 04</span><h3 class="mt-3 text-xl font-semibold text-white">Fix the stragglers manually</h3><p class="mt-3 text-base leading-7 text-slate-400">For channels that refuse to match, assign the guide entry by hand. Manual assignments stick, so this is a one-time tax per channel rather than a recurring chore.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 05</span><h3 class="mt-3 text-xl font-semibold text-white">Enable auto-refresh</h3><p class="mt-3 text-base leading-7 text-slate-400">Schedules go stale—typically within days. With Pro, auto-refresh re-pulls your guide sources on a schedule and re-runs matching, so the guide stays current without manual fetches.</p></li></ol>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Merging multiple EPG sources</h2>
+        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+          <p>No single guide covers everything. A realistic setup combines a regional guide with one or two channel-specific feeds. Multi-EPG merge handles this: each source contributes its channels, and programmes for the same matched channel combine into one timeline instead of competing duplicates.</p>
+          <p>Two habits keep a merged guide trustworthy:</p>
+          <ul class="space-y-4 pl-1"><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-cyan-400"></span><span><strong class="text-white">Prefer one source per channel.</strong> When two guides list the same channel with conflicting schedules, decide which publisher you trust rather than letting the overlap surprise you mid-evening.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-cyan-400"></span><span><strong class="text-white">Watch the refresh cadence.</strong> A source that updates weekly will show empty cells for the days beyond its horizon. Knowing each source's update rhythm explains gaps before you debug them.</span></li></ul>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Troubleshooting the classic failures</h2>
+        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+          <div class="grid gap-4 sm:grid-cols-2"><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Guide is completely empty</strong><span class="mt-2 block text-sm leading-6 text-slate-400">Usually matching, not loading. Check the matching view: if no channels linked, the IDs and names don't align—normalize playlist names or assign matches manually.</span></div><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Everything shifted by hours</strong><span class="mt-2 block text-sm leading-6 text-slate-400">Timezone offsets in the source are wrong or absent. Confirm the file's timestamps carry an offset; if they don't, treat the source as unreliable.</span></div><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Schedules stop after a few days</strong><span class="mt-2 block text-sm leading-6 text-slate-400">That is the source's coverage horizon, not a bug. Enable auto-refresh so new days arrive as the publisher extends them.</span></div><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Fetch fails outright</strong><span class="mt-2 block text-sm leading-6 text-slate-400">Check the URL in a browser, confirm it returns XML (or gzip), and look for size limits—very large guides need a player that decompresses and validates carefully.</span></div></div>
+        </div>
+
+        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Frequently asked questions</h2>
+        <div class="mt-7 divide-y divide-white/10 border-y border-white/10">
+          <section class="py-7"><h3 class="text-xl font-semibold text-white">Is XMLTV the only EPG format?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">It is the most widely supported interchange format, and the one StreamShōgun consumes. Some providers offer proprietary JSON APIs, but XMLTV's age means virtually every guide tool can produce or read it.</p></section>
+          <section class="py-7"><h3 class="text-xl font-semibold text-white">Why does my playlist have tvg-id values that match nothing?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">The playlist publisher wrote IDs for a guide scheme you are not using. IDs are only meaningful when playlist and guide share a scheme—otherwise fall back to normalized name matching or manual assignment.</p></section>
+          <section class="py-7"><h3 class="text-xl font-semibold text-white">How big can an XMLTV file get?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">Large global guides reach tens of megabytes compressed and far more uncompressed. StreamShōgun validates and decompresses with strict size limits so a malformed or hostile feed cannot exhaust your machine.</p></section>
+          <section class="py-7"><h3 class="text-xl font-semibold text-white">Does StreamShōgun provide guide data?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">No. It fetches, merges, and matches XMLTV sources you connect. No channels, schedules, or streams are bundled with the app.</p></section>
+        </div>
+
+        <div class="mt-14 rounded-3xl border border-violet-400/25 bg-violet-500/[0.08] p-7 sm:p-10"><div class="eyebrow">The practical takeaway</div><h2 class="text-3xl font-semibold tracking-[-0.04em] text-white">IDs first, names second, review the tail.</h2><p class="mt-5 text-[17px] leading-8 text-slate-300">Connect a guide that covers your channels, let exact matches attach themselves, and spend your time only on the ambiguous remainder. StreamShōgun does the parsing, merging, and confidence scoring on your desktop.</p><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary mt-7" target="_blank" rel="noopener">Download StreamShōgun free</a></div>
+
+        <div class="mt-12 border-t border-white/10 pt-8"><h2 class="font-mono text-[10px] tracking-widest text-slate-500 uppercase">Further reading</h2><ul class="mt-4 space-y-3 text-sm text-slate-400"><li><a class="text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/organize-m3u-playlists">How to Organize M3U Playlists: Cleaning, Merging, and Naming</a></li><li><a class="text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/the-legal-guide-to-free-iptv">The Legal Guide to Free IPTV and Public M3U Streams</a></li></ul></div>
+      </article>
+
+      <aside id="download-sidebar" class="lg:sticky lg:top-24" aria-label="Download StreamShōgun">
+        <div class="relative overflow-hidden rounded-2xl border border-violet-400/30 bg-gradient-to-b from-violet-500/[0.14] to-slate-950 p-6 shadow-[0_30px_80px_rgba(76,29,149,.18)]"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300 to-transparent"></div><div class="font-mono text-[10px] tracking-widest text-violet-300 uppercase">Organize it locally</div><h2 class="mt-4 text-2xl font-semibold tracking-[-0.035em] text-white">Your playlists deserve a cleaner desktop.</h2><p class="mt-3 text-sm leading-6 text-slate-400">Import M3U sources, connect XMLTV guides, and review smart channel matches.</p><div class="mt-6 space-y-2.5"><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-primary w-full justify-between"><span>Download for Windows</span><span class="font-mono text-[9px] opacity-70">.EXE</span></a><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-secondary w-full justify-between"><span>Download for macOS</span><span class="font-mono text-[9px] text-slate-500">.DMG</span></a><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-secondary w-full justify-between"><span>Download for Linux</span><span class="font-mono text-[9px] text-slate-500">.APPIMAGE</span></a></div><p class="mt-5 text-center font-mono text-[9px] leading-4 tracking-wide text-slate-600 uppercase">Free tier · No credit card<br>Windows · macOS · Linux</p></div>
+        <div class="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><div class="flex items-start gap-3"><svg class="mt-0.5 size-5 shrink-0 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg><div><h2 class="text-sm font-semibold text-slate-200">Software, not a provider</h2><p class="mt-1 text-xs leading-5 text-slate-500">StreamShōgun supplies no channels, playlists, or subscriptions. You remain in control of every source.</p></div></div></div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/[0.07] py-10"><div class="page-shell flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between"><div><a href="/" class="flex items-center gap-2.5 font-semibold"><span class="logo-mark grid size-7 place-items-center bg-violet-brand text-[10px] font-bold">S</span>StreamShōgun</a><p class="mt-3 max-w-md text-xs leading-5 text-slate-600">A local-first desktop playlist manager. No content or streaming service is provided.</p></div><div class="flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-500"><a class="hover:text-white" href="/blog/">Guides</a><a class="hover:text-white" href="/community">Community</a><a class="hover:text-white" href="/privacy">Privacy</a><a class="hover:text-white" href="/terms">Terms</a></div></div></footer>
+  <script src="/site.js" defer></script>
+</body>
+</html>

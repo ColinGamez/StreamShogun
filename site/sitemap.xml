@@ -8,9 +8,21 @@
   </url>
   <url>
     <loc>https://streamshogun.com/blog/</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://streamshogun.com/blog/xmltv-epg-setup-guide</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://streamshogun.com/blog/organize-m3u-playlists</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://streamshogun.com/blog/the-legal-guide-to-free-iptv</loc>
