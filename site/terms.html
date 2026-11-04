@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="theme-color" content="#7c5cfc" />
+  <meta name="theme-color" content="#2b2f33" />
   <title>Terms of Service — StreamShōgun</title>
   <meta name="description" content="Terms of Service for StreamShōgun desktop IPTV player application." />
   <link rel="canonical" href="https://streamshogun.com/terms" />
@@ -29,193 +29,22 @@
   }
   </script>
 
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
-
-    :root {
-      --bg:           #09090b;
-      --bg-subtle:    #111114;
-      --surface:      #18181b;
-      --border:       rgba(255,255,255,0.06);
-      --border-hover: rgba(255,255,255,0.12);
-      --text:         #fafafa;
-      --text-muted:   #a1a1aa;
-      --text-dim:     #71717a;
-      --accent:       #7c5cfc;
-      --accent-hover: #9a7eff;
-      --radius:       12px;
-      --transition:   0.2s ease;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(9,9,11,0.85); backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-    }
-    .nav-inner {
-      max-width: 800px; margin: 0 auto; padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      height: 60px;
-    }
-    .nav-brand {
-      font-size: 18px; font-weight: 800; color: var(--text);
-      text-decoration: none; letter-spacing: -0.02em;
-    }
-    .nav-brand span { color: var(--accent); }
-    .nav-back {
-      color: var(--text-muted); text-decoration: none; font-size: 14px;
-      font-weight: 500; transition: color var(--transition);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .nav-back:hover { color: var(--text); }
-
-    .legal-wrapper {
-      flex: 1; max-width: 800px; margin: 0 auto; width: 100%;
-      padding: 100px 24px 60px;
-    }
-
-    .legal-wrapper h1 {
-      font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
-      margin-bottom: 8px;
-    }
-    .legal-meta {
-      color: var(--text-dim); font-size: 14px; margin-bottom: 40px;
-    }
-    .legal-wrapper h2 {
-      font-size: 20px; font-weight: 700; margin-top: 40px; margin-bottom: 12px;
-      letter-spacing: -0.01em;
-    }
-    .legal-wrapper p {
-      color: var(--text-muted); font-size: 15px; line-height: 1.8;
-      margin-bottom: 16px;
-    }
-    .legal-wrapper ul {
-      list-style: none; margin-bottom: 16px; padding-left: 0;
-    }
-    .legal-wrapper ul li {
-      color: var(--text-muted); font-size: 15px; line-height: 1.8;
-      padding-left: 20px; position: relative;
-    }
-    .legal-wrapper ul li::before {
-      content: ''; position: absolute; left: 0; top: 11px;
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--accent);
-    }
-    .legal-wrapper a {
-      color: var(--accent); text-decoration: none;
-    }
-    .legal-wrapper a:hover { color: var(--accent-hover); }
-
-    .page-footer {
-      text-align: center; padding: 24px;
-      color: var(--text-dim); font-size: 13px;
-      border-top: 1px solid var(--border);
-    }
-    .page-footer a { color: var(--text-muted); text-decoration: none; }
-    .page-footer a:hover { color: var(--text); }
-
-    .back-to-top {
-      position: fixed; bottom: 32px; right: 32px; z-index: 90;
-      width: 44px; height: 44px; border-radius: 50%;
-      background: var(--accent); color: #fff; border: none;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      opacity: 0; transform: translateY(10px); pointer-events: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 20px rgba(124,92,252,0.3);
-    }
-    .back-to-top.visible {
-      opacity: 1; transform: translateY(0); pointer-events: auto;
-    }
-    .back-to-top:hover {
-      background: var(--accent-hover); transform: translateY(-2px);
-      box-shadow: 0 6px 28px rgba(124,92,252,0.4);
-    }
-
-    /* ── Skip Link ───────────────────────────────────────────────── */
-    .skip-link {
-      position: absolute; top: -100px; left: 16px;
-      background: var(--accent); color: #fff;
-      padding: 8px 16px; border-radius: 8px;
-      font-size: 14px; font-weight: 600;
-      text-decoration: none; z-index: 999;
-      transition: top 0.2s ease;
-    }
-    .skip-link:focus { top: 12px; }
-
-    /* Page entrance */
-    body { animation: pageEntrance 0.6s ease both; }
-    @keyframes pageEntrance { from { opacity: 0; } to { opacity: 1; } }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-      html { scroll-behavior: auto; }
-    }
-
-    /* ── Print styles ─────────────────────────────────────────────── */
-    @media print {
-      body { background: #fff; color: #000; }
-      .nav, .back-to-top, .page-footer { display: none; }
-      .legal-wrapper { padding-top: 20px; max-width: 100%; }
-      .legal-wrapper h1 { color: #000; font-size: 24px; }
-      .legal-wrapper h2 { color: #222; font-size: 16px; margin-top: 24px; }
-      .legal-wrapper p, .legal-wrapper ul li { color: #333; font-size: 13px; line-height: 1.6; }
-      .legal-wrapper ul li::before { background: #333; }
-      .legal-wrapper a { color: #000; text-decoration: underline; }
-      .legal-meta { color: #666; }
-      .toc { display: none; }
-    }
-
-    /* ── Table of Contents ────────────────────────────────────────── */
-    .toc {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px 24px;
-      margin-bottom: 32px;
-    }
-    .toc h3 {
-      font-size: 12px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 12px;
-    }
-    .toc ol {
-      list-style: none; counter-reset: toc-counter; padding: 0;
-    }
-    .toc ol li {
-      counter-increment: toc-counter;
-    }
-    .toc ol li a {
-      display: flex; align-items: baseline; gap: 8px;
-      padding: 6px 0; font-size: 14px; color: var(--text-muted);
-      text-decoration: none; transition: color var(--transition);
-    }
-    .toc ol li a:hover { color: var(--accent); }
-    .toc ol li a.toc-active {
-      color: var(--accent); font-weight: 600;
-    }
-    .toc ol li a.toc-active::before { color: var(--accent); }
-    .toc ol li a::before {
-      content: counter(toc-counter) '.';
-      font-size: 12px; font-weight: 600; color: var(--text-dim);
-      min-width: 20px;
-    }
+  <link rel="stylesheet" href="/retro.css" />
+  <style>.legal-wrapper{max-width:760px;margin:22px auto 40px;background:#fff;border:1px solid #c4c9cf;border-radius:4px;padding:26px 28px 40px}
+.legal-wrapper h1{font-size:26px;margin:0 0 6px}
+.legal-meta{font-size:11px;color:#888;border-bottom:1px solid #dfe2e6;padding-bottom:12px;margin-bottom:18px}
+.legal-wrapper h2{font-family:Georgia,serif;font-size:18px;margin:26px 0 8px}
+.legal-wrapper p{font-size:13px;color:#333;line-height:1.7;margin:0 0 10px}
+.legal-wrapper ul{margin:0 0 10px 22px;font-size:13px;color:#333;line-height:1.7}
+.legal-wrapper li{margin-bottom:4px}
+.toc{background:#fff;border:1px solid #c4c9cf;border-radius:4px;padding:14px 18px;font-size:12px;line-height:1.9;margin-bottom:22px}
+.toc a{text-decoration:none}
+.toc a:hover{text-decoration:underline}
+@media print{
+  .nav,.nav-back,.back-to-top,.page-footer,.skip-link{display:none !important}
+  .legal-wrapper{border:none;margin:0;max-width:none}
+}
   </style>
 </head>
 <body>
