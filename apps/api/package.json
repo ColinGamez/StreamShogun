@@ -30,7 +30,7 @@
     "fastify": "^5.12.5",
     "jose": "^6.2.4",
     "nodemailer": "^10.0.13",
-    "stripe": "^20.4.0",
+    "stripe": "^23.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
