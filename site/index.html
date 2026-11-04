@@ -1,18 +1,15 @@
 <!doctype html>
-<html lang="en" class="bg-ink">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StreamShōgun — Your IPTV playlists, finally organized</title>
   <meta name="description" content="A premium desktop playlist manager for your own M3U playlists and XMLTV guides. Match channels, merge EPG data, and sync your setup across Windows, macOS, and Linux.">
-  <meta name="theme-color" content="#070812">
+  <meta name="theme-color" content="#2b2f33">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://streamshogun.com/">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/retro.css">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://streamshogun.com/">
   <meta property="og:title" content="StreamShōgun — Your IPTV playlists, finally organized">
@@ -24,148 +21,212 @@
   {"@context":"https://schema.org","@type":"SoftwareApplication","name":"StreamShōgun","applicationCategory":"MultimediaApplication","operatingSystem":"Windows, macOS, Linux","description":"Desktop software for organizing user-provided M3U playlists and XMLTV programme guides.","url":"https://streamshogun.com","offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD"},{"@type":"Offer","name":"Pro Monthly","price":"6.99","priceCurrency":"USD"},{"@type":"Offer","name":"Pro Yearly","price":"69.99","priceCurrency":"USD"}]}
   </script>
 </head>
-<body class="min-w-0 overflow-x-hidden bg-ink font-sans text-slate-100 antialiased">
-  <a href="#main" class="fixed top-3 left-3 z-[100] -translate-y-20 rounded-lg bg-white px-4 py-2 font-semibold text-slate-950 transition focus:translate-y-0">Skip to content</a>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
 
-  <header class="fixed inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-ink/80 backdrop-blur-xl">
-    <nav class="page-shell flex h-16 items-center justify-between" aria-label="Primary navigation">
-      <a href="#main" class="flex items-center gap-2.5 font-semibold tracking-[-0.025em] text-white" aria-label="StreamShōgun home">
-        <span class="logo-mark grid size-8 place-items-center bg-violet-brand text-sm font-bold shadow-[0_0_25px_rgba(124,92,255,.35)]">S</span>
-        <span>StreamShōgun</span>
-      </a>
-      <div class="hidden items-center gap-7 text-sm text-slate-400 md:flex">
-        <a class="transition hover:text-white" href="#product">Product</a>
-        <a class="transition hover:text-white" href="#features">Features</a>
-        <a class="transition hover:text-white" href="/blog/">Guides</a>
-        <a class="transition hover:text-white" href="#downloads">Downloads</a>
-        <a class="transition hover:text-white" href="#pricing">Pricing</a>
-      </div>
-      <div class="hidden items-center gap-3 md:flex">
-        <a href="/login" class="px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white">Log in</a>
-        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary min-h-10 px-4 py-2" target="_blank" rel="noopener">Download free</a>
-      </div>
-      <button data-menu-button type="button" class="grid size-11 place-items-center rounded-xl border border-white/10 bg-white/[0.04] md:hidden" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">
-        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-    </nav>
-    <div data-mobile-menu id="mobile-menu" hidden class="border-t border-white/10 bg-ink px-5 py-5 md:hidden">
-      <div class="flex flex-col gap-1 text-base">
-        <a class="rounded-lg px-3 py-3 hover:bg-white/5" href="#product">Product</a>
-        <a class="rounded-lg px-3 py-3 hover:bg-white/5" href="#features">Features</a>
-        <a class="rounded-lg px-3 py-3 hover:bg-white/5" href="/blog/">Guides</a>
-        <a class="rounded-lg px-3 py-3 hover:bg-white/5" href="#downloads">Downloads</a>
-        <a class="rounded-lg px-3 py-3 hover:bg-white/5" href="#pricing">Pricing</a>
-        <a class="rounded-lg px-3 py-3 hover:bg-white/5" href="/login">Log in</a>
-        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary mt-2" target="_blank" rel="noopener">Download free</a>
-      </div>
+  <header class="site-header">
+    <div class="wrap">
+      <a href="#main" class="brand" aria-label="StreamShōgun home"><span class="mark">S</span>StreamShōgun</a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="#product">Product</a>
+        <a href="#features">Features</a>
+        <a href="/blog/">Guides</a>
+        <a href="#downloads">Downloads</a>
+        <a href="#pricing">Pricing</a>
+        <a href="/login">Log in</a>
+        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn btn-primary btn-small" target="_blank" rel="noopener">Download free</a>
+      </nav>
+      <button data-menu-button type="button" class="menu-button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">☰</button>
+    </div>
+    <div data-mobile-menu id="mobile-menu" hidden class="mobile-menu">
+      <a href="#product">Product</a>
+      <a href="#features">Features</a>
+      <a href="/blog/">Guides</a>
+      <a href="#downloads">Downloads</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/login">Log in</a>
+      <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener">Download free</a>
     </div>
   </header>
 
   <main id="main">
-    <section class="relative overflow-hidden pt-36 pb-24 sm:pt-44 lg:pt-52 lg:pb-32">
-      <div class="bg-grid pointer-events-none absolute inset-0"></div>
-      <div class="hero-glow pointer-events-none absolute -top-40 left-[42%] h-[600px] w-[700px]"></div>
-      <div class="page-shell relative grid items-center gap-14 lg:grid-cols-[.83fr_1.17fr] lg:gap-10">
-        <div class="relative z-10">
-          <div class="eyebrow"><span class="size-1.5 rounded-full bg-cyan-signal shadow-[0_0_12px_#67e8f9]"></span>Your playlists. Finally organized.</div>
-          <h1 class="max-w-[670px] text-[clamp(2.85rem,7vw,5.4rem)] leading-[.98] font-semibold tracking-[-0.065em] text-white">Turn playlist chaos into a clean TV guide.</h1>
-          <p class="mt-7 max-w-xl text-lg leading-8 text-slate-300">Import your own M3U playlists and EPG sources. StreamShōgun matches channels, merges guides, and keeps your desktop setup beautifully organized.</p>
-          <p class="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-500">
-            <svg class="mt-1 size-4 shrink-0 text-violet-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
-            Desktop software only. No channels, playlists, or streaming subscriptions included.
-          </p>
-          <div class="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary w-full sm:w-auto" target="_blank" rel="noopener">
-              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg>
-              Download free for <span data-platform-label>desktop</span>
-            </a>
-            <a href="#product" class="btn-secondary w-full sm:w-auto">Explore the app <span aria-hidden="true">↓</span></a>
+    <section class="hero">
+      <div class="wrap cols">
+        <div class="intro">
+          <div class="label">Your playlists. Finally organized.</div>
+          <h1>Turn playlist chaos into a clean TV guide.</h1>
+          <p class="lede">Import your own M3U playlists and EPG sources. StreamShōgun matches channels, merges guides, and keeps your desktop setup beautifully organized.</p>
+          <p class="note">Desktop software only. No channels, playlists, or streaming subscriptions included.</p>
+          <div class="actions">
+            <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">Download free for <span data-platform-label>desktop</span></a>
+            <a href="#product" class="btn">Explore the app ↓</a>
           </div>
-          <div class="mt-7 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] tracking-wide text-slate-500 uppercase">
-            <span>No credit card</span><span>Local-first playback</span><span>Win · Mac · Linux</span>
+          <div class="facts">
+            <span>No credit card</span>
+            <span>Local-first playback</span>
+            <span>Win · Mac · Linux</span>
           </div>
         </div>
 
-        <div class="relative lg:-mr-36" aria-label="Simulated StreamShōgun application showing smart channel matching and an EPG timeline" role="img">
-          <div class="absolute -inset-10 rounded-full bg-violet-600/15 blur-3xl"></div>
-          <div class="surface relative overflow-hidden rounded-2xl bg-[#0a0c16]/95 shadow-[0_45px_130px_rgba(0,0,0,.65),0_0_0_1px_rgba(124,92,255,.12)] lg:rotate-[1deg]">
-            <div class="flex h-11 items-center border-b border-white/10 bg-white/[0.035] px-4">
-              <div class="flex gap-1.5"><span class="size-2.5 rounded-full bg-red-400/80"></span><span class="size-2.5 rounded-full bg-amber-300/80"></span><span class="size-2.5 rounded-full bg-emerald-400/80"></span></div>
-              <div class="mx-auto font-mono text-[10px] text-slate-500">STREAMSHŌGUN / MASTER LIBRARY</div>
+        <div class="demo" aria-label="Simulated StreamShōgun application showing smart channel matching and an EPG timeline" role="img">
+          <div class="window">
+            <div class="window-title">
+              <span class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></span>
+              <span class="caption">STREAMSHŌGUN / MASTER LIBRARY</span>
             </div>
-            <div class="grid min-h-[430px] grid-cols-[74px_1fr] sm:grid-cols-[150px_1fr]">
-              <aside class="border-r border-white/10 bg-black/20 p-3 sm:p-4">
-                <div class="mb-7 flex items-center gap-2"><span class="logo-mark grid size-7 place-items-center bg-violet-brand text-[10px] font-bold">S</span><span class="hidden text-xs font-semibold sm:block">Library</span></div>
-                <div class="space-y-2 text-[10px] text-slate-500 sm:text-xs">
-                  <div class="rounded-lg bg-violet-500/14 px-2 py-2.5 text-violet-200">Guide</div>
-                  <div class="px-2 py-2.5">Channels</div><div class="px-2 py-2.5">Sources</div><div class="px-2 py-2.5">Matches</div>
+            <div class="window-body">
+              <div class="window-side">
+                <div class="side-title">Library</div>
+                <ul>
+                  <li class="active">Guide</li>
+                  <li>Channels</li>
+                  <li>Sources</li>
+                  <li>Matches</li>
+                </ul>
+                <div class="sync">● Up to date</div>
+              </div>
+              <div class="window-main">
+                <h4>Channel matching</h4>
+                <div class="sub">Nordic Mix · 128 channels · 94% matched</div>
+                <div class="match-row"><span><span class="name">National Geographic HD</span><span class="src">Nat Geo · XMLTV 01</span></span><span class="pct">98%</span></div>
+                <div class="match-row"><span><span class="name">BBC Earth</span><span class="src">BBC Earth Europe · XMLTV 01</span></span><span class="pct">95%</span></div>
+                <div class="match-row review"><span><span class="name">Cinema One FHD</span><span class="src">Needs review</span></span><span class="pct">72%</span></div>
+                <div class="epg-strip">
+                  <div class="label">Tonight’s guide · 20:00 — 23:00</div>
+                  <div class="epg-row"><span>CH1</span><div class="epg-bars"><span class="a" style="width:42%"></span><span class="c" style="width:58%"></span></div></div>
+                  <div class="epg-row"><span>CH2</span><div class="epg-bars"><span class="b" style="width:28%"></span><span class="a" style="width:48%"></span><span class="c" style="width:24%"></span></div></div>
                 </div>
-                <div class="mt-9 hidden border-t border-white/10 pt-4 sm:block"><div class="font-mono text-[9px] text-slate-600 uppercase">Sync status</div><div class="mt-2 flex items-center gap-2 text-[10px] text-emerald-300"><span class="size-1.5 rounded-full bg-emerald-400"></span>Up to date</div></div>
-              </aside>
-              <div class="min-w-0 p-4 sm:p-6">
-                <div class="flex items-center justify-between gap-3"><div><div class="text-sm font-semibold sm:text-base">Channel matching</div><div class="mt-1 text-[9px] text-slate-500 sm:text-[11px]">Nordic Mix · 128 channels</div></div><div class="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 font-mono text-[8px] text-emerald-300 sm:text-[10px]">94% MATCHED</div></div>
-                <div class="mt-5 grid gap-2">
-                  <div class="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-3"><div class="flex min-w-0 items-center gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-md bg-violet-500/15 text-[10px] text-violet-300">CH1</span><div class="min-w-0"><div class="truncate text-[11px] font-medium sm:text-xs">National Geographic HD</div><div class="truncate text-[9px] text-slate-600 sm:text-[10px]">Nat Geo · XMLTV 01</div></div></div><span class="font-mono text-[9px] text-emerald-300">98%</span></div>
-                  <div class="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg border border-violet-400/20 bg-violet-500/[0.07] p-3"><div class="flex min-w-0 items-center gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-md bg-cyan-400/10 text-[10px] text-cyan-300">CH2</span><div class="min-w-0"><div class="truncate text-[11px] font-medium sm:text-xs">BBC Earth</div><div class="truncate text-[9px] text-slate-600 sm:text-[10px]">BBC Earth Europe · XMLTV 01</div></div></div><span class="font-mono text-[9px] text-violet-300">95%</span></div>
-                  <div class="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-3"><div class="flex min-w-0 items-center gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-md bg-amber-400/10 text-[10px] text-amber-300">CH3</span><div class="min-w-0"><div class="truncate text-[11px] font-medium sm:text-xs">Cinema One FHD</div><div class="truncate text-[9px] text-slate-600 sm:text-[10px]">Needs review</div></div></div><span class="font-mono text-[9px] text-amber-300">72%</span></div>
-                </div>
-                <div class="mt-5 border-t border-white/10 pt-4"><div class="mb-3 flex items-center justify-between"><span class="text-[10px] font-medium text-slate-300 sm:text-xs">Tonight’s guide</span><span class="font-mono text-[8px] text-slate-600 sm:text-[9px]">20:00 — 23:00</span></div><div class="space-y-2"><div class="grid grid-cols-[38px_1fr] items-center gap-2"><span class="text-[8px] text-slate-600">CH1</span><div class="flex h-6 gap-1"><span class="w-[42%] rounded bg-violet-500/75"></span><span class="flex-1 rounded bg-slate-700/70"></span></div></div><div class="grid grid-cols-[38px_1fr] items-center gap-2"><span class="text-[8px] text-slate-600">CH2</span><div class="flex h-6 gap-1"><span class="w-[28%] rounded bg-cyan-500/65"></span><span class="w-[48%] rounded bg-violet-500/55"></span><span class="flex-1 rounded bg-slate-700/70"></span></div></div></div></div>
               </div>
             </div>
-            <div class="app-lines absolute inset-x-0 bottom-0 h-px"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="product" class="border-y border-white/[0.07] bg-slate-950/35 py-7">
-      <div class="page-shell grid gap-5 text-center sm:grid-cols-3 sm:divide-x sm:divide-white/10">
-        <div><div class="font-mono text-xs text-violet-300">M3U / M3U8</div><p class="mt-1 text-sm text-slate-500">Import files or remote URLs</p></div>
-        <div><div class="font-mono text-xs text-violet-300">XMLTV / EPG</div><p class="mt-1 text-sm text-slate-500">Merge multiple guide sources</p></div>
-        <div><div class="font-mono text-xs text-violet-300">DESKTOP NATIVE</div><p class="mt-1 text-sm text-slate-500">Windows, macOS, and Linux</p></div>
+    <section id="product" class="section alt">
+      <div class="wrap cols-3">
+        <div class="box"><div class="label">M3U / M3U8</div><p class="muted">Import files or remote URLs</p></div>
+        <div class="box"><div class="label">XMLTV / EPG</div><p class="muted">Merge multiple guide sources</p></div>
+        <div class="box"><div class="label">Desktop native</div><p class="muted">Windows, macOS, and Linux</p></div>
       </div>
     </section>
 
-    <section id="features" class="section-pad page-shell">
-      <div class="reveal"><div class="eyebrow">Core workflow</div><h2 class="section-title">The hard parts of playlist management, handled.</h2><p class="section-copy">A focused desktop workspace built around the three jobs that usually cost the most time.</p></div>
-      <div class="mt-12 grid gap-4 lg:grid-cols-3">
-        <article class="reveal surface group relative overflow-hidden rounded-2xl p-6 sm:p-7"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent"></div><div class="grid size-11 place-items-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 6 4-4 4 4M12 2v8M16 18l-4 4-4-4M12 22v-8M2 12h20"/></svg></div><div class="mt-8 font-mono text-[10px] tracking-widest text-violet-400">01 / MATCH</div><h3 class="mt-3 text-xl font-semibold tracking-tight">Smart Channel Matching</h3><p class="mt-3 text-sm leading-6 text-slate-400">Normalize messy channel names and map them to the right guide entries with visible confidence scores and manual review where needed.</p><div class="mt-7 flex items-center gap-2 text-xs text-slate-300"><span class="size-1.5 rounded-full bg-emerald-400"></span>Less manual mapping</div></article>
-        <article class="reveal surface group relative overflow-hidden rounded-2xl p-6 sm:p-7"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"></div><div class="grid size-11 place-items-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 16.5A4.5 4.5 0 0 0 17.5 8a6 6 0 0 0-11.6 2A4 4 0 0 0 6 18h12"/><path d="m9 15 3 3 3-3M12 18v-7"/></svg></div><div class="mt-8 font-mono text-[10px] tracking-widest text-cyan-400">02 / SYNC</div><h3 class="mt-3 text-xl font-semibold tracking-tight">Cross-Platform Sync</h3><p class="mt-3 text-sm leading-6 text-slate-400">Keep playlists, favorites, settings, and mappings aligned between your desktop machines without rebuilding the same setup twice.</p><div class="mt-7 flex items-center gap-2 text-xs text-slate-300"><span class="size-1.5 rounded-full bg-cyan-400"></span>Pick up where you left off</div></article>
-        <article class="reveal surface group relative overflow-hidden rounded-2xl p-6 sm:p-7"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent"></div><div class="grid size-11 place-items-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M7 14h3M14 14h3M7 17h3"/></svg></div><div class="mt-8 font-mono text-[10px] tracking-widest text-violet-400">03 / GUIDE</div><h3 class="mt-3 text-xl font-semibold tracking-tight">EPG Integration</h3><p class="mt-3 text-sm leading-6 text-slate-400">Combine multiple XMLTV sources into one browsable timeline, then connect programmes to the channels you already own.</p><div class="mt-7 flex items-center gap-2 text-xs text-slate-300"><span class="size-1.5 rounded-full bg-violet-400"></span>One unified guide</div></article>
-      </div>
-    </section>
-
-    <section class="section-pad border-y border-white/[0.07] bg-slate-950/35">
-      <div class="page-shell grid items-center gap-14 lg:grid-cols-[.72fr_1.28fr]">
-        <div class="reveal"><div class="eyebrow">From source to guide</div><h2 class="section-title">Set it up once. Keep it tidy.</h2><div class="mt-9 space-y-7"><div class="flex gap-4"><span class="grid size-8 shrink-0 place-items-center rounded-full border border-violet-400/25 bg-violet-400/10 font-mono text-[10px] text-violet-300">01</span><div><h3 class="font-semibold">Add your sources</h3><p class="mt-1 text-sm leading-6 text-slate-400">Import an M3U file or paste a URL, then connect your XMLTV guides.</p></div></div><div class="flex gap-4"><span class="grid size-8 shrink-0 place-items-center rounded-full border border-violet-400/25 bg-violet-400/10 font-mono text-[10px] text-violet-300">02</span><div><h3 class="font-semibold">Review smart matches</h3><p class="mt-1 text-sm leading-6 text-slate-400">Approve suggestions, resolve low-confidence items, and stay in control.</p></div></div><div class="flex gap-4"><span class="grid size-8 shrink-0 place-items-center rounded-full border border-violet-400/25 bg-violet-400/10 font-mono text-[10px] text-violet-300">03</span><div><h3 class="font-semibold">Browse your clean guide</h3><p class="mt-1 text-sm leading-6 text-slate-400">Search, favorite, and play the streams already in your playlists.</p></div></div></div></div>
-        <figure class="reveal surface overflow-hidden rounded-2xl bg-[#090b13] p-2"><img src="/screenshots/epg-guide.png" width="1280" height="800" alt="StreamShōgun electronic programme guide with channels and timeline" class="h-auto w-full rounded-xl"><figcaption class="flex items-center justify-between gap-4 px-3 py-3 text-xs text-slate-500"><span>A complete timeline built from your guide sources.</span><span class="hidden font-mono text-[9px] sm:block">EPG VIEW</span></figcaption></figure>
-      </div>
-    </section>
-
-    <section id="downloads" class="section-pad page-shell">
-      <div class="reveal text-center"><div class="eyebrow">Choose your platform</div><h2 class="section-title mx-auto">Your library belongs on your desktop.</h2><p class="section-copy mx-auto">Use the latest GitHub release to choose the installer format that fits your system.</p></div>
-      <div class="mt-12 grid gap-4 md:grid-cols-3">
-        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="reveal surface group rounded-2xl p-6 transition hover:-translate-y-1 hover:border-violet-400/35"><div class="flex items-start justify-between"><svg class="size-9 text-slate-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6 10.3 4.6v7H3V5.6Zm8.3-1.1L21 3v8.6h-9.7V4.5ZM3 12.6h7.3v7L3 18.6v-6Zm8.3 0H21V21l-9.7-1.3v-7.1Z"/></svg><span class="font-mono text-[9px] text-slate-600">01</span></div><h3 class="mt-7 text-lg font-semibold">Windows</h3><p class="mt-2 text-sm text-slate-500">NSIS installer or portable executable</p><div class="mt-7 flex items-center justify-between text-xs"><span class="font-mono text-violet-300">.EXE</span><span class="text-slate-400 transition group-hover:translate-x-1">View release →</span></div></a>
-        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="reveal surface group rounded-2xl p-6 transition hover:-translate-y-1 hover:border-violet-400/35"><div class="flex items-start justify-between"><svg class="size-9 text-slate-200" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.7 13.1c0-3.1 2.6-4.6 2.7-4.7a5.8 5.8 0 0 0-4.6-2.5c-1.9-.2-3.8 1.2-4.8 1.2-1 0-2.6-1.2-4.2-1.1A6.2 6.2 0 0 0 .6 9.2c-2.2 3.8-.6 9.5 1.6 12.6 1.1 1.5 2.3 3.2 4 3.1 1.6-.1 2.2-1 4.2-1s2.5 1 4.2 1c1.7 0 2.8-1.5 3.9-3.1a13.5 13.5 0 0 0 1.8-3.7 5.4 5.4 0 0 1-3.6-5Zm-3.2-9.2A5.5 5.5 0 0 0 14.8 0a5.6 5.6 0 0 0-3.7 1.9 5.2 5.2 0 0 0-1.3 3.7 4.7 4.7 0 0 0 3.7-1.7Z" transform="scale(.9) translate(2 0)"/></svg><span class="font-mono text-[9px] text-slate-600">02</span></div><h3 class="mt-7 text-lg font-semibold">macOS</h3><p class="mt-2 text-sm text-slate-500">Disk image or zipped application</p><div class="mt-7 flex items-center justify-between text-xs"><span class="font-mono text-violet-300">.DMG / .ZIP</span><span class="text-slate-400 transition group-hover:translate-x-1">View release →</span></div></a>
-        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="reveal surface group rounded-2xl p-6 transition hover:-translate-y-1 hover:border-violet-400/35"><div class="flex items-start justify-between"><svg class="size-9 text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 16c-3 2-3 5-3 5h14s0-3-3-5M9 10c-1 1-2 3-2 5m8-5c1 1 2 3 2 5M9 8c0-4 1-7 3-7s3 3 3 7c0 3-1 5-3 5s-3-2-3-5Z"/><path d="M10 7h.01M14 7h.01M10 10c1 1 3 1 4 0"/></svg><span class="font-mono text-[9px] text-slate-600">03</span></div><h3 class="mt-7 text-lg font-semibold">Linux</h3><p class="mt-2 text-sm text-slate-500">AppImage or Debian package</p><div class="mt-7 flex items-center justify-between text-xs"><span class="font-mono text-violet-300">.APPIMAGE / .DEB</span><span class="text-slate-400 transition group-hover:translate-x-1">View release →</span></div></a>
-      </div>
-      <p class="mt-6 text-center text-xs text-slate-600">Downloads are hosted on GitHub Releases. Availability can vary by release.</p>
-    </section>
-
-    <section id="pricing" class="section-pad border-y border-white/[0.07] bg-slate-950/35">
-      <div class="page-shell">
-        <div class="reveal text-center"><div class="eyebrow">Simple pricing</div><h2 class="section-title mx-auto">Start free. Upgrade when setup time matters.</h2><p class="section-copy mx-auto">Use the essentials without a card, then unlock automation and sync with Pro.</p></div>
-        <div class="price-switch mx-auto mt-9 flex w-fit items-center rounded-xl border border-white/10 bg-white/[0.04] p-1" aria-label="Billing frequency">
-          <button data-price="monthly" type="button" aria-pressed="true" class="rounded-lg px-4 py-2 text-xs font-semibold text-slate-400 transition">Monthly</button>
-          <button data-price="yearly" type="button" aria-pressed="false" class="rounded-lg px-4 py-2 text-xs font-semibold text-slate-400 transition">Yearly <span class="ml-1 text-emerald-500">save 16%</span></button>
+    <section id="features" class="section">
+      <div class="wrap">
+        <div class="label">Core workflow</div>
+        <h2>The hard parts of playlist management, handled.</h2>
+        <p class="intro">A focused desktop workspace built around the three jobs that usually cost the most time.</p>
+        <div class="cols-3">
+          <div class="box feature">
+            <div class="num">01 / Match</div>
+            <h3>Smart Channel Matching</h3>
+            <p>Normalize messy channel names and map them to the right guide entries with visible confidence scores and manual review where needed.</p>
+            <div class="tick">✓ Less manual mapping</div>
+          </div>
+          <div class="box feature">
+            <div class="num">02 / Sync</div>
+            <h3>Cross-Platform Sync</h3>
+            <p>Keep playlists, favorites, settings, and mappings aligned between your desktop machines without rebuilding the same setup twice.</p>
+            <div class="tick">✓ Pick up where you left off</div>
+          </div>
+          <div class="box feature">
+            <div class="num">03 / Guide</div>
+            <h3>EPG Integration</h3>
+            <p>Combine multiple XMLTV sources into one browsable timeline, then connect programmes to the channels you already own.</p>
+            <div class="tick">✓ One unified guide</div>
+          </div>
         </div>
-        <div class="mx-auto mt-10 grid max-w-4xl gap-5 md:grid-cols-2">
-          <article class="reveal surface rounded-2xl p-7 sm:p-8"><div class="font-mono text-[10px] tracking-widest text-slate-500">FREE</div><div class="mt-5 flex items-end gap-2"><span class="text-5xl font-semibold tracking-[-0.06em]">$0</span><span class="pb-1 text-sm text-slate-500">forever</span></div><p class="mt-5 min-h-12 text-sm leading-6 text-slate-400">Everything you need to bring a personal playlist into focus.</p><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-secondary mt-7 w-full">Download free</a><ul class="mt-8 space-y-3 text-sm text-slate-300"><li class="flex gap-3"><span class="text-violet-300">✓</span>Core playlist import and playback</li><li class="flex gap-3"><span class="text-violet-300">✓</span>One playlist setup</li><li class="flex gap-3"><span class="text-violet-300">✓</span>Manual EPG mapping</li><li class="flex gap-3"><span class="text-violet-300">✓</span>Favorites and history</li></ul></article>
-          <article class="reveal relative overflow-hidden rounded-2xl border border-violet-400/40 bg-gradient-to-b from-violet-500/[0.13] to-slate-900/70 p-7 shadow-[0_30px_100px_rgba(76,29,149,.2)] sm:p-8"><div class="absolute top-0 right-0 rounded-bl-xl bg-violet-brand px-3 py-1.5 font-mono text-[9px] tracking-wider text-white">7-DAY TRIAL</div><div class="font-mono text-[10px] tracking-widest text-violet-300">PRO</div><div class="mt-5 flex items-end gap-2"><span data-pro-price class="text-5xl font-semibold tracking-[-0.06em]">$6.99</span><span data-pro-cadence class="pb-1 text-sm text-slate-400">/ month</span></div><p data-pro-billed class="mt-2 text-xs text-slate-500">Billed monthly</p><p class="mt-5 min-h-12 text-sm leading-6 text-slate-300">Automate the tedious work and keep every desktop in step.</p><button data-checkout data-interval="monthly" type="button" class="btn-primary mt-7 w-full">Start Pro monthly</button><ul class="mt-8 space-y-3 text-sm text-slate-200"><li class="flex gap-3"><span class="text-violet-300">✓</span>Unlimited playlist sources</li><li class="flex gap-3"><span class="text-violet-300">✓</span>Smart channel matching</li><li class="flex gap-3"><span class="text-violet-300">✓</span>Multi-EPG merge and auto-refresh</li><li class="flex gap-3"><span class="text-violet-300">✓</span>Cross-platform cloud sync</li><li class="flex gap-3"><span class="text-violet-300">✓</span>Picture-in-picture</li></ul></article>
+      </div>
+    </section>
+
+    <section class="section alt">
+      <div class="wrap steps">
+        <div class="step-list">
+          <div class="label">From source to guide</div>
+          <h2>Set it up once. Keep it tidy.</h2>
+          <ol>
+            <li><span class="n">1</span><div><h3>Add your sources</h3><p>Import an M3U file or paste a URL, then connect your XMLTV guides.</p></div></li>
+            <li><span class="n">2</span><div><h3>Review smart matches</h3><p>Approve suggestions, resolve low-confidence items, and stay in control.</p></div></li>
+            <li><span class="n">3</span><div><h3>Browse your clean guide</h3><p>Search, favorite, and play the streams already in your playlists.</p></div></li>
+          </ol>
         </div>
-        <p class="mt-6 text-center text-xs text-slate-500">Cancel anytime. Pro stays active through the end of your billing period.</p>
-        <div class="mt-5 flex flex-col items-center gap-3">
-          <div class="flex flex-wrap items-center justify-center gap-2" role="list" aria-label="Accepted payment methods">
+        <figure>
+          <img src="/screenshots/epg-guide.png" width="1280" height="800" alt="StreamShōgun electronic programme guide with channels and timeline">
+          <figcaption>A complete timeline built from your guide sources.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="downloads" class="section">
+      <div class="wrap">
+        <div class="label">Choose your platform</div>
+        <h2>Your library belongs on your desktop.</h2>
+        <p class="intro">Use the latest GitHub release to choose the installer format that fits your system.</p>
+        <div class="cols-3">
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="box download">
+            <h3>Windows</h3>
+            <p>NSIS installer or portable executable</p>
+            <div class="fmt">.EXE →</div>
+          </a>
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="box download">
+            <h3>macOS</h3>
+            <p>Disk image or zipped application</p>
+            <div class="fmt">.DMG / .ZIP →</div>
+          </a>
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="box download">
+            <h3>Linux</h3>
+            <p>AppImage or Debian package</p>
+            <div class="fmt">.APPIMAGE / .DEB →</div>
+          </a>
+        </div>
+        <p class="small muted" style="margin-top:10px">Downloads are hosted on GitHub Releases. Availability can vary by release.</p>
+      </div>
+    </section>
+
+    <section id="pricing" class="section alt">
+      <div class="wrap">
+        <div class="label">Simple pricing</div>
+        <h2>Start free. Upgrade when setup time matters.</h2>
+        <p class="intro">Use the essentials without a card, then unlock automation and sync with Pro.</p>
+        <div class="price-switch" aria-label="Billing frequency">
+          <button data-price="monthly" type="button" aria-pressed="true">Monthly</button>
+          <button data-price="yearly" type="button" aria-pressed="false">Yearly <span class="save">save 16%</span></button>
+        </div>
+        <div class="plans">
+          <div class="box plan">
+            <div class="tier">Free</div>
+            <div class="amount">$0</div>
+            <div class="cadence">forever</div>
+            <div class="billed"></div>
+            <p class="pitch">Everything you need to bring a personal playlist into focus.</p>
+            <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn btn-block">Download free</a>
+            <ul>
+              <li>Core playlist import and playback</li>
+              <li>One playlist setup</li>
+              <li>Manual EPG mapping</li>
+              <li>Favorites and history</li>
+            </ul>
+          </div>
+          <div class="box plan pro">
+            <span class="ribbon">7-DAY TRIAL</span>
+            <div class="tier">Pro</div>
+            <div class="amount"><span data-pro-price>$6.99</span></div>
+            <div class="cadence" data-pro-cadence>/ month</div>
+            <div class="billed" data-pro-billed>Billed monthly</div>
+            <p class="pitch">Automate the tedious work and keep every desktop in step.</p>
+            <button data-checkout data-interval="monthly" type="button" class="btn btn-primary btn-block">Start Pro monthly</button>
+            <ul>
+              <li>Unlimited playlist sources</li>
+              <li>Smart channel matching</li>
+              <li>Multi-EPG merge and auto-refresh</li>
+              <li>Cross-platform cloud sync</li>
+              <li>Picture-in-picture</li>
+            </ul>
+          </div>
+        </div>
+        <div class="pricing-notes">
+          <p class="small muted">Cancel anytime. Pro stays active through the end of your billing period.</p>
+          <div class="pay-badges" role="list" aria-label="Accepted payment methods">
             <span class="pay-badge" role="listitem" title="Visa"><img src="pay/visa.svg" alt="Visa" loading="lazy" /></span>
             <span class="pay-badge" role="listitem" title="Mastercard"><img src="pay/mastercard.svg" alt="Mastercard" loading="lazy" /></span>
             <span class="pay-badge" role="listitem" title="American Express"><img src="pay/americanexpress.svg" alt="American Express" loading="lazy" /></span>
@@ -175,34 +236,77 @@
             <span class="pay-badge" role="listitem" title="Google Pay"><img src="pay/googlepay.svg" alt="Google Pay" loading="lazy" /></span>
             <span class="pay-badge" role="listitem" title="Processed securely by Stripe"><img src="pay/stripe.svg" alt="Stripe" loading="lazy" /></span>
           </div>
-          <p class="text-xs text-slate-500">Secure checkout via Stripe — cards and wallets accepted.</p>
+          <p class="small muted">Secure checkout via Stripe — cards and wallets accepted.</p>
         </div>
       </div>
     </section>
 
-    <section id="faq" class="section-pad page-shell">
-      <div class="grid gap-12 lg:grid-cols-[.65fr_1.35fr]">
-        <div class="reveal"><div class="eyebrow">Straight answers</div><h2 class="section-title">Before you download.</h2><p class="section-copy">StreamShōgun is a player and organizer for content sources you already have.</p></div>
-        <div class="reveal divide-y divide-white/10 border-y border-white/10">
-          <div class="faq-item" data-open="true"><button class="flex w-full items-center justify-between gap-5 py-6 text-left font-medium" aria-expanded="true"><span>Does StreamShōgun provide channels or playlists?</span><span class="faq-icon text-2xl font-light text-violet-300 transition">+</span></button><div class="faq-answer"><div class="overflow-hidden"><p class="pb-6 text-sm leading-7 text-slate-400">No. StreamShōgun is desktop software only. It does not host, sell, distribute, or include any TV channels, streams, M3U playlists, or EPG data. You must provide sources you are authorized to use.</p></div></div></div>
-          <div class="faq-item" data-open="false"><button class="flex w-full items-center justify-between gap-5 py-6 text-left font-medium" aria-expanded="false"><span>Can I use it without creating an account?</span><span class="faq-icon text-2xl font-light text-violet-300 transition">+</span></button><div class="faq-answer"><div class="overflow-hidden"><p class="pb-6 text-sm leading-7 text-slate-400">Yes. The free desktop experience can be used without a paid subscription. Account-backed features such as Pro cloud sync require sign-in.</p></div></div></div>
-          <div class="faq-item" data-open="false"><button class="flex w-full items-center justify-between gap-5 py-6 text-left font-medium" aria-expanded="false"><span>Which playlist and guide formats are supported?</span><span class="faq-icon text-2xl font-light text-violet-300 transition">+</span></button><div class="faq-answer"><div class="overflow-hidden"><p class="pb-6 text-sm leading-7 text-slate-400">StreamShōgun supports M3U and M3U8 playlists, plus XMLTV programme guide sources. You can import local files or add compatible remote URLs.</p></div></div></div>
-          <div class="faq-item" data-open="false"><button class="flex w-full items-center justify-between gap-5 py-6 text-left font-medium" aria-expanded="false"><span>Can I cancel Pro at any time?</span><span class="faq-icon text-2xl font-light text-violet-300 transition">+</span></button><div class="faq-answer"><div class="overflow-hidden"><p class="pb-6 text-sm leading-7 text-slate-400">Yes. Cancel from your account or Stripe billing portal. Your Pro access remains active until the end of the current billing period.</p></div></div></div>
+    <section id="faq" class="section">
+      <div class="wrap">
+        <div class="label">Straight answers</div>
+        <h2>Before you download.</h2>
+        <p class="intro">StreamShōgun is a player and organizer for content sources you already have.</p>
+        <div class="faq">
+          <div class="faq-item" data-open="true">
+            <button type="button" aria-expanded="true">Does StreamShōgun provide channels or playlists? <span class="faq-icon">+</span></button>
+            <div class="faq-answer"><p>No. StreamShōgun is desktop software only. It does not host, sell, distribute, or include any TV channels, streams, M3U playlists, or EPG data. You must provide sources you are authorized to use.</p></div>
+          </div>
+          <div class="faq-item" data-open="false">
+            <button type="button" aria-expanded="false">Can I use it without creating an account? <span class="faq-icon">+</span></button>
+            <div class="faq-answer"><p>Yes. The free desktop experience can be used without a paid subscription. Account-backed features such as Pro cloud sync require sign-in.</p></div>
+          </div>
+          <div class="faq-item" data-open="false">
+            <button type="button" aria-expanded="false">Which playlist and guide formats are supported? <span class="faq-icon">+</span></button>
+            <div class="faq-answer"><p>StreamShōgun supports M3U and M3U8 playlists, plus XMLTV programme guide sources. You can import local files or add compatible remote URLs.</p></div>
+          </div>
+          <div class="faq-item" data-open="false">
+            <button type="button" aria-expanded="false">Can I cancel Pro at any time? <span class="faq-icon">+</span></button>
+            <div class="faq-answer"><p>Yes. Cancel from your account or Stripe billing portal. Your Pro access remains active until the end of the current billing period.</p></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="page-shell pb-20 sm:pb-28">
-      <div class="reveal relative overflow-hidden rounded-3xl border border-violet-400/25 bg-violet-500/[0.09] px-6 py-14 text-center sm:px-12 sm:py-20"><div class="hero-glow pointer-events-none absolute inset-x-1/4 -top-60 h-[480px]"></div><div class="relative"><div class="eyebrow">Take control of your setup</div><h2 class="mx-auto max-w-3xl text-3xl font-semibold tracking-[-0.045em] sm:text-5xl">Your sources. Your guide. One clean desktop.</h2><p class="mx-auto mt-5 max-w-xl text-base leading-7 text-slate-400">Download StreamShōgun and turn the playlists you already own into a setup you actually enjoy using.</p><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary mt-8 w-full sm:w-auto" target="_blank" rel="noopener">Download free for <span data-platform-label>desktop</span></a></div></div>
+    <section class="section">
+      <div class="wrap">
+        <div class="box cta">
+          <div class="label">Take control of your setup</div>
+          <h2>Your sources. Your guide. One clean desktop.</h2>
+          <p>Download StreamShōgun and turn the playlists you already own into a setup you actually enjoy using.</p>
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">Download free for <span data-platform-label>desktop</span></a>
+        </div>
+      </div>
     </section>
   </main>
 
-  <footer class="border-t border-white/[0.07] py-10">
-    <div class="page-shell flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between"><div><a href="#main" class="flex items-center gap-2.5 font-semibold"><span class="logo-mark grid size-7 place-items-center bg-violet-brand text-[10px] font-bold">S</span>StreamShōgun</a><p class="mt-3 max-w-md text-xs leading-5 text-slate-600">A desktop playlist manager and media player. No content or streaming service is provided.</p></div><div class="flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-500"><a class="hover:text-white" href="/blog/">Guides</a><a class="hover:text-white" href="/community">Community</a><a class="hover:text-white" href="/changelog">Changelog</a><a class="hover:text-white" href="mailto:ColinKenny@programmer.net">Support</a><a class="hover:text-white" href="/privacy">Privacy</a><a class="hover:text-white" href="/terms">Terms</a></div></div>
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a href="#main" class="brand"><span class="mark">S</span>StreamShōgun</a>
+        <p style="margin-top:6px; max-width:34em">A desktop playlist manager and media player. No content or streaming service is provided.</p>
+      </div>
+      <nav aria-label="Footer">
+        <a href="/blog/">Guides</a>
+        <a href="/community">Community</a>
+        <a href="/changelog">Changelog</a>
+        <a href="mailto:ColinKenny@programmer.net">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </div>
   </footer>
 
-  <div data-login-modal class="modal fixed inset-0 z-[80] grid place-items-center bg-black/75 p-5 backdrop-blur-sm" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="surface w-full max-w-md rounded-2xl bg-slate-950 p-7"><div class="flex items-start justify-between gap-6"><div><div class="eyebrow mb-3">Pro checkout</div><h2 id="modal-title" class="text-xl font-semibold">Sign in to continue</h2></div><button data-modal-close type="button" class="grid size-9 shrink-0 place-items-center rounded-lg border border-white/10 text-xl text-slate-400 hover:text-white" aria-label="Close">×</button></div><p class="mt-4 text-sm leading-6 text-slate-400">Pro is linked to your StreamShōgun account so your subscription and sync access work across devices.</p><div class="mt-7 grid gap-3 sm:grid-cols-2"><a href="/login" class="btn-primary">Log in</a><a href="/register" class="btn-secondary">Create account</a></div></div>
+  <div data-login-modal class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="dialog">
+      <button data-modal-close type="button" class="close" aria-label="Close">×</button>
+      <div class="label">Pro checkout</div>
+      <h2 id="modal-title">Sign in to continue</h2>
+      <p>Pro is linked to your StreamShōgun account so your subscription and sync access work across devices.</p>
+      <div class="actions">
+        <a href="/login" class="btn btn-primary">Log in</a>
+        <a href="/register" class="btn">Create account</a>
+      </div>
+    </div>
   </div>
 
   <script src="/site.js" defer></script>
