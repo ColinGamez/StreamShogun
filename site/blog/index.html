@@ -1,54 +1,111 @@
 <!doctype html>
-<html lang="en" class="bg-ink">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StreamShōgun Guides — IPTV Playlist and EPG Tutorials</title>
   <meta name="description" content="Practical guides for organizing legal M3U channels, improving EPG data, and getting more from your IPTV desktop player.">
-  <meta name="theme-color" content="#070812">
+  <meta name="theme-color" content="#2b2f33">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://streamshogun.com/blog/">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/retro.css">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://streamshogun.com/blog/">
   <meta property="og:title" content="StreamShōgun Guides">
   <meta property="og:description" content="Clear, responsible guides for M3U playlists, EPG data, and desktop IPTV organization.">
   <meta property="og:image" content="https://streamshogun.com/og-image.png">
 </head>
-<body class="min-w-0 overflow-x-hidden bg-ink font-sans text-slate-100 antialiased">
-  <a href="#main" class="fixed top-3 left-3 z-[100] -translate-y-20 rounded-lg bg-white px-4 py-2 font-semibold text-slate-950 transition focus:translate-y-0">Skip to content</a>
-  <header class="sticky inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-ink/85 backdrop-blur-xl">
-    <nav class="page-shell flex h-16 items-center justify-between" aria-label="Primary navigation">
-      <a href="/" class="flex items-center gap-2.5 font-semibold tracking-[-0.025em] text-white" aria-label="StreamShōgun home"><span class="logo-mark grid size-8 place-items-center bg-violet-brand text-sm font-bold shadow-[0_0_25px_rgba(124,92,255,.35)]">S</span><span>StreamShōgun</span></a>
-      <div class="hidden items-center gap-7 text-sm text-slate-400 md:flex"><a class="transition hover:text-white" href="/#features">Features</a><a class="text-white" href="/blog/">Guides</a><a class="transition hover:text-white" href="/#downloads">Downloads</a><a class="transition hover:text-white" href="/#pricing">Pricing</a></div>
-      <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary min-h-10 px-4 py-2" target="_blank" rel="noopener">Download free</a>
-    </nav>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a href="/" class="brand" aria-label="StreamShōgun home"><span class="mark">S</span>StreamShōgun</a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/#features">Features</a>
+        <a href="/blog/">Guides</a>
+        <a href="/#downloads">Downloads</a>
+        <a href="/#pricing">Pricing</a>
+        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn btn-primary btn-small" target="_blank" rel="noopener">Download free</a>
+      </nav>
+      <button data-menu-button type="button" class="menu-button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">☰</button>
+    </div>
+    <div data-mobile-menu id="mobile-menu" hidden class="mobile-menu">
+      <a href="/#features">Features</a>
+      <a href="/blog/">Guides</a>
+      <a href="/#downloads">Downloads</a>
+      <a href="/#pricing">Pricing</a>
+    </div>
   </header>
 
   <main id="main">
-    <section class="relative overflow-hidden border-b border-white/[0.07] py-24 sm:py-32">
-      <div class="bg-grid pointer-events-none absolute inset-0"></div><div class="hero-glow pointer-events-none absolute -top-64 left-1/3 h-[600px] w-[700px]"></div>
-      <div class="page-shell relative"><div class="eyebrow"><span class="size-1.5 rounded-full bg-cyan-signal"></span>StreamShōgun field notes</div><h1 class="max-w-4xl text-[clamp(2.8rem,7vw,5.5rem)] leading-[.98] font-semibold tracking-[-0.065em] text-white">Build a cleaner, safer playlist setup.</h1><p class="mt-7 max-w-2xl text-lg leading-8 text-slate-300">Practical guides for finding legitimate public streams, organizing M3U sources, improving guide data, and choosing the right desktop workflow.</p></div>
+    <section class="hero">
+      <div class="wrap">
+        <div class="label">StreamShōgun field notes</div>
+        <h1 style="margin-top:6px">Build a cleaner, safer playlist setup.</h1>
+        <p class="lede">Practical guides for finding legitimate public streams, organizing M3U sources, improving guide data, and choosing the right desktop workflow.</p>
+      </div>
     </section>
 
-    <section class="section-pad page-shell">
-      <div class="grid gap-6 lg:grid-cols-[1.35fr_.65fr]">
-        <article class="surface group relative overflow-hidden rounded-3xl p-7 sm:p-10"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/80 to-transparent"></div><div class="flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-widest text-violet-300 uppercase"><span>EPG fundamentals</span><span class="text-slate-700">•</span><time datetime="2026-11-04" class="text-slate-500">November 4, 2026</time><span class="text-slate-700">•</span><span class="text-slate-500">11 min read</span></div><h2 class="mt-7 max-w-3xl text-3xl leading-tight font-semibold tracking-[-0.045em] sm:text-5xl"><a class="transition group-hover:text-violet-200" href="/blog/xmltv-epg-setup-guide">XMLTV EPG Setup Guide: From Empty Guide to Full Schedule</a></h2><p class="mt-5 max-w-2xl text-base leading-7 text-slate-400">Understand the XMLTV format, connect a guide source, fix tvg-id and channel-name matching, and merge multiple EPG feeds into one reliable timeline.</p><a href="/blog/xmltv-epg-setup-guide" class="btn-primary mt-8">Read the complete guide <span aria-hidden="true">→</span></a></article>
-        <aside class="rounded-3xl border border-white/[0.08] bg-white/[0.025] p-7 sm:p-8"><div class="font-mono text-[10px] tracking-widest text-cyan-300 uppercase">What we cover</div><ul class="mt-6 space-y-5 text-sm leading-6 text-slate-400"><li class="flex gap-3"><span class="mt-2 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="block text-slate-200">Source safety</strong>How to distinguish public streams from suspicious subscription lists.</span></li><li class="flex gap-3"><span class="mt-2 size-1.5 shrink-0 rounded-full bg-cyan-400"></span><span><strong class="block text-slate-200">Playlist structure</strong>M3U metadata, channel names, groups, and guide identifiers.</span></li><li class="flex gap-3"><span class="mt-2 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="block text-slate-200">EPG workflows</strong>Matching channels to trustworthy XMLTV programme data.</span></li></ul></aside>
+    <section class="section">
+      <div class="wrap post-list">
+        <div class="box post-card post-feature">
+          <div class="post-meta">EPG fundamentals · <time datetime="2026-11-04">November 4, 2026</time> · <span class="dim">11 min read</span></div>
+          <h2><a href="/blog/xmltv-epg-setup-guide">XMLTV EPG Setup Guide: From Empty Guide to Full Schedule</a></h2>
+          <p>Understand the XMLTV format, connect a guide source, fix tvg-id and channel-name matching, and merge multiple EPG feeds into one reliable timeline.</p>
+          <a href="/blog/xmltv-epg-setup-guide" class="btn btn-primary btn-small">Read the complete guide →</a>
+        </div>
+
+        <div class="box">
+          <div class="label">What we cover</div>
+          <ul style="margin:8px 0 0 18px; font-size:12px; color:#555">
+            <li><strong>Source safety</strong> — how to distinguish public streams from suspicious subscription lists.</li>
+            <li><strong>Playlist structure</strong> — M3U metadata, channel names, groups, and guide identifiers.</li>
+            <li><strong>EPG workflows</strong> — matching channels to trustworthy XMLTV programme data.</li>
+          </ul>
+        </div>
+
+        <div class="box post-card">
+          <div class="post-meta">Playlist organization · <time datetime="2026-11-04">November 4, 2026</time> · <span class="dim">10 min read</span></div>
+          <h2><a href="/blog/organize-m3u-playlists">How to Organize M3U Playlists: Cleaning, Merging, and Naming</a></h2>
+          <p>Turn a chaotic M3U dump into a tidy library: #EXTINF metadata explained, dedupe strategy, merge rules, and naming that makes EPG matching reliable.</p>
+          <a href="/blog/organize-m3u-playlists" class="btn btn-small">Read the guide →</a>
+        </div>
+
+        <div class="box post-card">
+          <div class="post-meta">Legal &amp; safety · <time datetime="2026-07-26">July 26, 2026</time> · <span class="dim">12 min read</span></div>
+          <h2><a href="/blog/the-legal-guide-to-free-iptv">The Legal Guide to Free IPTV: How to Safely Find and Organize Public M3U Streams</a></h2>
+          <p>Learn how to evaluate free IPTV playlists, identify legal M3U channels, and load the open-source iptv-org repository into a local-first desktop player.</p>
+          <a href="/blog/the-legal-guide-to-free-iptv" class="btn btn-small">Read the guide →</a>
+        </div>
+
+        <div class="teasers">
+          <div class="label">More guides in production</div>
+          <div class="cols-3" style="margin-top:10px">
+            <div class="box"><div class="label">Desktop / Privacy</div><p style="margin-top:6px; font-size:12px; color:#444">Local-first IPTV players: what stays on your device</p></div>
+            <div class="box"><div class="label">Playback / Troubleshooting</div><p style="margin-top:6px; font-size:12px; color:#444">Desktop HLS playback: fixing buffering, stutter, and dead streams</p></div>
+            <div class="box"><div class="label">Sync / Workflow</div><p style="margin-top:6px; font-size:12px; color:#444">Cloud Sync for playlist setups: organize once, watch anywhere</p></div>
+          </div>
+        </div>
       </div>
-      <div class="mt-6 grid gap-6 md:grid-cols-2">
-        <article class="surface group relative overflow-hidden rounded-3xl p-7 sm:p-8"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent"></div><div class="flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-widest text-cyan-300 uppercase"><span>Playlist organization</span><span class="text-slate-700">•</span><time datetime="2026-11-04" class="text-slate-500">November 4, 2026</time><span class="text-slate-700">•</span><span class="text-slate-500">10 min read</span></div><h2 class="mt-6 text-2xl leading-tight font-semibold tracking-[-0.04em] sm:text-3xl"><a class="transition group-hover:text-cyan-200" href="/blog/organize-m3u-playlists">How to Organize M3U Playlists: Cleaning, Merging, and Naming</a></h2><p class="mt-4 text-sm leading-6 text-slate-400">Turn a chaotic M3U dump into a tidy library: #EXTINF metadata explained, dedupe strategy, merge rules, and naming that makes EPG matching reliable.</p><a href="/blog/organize-m3u-playlists" class="btn-secondary mt-7">Read the guide <span aria-hidden="true">→</span></a></article>
-        <article class="surface group relative overflow-hidden rounded-3xl p-7 sm:p-8"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent"></div><div class="flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-widest text-violet-300 uppercase"><span>Legal & safety</span><span class="text-slate-700">•</span><time datetime="2026-07-26" class="text-slate-500">July 26, 2026</time><span class="text-slate-700">•</span><span class="text-slate-500">12 min read</span></div><h2 class="mt-6 text-2xl leading-tight font-semibold tracking-[-0.04em] sm:text-3xl"><a class="transition group-hover:text-violet-200" href="/blog/the-legal-guide-to-free-iptv">The Legal Guide to Free IPTV: How to Safely Find and Organize Public M3U Streams</a></h2><p class="mt-4 text-sm leading-6 text-slate-400">Learn how to evaluate free IPTV playlists, identify legal M3U channels, and load the open-source iptv-org repository into a local-first desktop player.</p><a href="/blog/the-legal-guide-to-free-iptv" class="btn-secondary mt-7">Read the guide <span aria-hidden="true">→</span></a></article>
-      </div>
-      <div class="mt-16 border-t border-white/[0.07] pt-10"><div class="eyebrow">More guides in production</div><div class="grid gap-4 md:grid-cols-3"><div class="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6"><span class="font-mono text-[9px] text-slate-600">DESKTOP / PRIVACY</span><h3 class="mt-4 font-semibold text-slate-300">Local-first IPTV players: what stays on your device</h3></div><div class="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6"><span class="font-mono text-[9px] text-slate-600">PLAYBACK / TROUBLESHOOTING</span><h3 class="mt-4 font-semibold text-slate-300">Desktop HLS playback: fixing buffering, stutter, and dead streams</h3></div><div class="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6"><span class="font-mono text-[9px] text-slate-600">SYNC / WORKFLOW</span><h3 class="mt-4 font-semibold text-slate-300">Cloud Sync for playlist setups: organize once, watch anywhere</h3></div></div></div>
     </section>
   </main>
 
-  <footer class="border-t border-white/[0.07] py-10"><div class="page-shell flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between"><div><a href="/" class="flex items-center gap-2.5 font-semibold"><span class="logo-mark grid size-7 place-items-center bg-violet-brand text-[10px] font-bold">S</span>StreamShōgun</a><p class="mt-3 max-w-md text-xs leading-5 text-slate-600">Desktop software for user-provided playlists and guides. No channels or subscriptions included.</p></div><div class="flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-500"><a class="hover:text-white" href="/blog/">Guides</a><a class="hover:text-white" href="/community">Community</a><a class="hover:text-white" href="/privacy">Privacy</a><a class="hover:text-white" href="/terms">Terms</a></div></div></footer>
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a href="/" class="brand"><span class="mark">S</span>StreamShōgun</a>
+        <p style="margin-top:6px; max-width:34em">Desktop software for user-provided playlists and guides. No channels or subscriptions included.</p>
+      </div>
+      <nav aria-label="Footer">
+        <a href="/">Home</a>
+        <a href="/community">Community</a>
+        <a href="/changelog">Changelog</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </div>
+  </footer>
   <script src="/site.js" defer></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="bg-ink">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,14 +7,11 @@
   <meta name="description" content="A practical guide to cleaning up messy M3U playlists: understand #EXTINF metadata, remove dead and duplicate channels, merge multiple lists, and name channels so EPG matching actually works.">
   <meta name="keywords" content="organize M3U playlist, merge M3U playlists, M3U channel names, clean IPTV playlist, #EXTINF, tvg-id, M3U editor desktop">
   <meta name="author" content="StreamShōgun">
-  <meta name="theme-color" content="#070812">
+  <meta name="theme-color" content="#2b2f33">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="https://streamshogun.com/blog/organize-m3u-playlists">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/retro.css">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://streamshogun.com/blog/organize-m3u-playlists">
   <meta property="og:title" content="How to Organize M3U Playlists: Cleaning, Merging, and Naming">
@@ -27,94 +24,127 @@
   {"@context":"https://schema.org","@type":"Article","headline":"How to Organize M3U Playlists: Cleaning, Merging, and Naming","description":"A practical guide to cleaning up messy M3U playlists: #EXTINF metadata, dead links, duplicates, merging multiple lists, and naming channels for reliable EPG matching.","datePublished":"2026-11-04","dateModified":"2026-11-04","author":{"@type":"Organization","name":"StreamShōgun"},"publisher":{"@type":"Organization","name":"StreamShōgun","url":"https://streamshogun.com"},"mainEntityOfPage":"https://streamshogun.com/blog/organize-m3u-playlists","image":"https://streamshogun.com/og-image.png"}
   </script>
 </head>
-<body class="min-w-0 overflow-x-hidden bg-ink font-sans text-slate-100 antialiased">
-  <a href="#article" class="fixed top-3 left-3 z-[100] -translate-y-20 rounded-lg bg-white px-4 py-2 font-semibold text-slate-950 transition focus:translate-y-0">Skip to article</a>
-  <header class="sticky inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-ink/85 backdrop-blur-xl">
-    <nav class="page-shell flex h-16 items-center justify-between" aria-label="Primary navigation">
-      <a href="/" class="flex items-center gap-2.5 font-semibold tracking-[-0.025em] text-white" aria-label="StreamShōgun home"><span class="logo-mark grid size-8 place-items-center bg-violet-brand text-sm font-bold shadow-[0_0_25px_rgba(124,92,255,.35)]">S</span><span>StreamShōgun</span></a>
-      <div class="hidden items-center gap-7 text-sm text-slate-400 md:flex"><a class="transition hover:text-white" href="/#features">Features</a><a class="text-white" href="/blog/">Guides</a><a class="transition hover:text-white" href="/#downloads">Downloads</a><a class="transition hover:text-white" href="/#pricing">Pricing</a></div>
-      <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary min-h-10 px-4 py-2" target="_blank" rel="noopener">Download free</a>
-    </nav>
+<body>
+  <a href="#article" class="skip-link">Skip to article</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a href="/" class="brand" aria-label="StreamShōgun home"><span class="mark">S</span>StreamShōgun</a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/#features">Features</a>
+        <a href="/blog/">Guides</a>
+        <a href="/#downloads">Downloads</a>
+        <a href="/#pricing">Pricing</a>
+        <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn btn-primary btn-small" target="_blank" rel="noopener">Download free</a>
+      </nav>
+      <button data-menu-button type="button" class="menu-button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">☰</button>
+    </div>
+    <div data-mobile-menu id="mobile-menu" hidden class="mobile-menu">
+      <a href="/#features">Features</a>
+      <a href="/blog/">Guides</a>
+      <a href="/#downloads">Downloads</a>
+      <a href="/#pricing">Pricing</a>
+    </div>
   </header>
 
   <main>
-    <section class="relative overflow-hidden border-b border-white/[0.07] py-20 sm:py-28">
-      <div class="bg-grid pointer-events-none absolute inset-0"></div><div class="hero-glow pointer-events-none absolute -top-72 left-[35%] h-[650px] w-[750px]"></div>
-      <div class="page-shell relative">
-        <nav aria-label="Breadcrumb" class="font-mono text-[10px] tracking-widest text-slate-500 uppercase"><a class="hover:text-violet-300" href="/">Home</a><span class="mx-2">/</span><a class="hover:text-violet-300" href="/blog/">Guides</a><span class="mx-2">/</span><span class="text-slate-400">M3U organization</span></nav>
-        <div class="mt-9 flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-widest text-violet-300 uppercase"><span>Playlist organization</span><span class="text-slate-700">•</span><time datetime="2026-11-04" class="text-slate-500">November 4, 2026</time><span class="text-slate-700">•</span><span class="text-slate-500">10 min read</span></div>
-        <h1 class="mt-6 max-w-5xl text-[clamp(2.7rem,6.5vw,5.4rem)] leading-[1.02] font-semibold tracking-[-0.06em] text-white">How to Organize M3U Playlists: Cleaning, Merging, and Naming</h1>
-        <p class="mt-7 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">Most M3U files arrive as a dump: thousands of channels, four naming conventions, duplicates at three quality levels, and dead links nobody pruned. This guide turns that dump into a library you can actually browse.</p>
-        <div class="mt-8 flex flex-wrap gap-3 text-xs text-slate-500"><span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">M3U metadata</span><span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">Merging playlists</span><span class="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">EPG-ready naming</span></div>
+    <section class="hero">
+      <div class="wrap">
+        <nav aria-label="Breadcrumb" class="crumb"><a href="/">Home</a> / <a href="/blog/">Guides</a> / <span>M3U organization</span></nav>
+        <div class="post-meta">Playlist organization · <time datetime="2026-11-04">November 4, 2026</time> · <span class="dim">10 min read</span></div>
+        <h1>How to Organize M3U Playlists: Cleaning, Merging, and Naming</h1>
+        <p class="lede">Most M3U files arrive as a dump: thousands of channels, four naming conventions, duplicates at three quality levels, and dead links nobody pruned. This guide turns that dump into a library you can actually browse.</p>
+        <div class="tags"><span class="tag">M3U metadata</span><span class="tag">Merging playlists</span><span class="tag">EPG-ready naming</span></div>
       </div>
     </section>
 
-    <div class="page-shell grid items-start gap-12 py-14 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16 lg:py-20">
-      <article id="article" class="min-w-0">
-        <div class="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-sm leading-6 text-slate-400"><strong class="text-slate-200">A quick boundary:</strong> this guide is about organizing playlist files you are entitled to use. StreamShōgun supplies no channels or playlists—it is a desktop manager and player for sources you bring. If you are still evaluating sources, start with <a class="font-medium text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/the-legal-guide-to-free-iptv">our legal guide to free IPTV</a>.</div>
+    <div class="wrap section article-layout">
+      <article id="article" class="prose">
+        <div class="notice"><strong>A quick boundary:</strong> this guide is about organizing playlist files you are entitled to use. StreamShōgun supplies no channels or playlists—it is a desktop manager and player for sources you bring. If you are still evaluating sources, start with <a href="/blog/the-legal-guide-to-free-iptv">our legal guide to free IPTV</a>.</div>
 
-        <div class="mt-12 space-y-7 text-[17px] leading-8 text-slate-300">
-          <p>An M3U playlist is a plain text file. That is its strength—you can open it in any editor—and its weakness, because nothing forces the publisher to be consistent. One provider writes <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">BBC One HD</code>, the next writes <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">UK: BBC One FHD | 1080p</code>. Multiply that by a few thousand entries and the list is technically valid but practically unusable.</p>
+        <div>
+          <p>An M3U playlist is a plain text file. That is its strength—you can open it in any editor—and its weakness, because nothing forces the publisher to be consistent. One provider writes <code>BBC One HD</code>, the next writes <code>UK: BBC One FHD | 1080p</code>. Multiply that by a few thousand entries and the list is technically valid but practically unusable.</p>
           <p>Organization is not cosmetic. Channel names and identifiers are what an electronic programme guide uses to attach schedules. A tidy playlist is the difference between a working TV guide and a grid full of empty cells.</p>
         </div>
 
-        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Anatomy of an M3U entry</h2>
-        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
-          <p>Every channel in an extended M3U file is a two-line record: an <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">#EXTINF</code> metadata line followed by the stream URL. A typical entry looks like this:</p>
-          <div class="overflow-x-auto rounded-xl border border-white/10 bg-black/35 p-4"><pre class="font-mono text-sm leading-7 whitespace-pre text-cyan-300">#EXTINF:-1 tvg-id="BBCOne.uk" tvg-name="BBC One" tvg-logo="https://example.com/bbc1.png" group-title="UK / Entertainment",BBC One HD
-https://example.com/streams/bbc-one.m3u8</pre></div>
-          <p>The attributes after <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">#EXTINF:-1</code> do the organizational work:</p>
-          <ul class="space-y-4 pl-1"><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">tvg-id</strong> — the guide identifier. When it matches a channel <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">id</code> in your XMLTV source, EPG data attaches automatically. This is the single most valuable field in the file.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">tvg-name</strong> — the canonical channel name guide sources expect. When <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">tvg-id</code> is missing, matchers fall back to comparing names, so consistency here pays off twice.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">tvg-logo</strong> — a square channel logo URL. Logos make a large library scannable; broken logo URLs make it look abandoned.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span><strong class="text-white">group-title</strong> — the category the channel files itself under. Pick a small set of group names and stick to them, or you end up with "News", "NEWS", and "news | 24/7" as three separate shelves.</span></li></ul>
+        <h2>Anatomy of an M3U entry</h2>
+        <div>
+          <p>Every channel in an extended M3U file is a two-line record: an <code>#EXTINF</code> metadata line followed by the stream URL. A typical entry looks like this:</p>
+          <pre>#EXTINF:-1 tvg-id="BBCOne.uk" tvg-name="BBC One" tvg-logo="https://example.com/bbc1.png" group-title="UK / Entertainment",BBC One HD
+https://example.com/streams/bbc-one.m3u8</pre>
+          <p>The attributes after <code>#EXTINF:-1</code> do the organizational work:</p>
+          <ul><li><strong>tvg-id</strong> — the guide identifier. When it matches a channel <code>id</code> in your XMLTV source, EPG data attaches automatically. This is the single most valuable field in the file.</li><li><strong>tvg-name</strong> — the canonical channel name guide sources expect. When <code>tvg-id</code> is missing, matchers fall back to comparing names, so consistency here pays off twice.</li><li><strong>tvg-logo</strong> — a square channel logo URL. Logos make a large library scannable; broken logo URLs make it look abandoned.</li><li><strong>group-title</strong> — the category the channel files itself under. Pick a small set of group names and stick to them, or you end up with "News", "NEWS", and "news | 24/7" as three separate shelves.</li></ul>
           <p>The text after the final comma is the display name—the label you actually see in the player. Everything before it is metadata other tools consume.</p>
         </div>
 
-        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">The four messes every playlist accumulates</h2>
-        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
-          <div class="grid gap-4 sm:grid-cols-2"><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Duplicates</strong><span class="mt-2 block text-sm leading-6 text-slate-400">The same channel appears as SD, HD, FHD, and "backup" variants. Keep one working quality level per channel and remove the rest.</span></div><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Dead links</strong><span class="mt-2 block text-sm leading-6 text-slate-400">Streams move or vanish. A playlist that was 4,000 channels when you downloaded it may be 3,100 working channels today.</span></div><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Inconsistent names</strong><span class="mt-2 block text-sm leading-6 text-slate-400">Country prefixes, quality suffixes, and punctuation noise defeat both search and EPG matching.</span></div><div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><strong class="block text-white">Group sprawl</strong><span class="mt-2 block text-sm leading-6 text-slate-400">Dozens of overlapping groups mean nothing is ever where you look first. Consolidate into a short, deliberate list.</span></div></div>
+        <h2>The four messes every playlist accumulates</h2>
+        <div>
+          <div class="card-grid"><div class="box"><strong>Duplicates</strong><p class="muted">The same channel appears as SD, HD, FHD, and "backup" variants. Keep one working quality level per channel and remove the rest.</p></div><div class="box"><strong>Dead links</strong><p class="muted">Streams move or vanish. A playlist that was 4,000 channels when you downloaded it may be 3,100 working channels today.</p></div><div class="box"><strong>Inconsistent names</strong><p class="muted">Country prefixes, quality suffixes, and punctuation noise defeat both search and EPG matching.</p></div><div class="box"><strong>Group sprawl</strong><p class="muted">Dozens of overlapping groups mean nothing is ever where you look first. Consolidate into a short, deliberate list.</p></div></div>
           <p>You can fix all four by hand in a text editor—an M3U is just text—but at library scale that stops being a hobby and starts being data entry. This is the job StreamShōgun's library view is built for: parse, group, search, rename, and prune without touching the raw file.</p>
         </div>
 
-        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">A cleanup workflow that holds up</h2>
-        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
-          <ol class="space-y-6"><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 01</span><h3 class="mt-3 text-xl font-semibold text-white">Import and audit before you delete anything</h3><p class="mt-3 text-base leading-7 text-slate-400">Add the playlist to StreamShōgun (Library → Add playlist) and get counts first: how many channels, how many groups, how many entries share a name. Knowing the shape of the mess beats pruning blind.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 02</span><h3 class="mt-3 text-xl font-semibold text-white">Prune whole groups you will never open</h3><p class="mt-3 text-base leading-7 text-slate-400">Deleting twenty unwanted categories is faster than deleting two thousand channels one at a time. A smaller library also makes every later step—search, matching, sync—measurably quicker.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 03</span><h3 class="mt-3 text-xl font-semibold text-white">Deduplicate by channel, not by URL</h3><p class="mt-3 text-base leading-7 text-slate-400">Duplicate <em>streams</em> have identical URLs; duplicate <em>channels</em> have different URLs but the same content. Remove exact-URL duplicates outright, then keep the most reliable quality variant of each channel and favorite it so it survives future cleanups.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 04</span><h3 class="mt-3 text-xl font-semibold text-white">Normalize names for the guide, not just for your eyes</h3><p class="mt-3 text-base leading-7 text-slate-400">Strip quality tokens (HD/FHD/4K), country prefixes, and trailing punctuation from display names. Where the playlist lacks a <code class="font-mono text-sm text-cyan-300">tvg-id</code>, a clean <code class="font-mono text-sm text-cyan-300">tvg-name</code> is what channel matching uses instead—so name channels the way your XMLTV source names them.</p></li><li class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6"><span class="font-mono text-[10px] tracking-widest text-violet-300">STEP 05</span><h3 class="mt-3 text-xl font-semibold text-white">Test a sample, then schedule maintenance</h3><p class="mt-3 text-base leading-7 text-slate-400">Play a handful of channels per group to confirm the survivors work. Then set a rhythm: refresh the source, spot-check matches, and prune what died. Ten minutes a month beats a full reorganization twice a year.</p></li></ol>
+        <h2>A cleanup workflow that holds up</h2>
+        <div>
+          <ol class="steps-list"><li class="step"><span class="label">STEP 01</span><h3>Import and audit before you delete anything</h3><p>Add the playlist to StreamShōgun (Library → Add playlist) and get counts first: how many channels, how many groups, how many entries share a name. Knowing the shape of the mess beats pruning blind.</p></li><li class="step"><span class="label">STEP 02</span><h3>Prune whole groups you will never open</h3><p>Deleting twenty unwanted categories is faster than deleting two thousand channels one at a time. A smaller library also makes every later step—search, matching, sync—measurably quicker.</p></li><li class="step"><span class="label">STEP 03</span><h3>Deduplicate by channel, not by URL</h3><p>Duplicate <em>streams</em> have identical URLs; duplicate <em>channels</em> have different URLs but the same content. Remove exact-URL duplicates outright, then keep the most reliable quality variant of each channel and favorite it so it survives future cleanups.</p></li><li class="step"><span class="label">STEP 04</span><h3>Normalize names for the guide, not just for your eyes</h3><p>Strip quality tokens (HD/FHD/4K), country prefixes, and trailing punctuation from display names. Where the playlist lacks a <code>tvg-id</code>, a clean <code>tvg-name</code> is what channel matching uses instead—so name channels the way your XMLTV source names them.</p></li><li class="step"><span class="label">STEP 05</span><h3>Test a sample, then schedule maintenance</h3><p>Play a handful of channels per group to confirm the survivors work. Then set a rhythm: refresh the source, spot-check matches, and prune what died. Ten minutes a month beats a full reorganization twice a year.</p></li></ol>
         </div>
 
-        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Merging multiple playlists without losing track</h2>
-        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
+        <h2>Merging multiple playlists without losing track</h2>
+        <div>
           <p>Many setups combine lists: a regional playlist, a category playlist, maybe a small list a friend maintains. The failure mode is always the same—everything lands in one undifferentiated pile and duplicate channels multiply.</p>
           <p>Three rules keep a merged library sane:</p>
-          <ul class="space-y-4 pl-1"><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-cyan-400"></span><span><strong class="text-white">Keep sources separate at import.</strong> Add each playlist as its own named source instead of concatenating files. When one provider goes stale, you can refresh or remove exactly that source.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-cyan-400"></span><span><strong class="text-white">Name sources descriptively.</strong> "US news — iptv-org" tells you what it is and where it came from. "list_final_FINAL2.m3u" does not.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-cyan-400"></span><span><strong class="text-white">Deduplicate after every merge.</strong> Overlapping sources re-introduce the same channels under slightly different names. A matching pass catches the near-duplicates that exact-URL checks miss.</span></li></ul>
+          <ul><li><strong>Keep sources separate at import.</strong> Add each playlist as its own named source instead of concatenating files. When one provider goes stale, you can refresh or remove exactly that source.</li><li><strong>Name sources descriptively.</strong> "US news — iptv-org" tells you what it is and where it came from. "list_final_FINAL2.m3u" does not.</li><li><strong>Deduplicate after every merge.</strong> Overlapping sources re-introduce the same channels under slightly different names. A matching pass catches the near-duplicates that exact-URL checks miss.</li></ul>
           <p>With a Pro subscription, a multi-source library also syncs across your desktop machines, so you organize once rather than once per computer.</p>
         </div>
 
-        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Naming rules that make EPG matching work</h2>
-        <div class="mt-7 space-y-7 text-[17px] leading-8 text-slate-300">
-          <p>Guide data attaches through <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">tvg-id</code> first and channel names second. You cannot always fix a missing ID, but you can make name-based matching nearly as reliable:</p>
-          <ul class="space-y-4 pl-1"><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span>Match the XMLTV spelling, not the provider's branding: <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">News 24</code> matches; <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">NEWS 24 | HD</code> needs cleanup first.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span>Keep one name per channel across all sources—consistent names let a matcher confirm the same guide entry everywhere.</span></li><li class="flex gap-3"><span class="mt-3 size-1.5 shrink-0 rounded-full bg-violet-400"></span><span>Review low-confidence matches by hand. Automation gets you most of the way; the ambiguous remainder is exactly where a wrong guide entry would mislead you every evening.</span></li></ul>
-          <p>StreamShōgun's Smart Channel Matching normalizes case, punctuation, and quality tokens automatically and shows a confidence score per suggestion, so your manual review lands only where judgment is needed. Once channels match, the next step is a proper guide source—our <a class="font-medium text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/xmltv-epg-setup-guide">XMLTV EPG setup guide</a> walks through that end to end.</p>
+        <h2>Naming rules that make EPG matching work</h2>
+        <div>
+          <p>Guide data attaches through <code>tvg-id</code> first and channel names second. You cannot always fix a missing ID, but you can make name-based matching nearly as reliable:</p>
+          <ul><li>Match the XMLTV spelling, not the provider's branding: <code>News 24</code> matches; <code>NEWS 24 | HD</code> needs cleanup first.</li><li>Keep one name per channel across all sources—consistent names let a matcher confirm the same guide entry everywhere.</li><li>Review low-confidence matches by hand. Automation gets you most of the way; the ambiguous remainder is exactly where a wrong guide entry would mislead you every evening.</li></ul>
+          <p>StreamShōgun's Smart Channel Matching normalizes case, punctuation, and quality tokens automatically and shows a confidence score per suggestion, so your manual review lands only where judgment is needed. Once channels match, the next step is a proper guide source—our <a href="/blog/xmltv-epg-setup-guide">XMLTV EPG setup guide</a> walks through that end to end.</p>
         </div>
 
-        <h2 class="mt-16 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">Frequently asked questions</h2>
-        <div class="mt-7 divide-y divide-white/10 border-y border-white/10">
-          <section class="py-7"><h3 class="text-xl font-semibold text-white">Can I edit an M3U file in a text editor?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">Yes—the format is plain text, and small fixes are fine by hand. Beyond a few dozen edits, a dedicated manager is faster and safer: it parses metadata fields instead of relying on your regex luck, and it will not corrupt the file's line structure.</p></section>
-          <section class="py-7"><h3 class="text-xl font-semibold text-white">How often should I clean my playlist?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">Refresh remote sources weekly if your player supports it, and do a manual prune pass monthly. Public streams in particular change endpoints without notice, so little-and-often beats a yearly overhaul.</p></section>
-          <section class="py-7"><h3 class="text-xl font-semibold text-white">What is the difference between tvg-id and tvg-name?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300"><code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">tvg-id</code> is a machine identifier that should equal a channel ID in your XMLTV guide; when it does, matching is exact. <code class="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-sm text-violet-200">tvg-name</code> is the human-readable channel name, used as a fallback when no ID is present.</p></section>
-          <section class="py-7"><h3 class="text-xl font-semibold text-white">Does StreamShōgun include playlists to practice with?</h3><p class="mt-3 text-[17px] leading-8 text-slate-300">No channels or playlists are bundled. The app imports sources you provide—local files or URLs you are authorized to use—and organizes them locally on your desktop.</p></section>
+        <h2>Frequently asked questions</h2>
+        <div class="faq-list">
+          <section class="faq-entry"><h3>Can I edit an M3U file in a text editor?</h3><p>Yes—the format is plain text, and small fixes are fine by hand. Beyond a few dozen edits, a dedicated manager is faster and safer: it parses metadata fields instead of relying on your regex luck, and it will not corrupt the file's line structure.</p></section>
+          <section class="faq-entry"><h3>How often should I clean my playlist?</h3><p>Refresh remote sources weekly if your player supports it, and do a manual prune pass monthly. Public streams in particular change endpoints without notice, so little-and-often beats a yearly overhaul.</p></section>
+          <section class="faq-entry"><h3>What is the difference between tvg-id and tvg-name?</h3><p><code>tvg-id</code> is a machine identifier that should equal a channel ID in your XMLTV guide; when it does, matching is exact. <code>tvg-name</code> is the human-readable channel name, used as a fallback when no ID is present.</p></section>
+          <section class="faq-entry"><h3>Does StreamShōgun include playlists to practice with?</h3><p>No channels or playlists are bundled. The app imports sources you provide—local files or URLs you are authorized to use—and organizes them locally on your desktop.</p></section>
         </div>
 
-        <div class="mt-14 rounded-3xl border border-violet-400/25 bg-violet-500/[0.08] p-7 sm:p-10"><div class="eyebrow">The practical takeaway</div><h2 class="text-3xl font-semibold tracking-[-0.04em] text-white">Small library, clean names, working guide.</h2><p class="mt-5 text-[17px] leading-8 text-slate-300">Prune aggressively, keep sources separate, and name channels for the guide you want them to join. StreamShōgun handles the parsing, grouping, and confidence-scored matching on your desktop—your sources stay yours.</p><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn-primary mt-7" target="_blank" rel="noopener">Download StreamShōgun free</a></div>
+        <div class="box cta-box"><div class="label">The practical takeaway</div><h2>Small library, clean names, working guide.</h2><p>Prune aggressively, keep sources separate, and name channels for the guide you want them to join. StreamShōgun handles the parsing, grouping, and confidence-scored matching on your desktop—your sources stay yours.</p><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">Download StreamShōgun free</a></div>
 
-        <div class="mt-12 border-t border-white/10 pt-8"><h2 class="font-mono text-[10px] tracking-widest text-slate-500 uppercase">Further reading</h2><ul class="mt-4 space-y-3 text-sm text-slate-400"><li><a class="text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/xmltv-epg-setup-guide">XMLTV EPG Setup Guide: From Empty Guide to Full Schedule</a></li><li><a class="text-violet-300 underline decoration-violet-400/30 underline-offset-4 hover:text-violet-200" href="/blog/the-legal-guide-to-free-iptv">The Legal Guide to Free IPTV and Public M3U Streams</a></li></ul></div>
+        <div class="further"><h2 class="label">Further reading</h2><ul><li><a href="/blog/xmltv-epg-setup-guide">XMLTV EPG Setup Guide: From Empty Guide to Full Schedule</a></li><li><a href="/blog/the-legal-guide-to-free-iptv">The Legal Guide to Free IPTV and Public M3U Streams</a></li></ul></div>
       </article>
 
-      <aside id="download-sidebar" class="lg:sticky lg:top-24" aria-label="Download StreamShōgun">
-        <div class="relative overflow-hidden rounded-2xl border border-violet-400/30 bg-gradient-to-b from-violet-500/[0.14] to-slate-950 p-6 shadow-[0_30px_80px_rgba(76,29,149,.18)]"><div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-300 to-transparent"></div><div class="font-mono text-[10px] tracking-widest text-violet-300 uppercase">Organize it locally</div><h2 class="mt-4 text-2xl font-semibold tracking-[-0.035em] text-white">Your playlists deserve a cleaner desktop.</h2><p class="mt-3 text-sm leading-6 text-slate-400">Import M3U sources, connect XMLTV guides, and review smart channel matches.</p><div class="mt-6 space-y-2.5"><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-primary w-full justify-between"><span>Download for Windows</span><span class="font-mono text-[9px] opacity-70">.EXE</span></a><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-secondary w-full justify-between"><span>Download for macOS</span><span class="font-mono text-[9px] text-slate-500">.DMG</span></a><a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn-secondary w-full justify-between"><span>Download for Linux</span><span class="font-mono text-[9px] text-slate-500">.APPIMAGE</span></a></div><p class="mt-5 text-center font-mono text-[9px] leading-4 tracking-wide text-slate-600 uppercase">Free tier · No credit card<br>Windows · macOS · Linux</p></div>
-        <div class="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><div class="flex items-start gap-3"><svg class="mt-0.5 size-5 shrink-0 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg><div><h2 class="text-sm font-semibold text-slate-200">Software, not a provider</h2><p class="mt-1 text-xs leading-5 text-slate-500">StreamShōgun supplies no channels, playlists, or subscriptions. You remain in control of every source.</p></div></div></div>
+      <aside class="sidebar" aria-label="Download StreamShōgun">
+        <div class="box sidebar-download">
+          <div class="label">Organize it locally</div>
+          <h2>Your playlists deserve a cleaner desktop.</h2>
+          <p class="muted">Import M3U sources, connect XMLTV guides, and review smart channel matches.</p>
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn btn-primary btn-block">Download for Windows (.EXE)</a>
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn btn-block">Download for macOS (.DMG)</a>
+          <a data-release-link href="https://github.com/ColinGamez/StreamShogun/releases/latest" target="_blank" rel="noopener" class="btn btn-block">Download for Linux (.AppImage)</a>
+          <p class="small muted center" style="margin-top:10px">Free tier · No credit card · Windows · macOS · Linux</p>
+        </div>
+        <div class="notice"><strong>Software, not a provider.</strong> StreamShōgun supplies no channels, playlists, or subscriptions. You remain in control of every source.</div>
       </aside>
     </div>
   </main>
 
-  <footer class="border-t border-white/[0.07] py-10"><div class="page-shell flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between"><div><a href="/" class="flex items-center gap-2.5 font-semibold"><span class="logo-mark grid size-7 place-items-center bg-violet-brand text-[10px] font-bold">S</span>StreamShōgun</a><p class="mt-3 max-w-md text-xs leading-5 text-slate-600">A local-first desktop playlist manager. No content or streaming service is provided.</p></div><div class="flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-500"><a class="hover:text-white" href="/blog/">Guides</a><a class="hover:text-white" href="/community">Community</a><a class="hover:text-white" href="/privacy">Privacy</a><a class="hover:text-white" href="/terms">Terms</a></div></div></footer>
+  <footer class="site-footer">
+    <div class="wrap">
+      <div>
+        <a href="/" class="brand"><span class="mark">S</span>StreamShōgun</a>
+        <p style="margin-top:6px; max-width:34em">A local-first desktop playlist manager. No content or streaming service is provided.</p>
+      </div>
+      <nav aria-label="Footer">
+        <a href="/blog/">Guides</a>
+        <a href="/community">Community</a>
+        <a href="/changelog">Changelog</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </div>
+  </footer>
   <script src="/site.js" defer></script>
 </body>
 </html>

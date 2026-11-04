@@ -799,16 +799,258 @@ img {
   text-align: center;
 }
 
+/* ── Blog ────────────────────────────────────────────────────────────── */
+.crumb {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 14px;
+}
+.crumb a {
+  color: #0b5cad;
+}
+.post-meta {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8f1d1d;
+  margin-bottom: 8px;
+}
+.post-meta time,
+.post-meta .dim {
+  color: #888;
+}
+.tags {
+  margin-top: 14px;
+}
+.tag {
+  display: inline-block;
+  border: 1px solid #c4c9cf;
+  border-radius: 3px;
+  background: #f4f5f7;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #555;
+  margin: 0 6px 6px 0;
+}
+
+.article-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.article-layout > article {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+}
+.sidebar .btn-block {
+  margin-top: 8px;
+}
+.sidebar h2 {
+  font-size: 18px;
+  margin: 6px 0 8px;
+}
+
+/* Article prose — descendant selectors, class-free content */
+.prose {
+  font-size: 14px;
+}
+.prose p {
+  margin: 0 0 16px;
+  color: #333;
+  line-height: 1.7;
+}
+.prose h2 {
+  font-size: 22px;
+  margin: 34px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #dfe2e6;
+}
+.prose h3 {
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+  margin: 20px 0 6px;
+}
+.prose code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  background: #f0f2f5;
+  border: 1px solid #dde1e6;
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: #8f1d1d;
+}
+.prose pre {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  background: #f6f7f8;
+  border: 1px solid #d5d8dc;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+  color: #333;
+}
+.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+.prose ul,
+.prose ol {
+  margin: 0 0 16px 22px;
+}
+.prose li {
+  margin-bottom: 8px;
+  color: #333;
+  line-height: 1.6;
+}
+.prose strong {
+  color: #111;
+}
+
+.notice {
+  background: #fdf6d8;
+  border: 1px solid #e5d9a0;
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #5d5430;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.card-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.card-grid .box {
+  flex: 1 1 40%;
+  padding: 12px 14px;
+}
+.card-grid .box p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+ol.steps-list {
+  list-style: none;
+  margin: 0 0 16px;
+}
+li.step {
+  background: #fff;
+  border: 1px solid #c4c9cf;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+li.step .label {
+  color: #8f1d1d;
+}
+li.step h3 {
+  margin: 4px 0 6px;
+}
+li.step p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.faq-list {
+  border-top: 1px solid #c4c9cf;
+  margin-bottom: 16px;
+}
+.faq-entry {
+  border-bottom: 1px solid #c4c9cf;
+  padding: 12px 0;
+}
+.faq-entry h3 {
+  margin: 0 0 6px;
+}
+.faq-entry p {
+  margin: 0;
+}
+
+.cta-box {
+  text-align: left;
+  border: 1px solid #b5bbc2;
+  background: #f0f3f7;
+  padding: 20px;
+  margin-top: 24px;
+}
+.cta-box h2 {
+  border: none;
+  margin: 4px 0 10px;
+  padding: 0;
+}
+
+.further {
+  border-top: 1px solid #c4c9cf;
+  margin-top: 26px;
+  padding-top: 14px;
+}
+.further ul {
+  margin-top: 8px;
+}
+
+/* Blog index */
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.post-card h2 {
+  font-size: 19px;
+  margin: 4px 0 8px;
+}
+.post-card h2 a {
+  color: #111;
+  text-decoration: none;
+}
+.post-card h2 a:hover {
+  color: #0b5cad;
+  text-decoration: underline;
+}
+.post-card p {
+  color: #555;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.post-feature {
+  border: 1px solid #9aa1a9;
+  background: #fff;
+}
+.post-feature h2 {
+  font-size: 24px;
+}
+.teasers {
+  margin-top: 22px;
+}
+.center {
+  text-align: center;
+}
+
 /* ── Narrow screens ──────────────────────────────────────────────────── */
 @media (max-width: 800px) {
   .hero .cols,
   .steps,
   .plans,
-  .cols-3 {
+  .cols-3,
+  .article-layout {
     flex-direction: column;
   }
   .window-side {
     width: 92px;
+  }
+  .sidebar {
+    width: 100%;
   }
 }
 
