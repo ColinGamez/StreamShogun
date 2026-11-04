@@ -157,7 +157,9 @@ export function getRange(
   // Walk back past every earlier programme that is still airing (stop > startTs
   // or unknown stop): long-running programmes must not be skipped just because
   // newer ones started after them.
-  let scanFrom = lowerBound(progs, startTs);
+  // lowerBound is -1 when every programme starts after startTs — clamp so the
+  // scan below never reads progs[-1].
+  let scanFrom = Math.max(0, lowerBound(progs, startTs));
   while (scanFrom > 0) {
     const prev = progs[scanFrom - 1];
     if (prev.stop !== 0 && prev.stop <= startTs) break;

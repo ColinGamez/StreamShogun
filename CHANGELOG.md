@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **EPG grid crash on windows before any programme data** - asking for the guide
+  range of a channel whose programmes all start later than the requested window
+  (e.g. scrolling to an earlier day with sparse guide data) read past the front of
+  the programme list and threw. The range scan now clamps its start index, so the
+  grid just shows an empty window.
 - **Master account gated out of Pro features** - the server-side `requirePro` gate
   (cloud sync, Roku EPG proxy) read only the raw subscription row, so the master
   account got 403 ProRequired even though the API reports it as Pro. The gate now
