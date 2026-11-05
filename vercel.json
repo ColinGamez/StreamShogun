@@ -19,6 +19,14 @@
       "source": "/blog/the-legal-guide-to-free-iptv",
       "destination": "/blog/the-legal-guide-to-free-iptv.html"
     },
+    {
+      "source": "/blog/organize-m3u-playlists",
+      "destination": "/blog/organize-m3u-playlists.html"
+    },
+    {
+      "source": "/blog/xmltv-epg-setup-guide",
+      "destination": "/blog/xmltv-epg-setup-guide.html"
+    },
     { "source": "/u", "destination": "/profile.html" },
     { "source": "/u/:username", "destination": "/profile.html" }
   ],
