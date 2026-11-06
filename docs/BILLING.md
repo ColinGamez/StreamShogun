@@ -48,11 +48,11 @@ validator during processing.
 
 Roku Pay environment variables:
 
-| Variable                      | Description                                                       |
-| ----------------------------- | ----------------------------------------------------------------- |
-| `ROKU_PAY_API_KEY`            | Partner API key used server-side for Roku Pay validation          |
-| `ROKU_PRODUCT_ID_PRO_MONTHLY` | Monthly Pro in-app product identifier                             |
-| `ROKU_PRODUCT_ID_PRO_YEARLY`  | Yearly Pro in-app product identifier                              |
+| Variable                      | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `ROKU_PAY_API_KEY`            | Partner API key used server-side for Roku Pay validation           |
+| `ROKU_PRODUCT_ID_PRO_MONTHLY` | Monthly Pro in-app product identifier                              |
+| `ROKU_PRODUCT_ID_PRO_YEARLY`  | Yearly Pro in-app product identifier                               |
 | `ROKU_PAY_PUSH_SECRET`        | Shared secret embedded in the pay-push listener URL (min 16 chars) |
 
 ---
@@ -120,8 +120,9 @@ Checkout uses hosted Stripe pages, then redirects customers back to:
 | Cancel  | `${APP_PUBLIC_URL}/billing/cancel`  |
 
 The static site includes matching pages at `site/billing/success.html` and
-`site/billing/cancel.html`. Keep the Vercel rewrites in both `vercel.json` and
-`site/vercel.json` in sync with these paths.
+`site/billing/cancel.html`. Keep the Vercel rewrites in the root `vercel.json`
+in sync with these paths. (The root file is the only live config — Vercel reads
+it from the project root and serves `site/` as the output directory.)
 
 ---
 
