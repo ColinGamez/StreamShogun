@@ -14,7 +14,8 @@
 // up for packaged builds. Portable builds are skipped by electron-updater
 // itself (no persistent install to update).
 
-import { app, dialog, BrowserWindow } from "electron";
+import type { BrowserWindow } from "electron";
+import { app, dialog } from "electron";
 import { autoUpdater } from "electron-updater";
 
 /** Delay before the launch-time check so startup stays snappy. */
@@ -29,10 +30,12 @@ export function initAutoUpdater(getWindow: () => BrowserWindow | null): void {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on("update-available", (info) => {
+    // eslint-disable-next-line no-console -- Informational updater diagnostics.
     console.log(`[updater] update available: ${info.version} — downloading in background`);
   });
 
   autoUpdater.on("update-not-available", () => {
+    // eslint-disable-next-line no-console -- Informational updater diagnostics.
     console.log("[updater] already up to date");
   });
 

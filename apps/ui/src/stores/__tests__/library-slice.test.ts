@@ -1,3 +1,4 @@
+import type * as Persistence from "../../lib/persistence";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { create } from "zustand";
 import type { StateCreator } from "zustand";
@@ -14,9 +15,9 @@ import type { LibrarySlice } from "../slices/library-slice";
 const fakes = vi.hoisted(() => ({
   storage: new Map<string, string>(),
   loaders: {
-    loadSettings: vi.fn(async () => {}),
-    loadWatchHistory: vi.fn(async () => {}),
-    loadLicense: vi.fn(async () => {}),
+    loadSettings: vi.fn(async () => undefined),
+    loadWatchHistory: vi.fn(async () => undefined),
+    loadLicense: vi.fn(async () => undefined),
   },
   bridge: {
     dbListPlaylists: vi.fn(),
@@ -34,7 +35,7 @@ const fakes = vi.hoisted(() => ({
 
 vi.mock("../../lib/bridge", () => fakes.bridge);
 vi.mock("../../lib/persistence", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("../../lib/persistence")>();
+  const mod = await importOriginal<typeof Persistence>();
   return {
     ...mod,
     localStorageAdapter: {

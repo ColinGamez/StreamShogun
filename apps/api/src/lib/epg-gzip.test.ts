@@ -51,7 +51,7 @@ describe("processEpgBuffer", () => {
   });
 
   it("accepts XMLTV with a BOM and XML declaration", async () => {
-    const withBom = `﻿${XMLTV}`;
+    const withBom = `\uFEFF${XMLTV}`;
     const res = await processEpgBuffer("https://example.com/guide.xml", Buffer.from(withBom));
     expect(res.ok).toBe(true);
   });

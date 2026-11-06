@@ -325,7 +325,7 @@ async function handlePayPushRequest(request: FastifyRequest, reply: FastifyReply
     echoApiKey = true;
   }
 
-  let verifiedWithRoku = false;
+  let verifiedWithRoku: boolean;
   try {
     verifiedWithRoku = await handleRokuPayNotification(parsed.data, request.log);
   } catch (err) {

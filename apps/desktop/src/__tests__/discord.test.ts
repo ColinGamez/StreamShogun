@@ -1,3 +1,4 @@
+import type * as Discord from "../discord";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventEmitter } from "node:events";
 
@@ -54,7 +55,7 @@ function writtenJson(sock: FakeSocket): Record<string, unknown>[] {
   return sock.written.filter((_, i) => i % 2 === 1).map((b) => JSON.parse(b.toString("utf8")));
 }
 
-type DiscordModule = typeof import("../discord");
+type DiscordModule = typeof Discord;
 
 async function freshDiscord(): Promise<DiscordModule> {
   vi.resetModules();

@@ -78,7 +78,7 @@ describe("adminAuth middleware", () => {
       id: "req-1",
       url: "/admin",
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     await adminAuth(request as any, reply as any);
     expect(reply.statusCode).toBe(401);
   });

@@ -1,3 +1,4 @@
+import type * as Persistence from "../../lib/persistence";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { create } from "zustand";
 import type { StateCreator } from "zustand";
@@ -12,7 +13,7 @@ import type { AuthSlice } from "../slices/auth-slice";
 const fakes = vi.hoisted(() => ({
   storage: new Map<string, string>(),
   dispatchEvent: vi.fn(),
-  cloudPull: vi.fn(async () => {}),
+  cloudPull: vi.fn(async () => undefined),
   bridge: {
     authRefresh: vi.fn(),
     authLogin: vi.fn(),
@@ -29,7 +30,7 @@ const fakes = vi.hoisted(() => ({
 vi.mock("../../lib/bridge", () => fakes.bridge);
 vi.mock("../../lib/analytics", () => fakes.analytics);
 vi.mock("../../lib/persistence", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("../../lib/persistence")>();
+  const mod = await importOriginal<typeof Persistence>();
   return {
     ...mod,
     localStorageAdapter: {

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { isPrivateIP, redactUrl, validateEpgUrl } from "./epg-url-validator";
 
-type LookupAddress = { address: string; family: number };
+interface LookupAddress {
+  address: string;
+  family: number;
+}
 const lookupAll = (addresses: string[]) =>
   (async () => addresses.map((address) => ({ address, family: 4 }))) as unknown as (
     hostname: string,

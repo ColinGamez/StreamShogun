@@ -1,3 +1,4 @@
+import type * as Persistence from "../../lib/persistence";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { create } from "zustand";
 import type { StateCreator } from "zustand";
@@ -27,7 +28,7 @@ const fakes = vi.hoisted(() => ({
 
 vi.mock("../../lib/bridge", () => fakes.bridge);
 vi.mock("../../lib/persistence", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("../../lib/persistence")>();
+  const mod = await importOriginal<typeof Persistence>();
   return {
     ...mod,
     localStorageAdapter: {

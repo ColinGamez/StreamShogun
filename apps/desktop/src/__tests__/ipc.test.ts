@@ -43,19 +43,19 @@ const fakes = vi.hoisted(() => {
     scheduler: {
       initScheduler: vi.fn(),
       setRefreshInterval: vi.fn(),
-      triggerRefresh: vi.fn(async () => {}),
+      triggerRefresh: vi.fn(async () => undefined),
       getRefreshStatus: vi.fn(() => ({})),
     },
     pip: { openPipWindow: vi.fn(), closePipWindow: vi.fn(), isPipOpen: vi.fn(() => false) },
     discord: {
       setDiscordEnabled: vi.fn(),
-      setActivity: vi.fn(async () => {}),
-      clearActivity: vi.fn(async () => {}),
+      setActivity: vi.fn(async () => undefined),
+      clearActivity: vi.fn(async () => undefined),
     },
     api: {
       apiRegister: vi.fn(),
       apiLogin: vi.fn(),
-      apiLogout: vi.fn(async () => {}),
+      apiLogout: vi.fn(async () => undefined),
       apiGetFeatures: vi.fn(),
       apiGetMasterSources: vi.fn(),
       apiGetMasterSourceContent: vi.fn(),
