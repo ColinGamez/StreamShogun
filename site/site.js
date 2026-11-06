@@ -70,10 +70,35 @@
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') hideModal(); });
 
   const csrfToken = () => document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/)?.[1] || '';
+  let sessionRefresh;
+  const getAccount = async () => {
+    const options = { credentials: 'include', headers: { 'x-client': 'web' } };
+    let response = await fetch(`${apiBase}/v1/me`, options);
+    if (response.status === 401) {
+      if (!sessionRefresh) {
+        sessionRefresh = fetch(`${apiBase}/v1/auth/refresh`, {
+          ...options,
+          method: 'POST',
+          headers: { ...options.headers, 'Content-Type': 'application/json' },
+          body: '{}',
+        }).finally(() => { sessionRefresh = undefined; });
+      }
+      const refreshed = await sessionRefresh;
+      if (refreshed.ok) response = await fetch(`${apiBase}/v1/me`, options);
+    }
+    return response;
+  };
+  getAccount().then((response) => {
+    if (!response.ok) return;
+    document.querySelectorAll('.site-nav a[href="/login"], .mobile-menu a[href="/login"]').forEach((link) => {
+      link.href = '/account';
+      link.textContent = 'Account';
+    });
+  }).catch(() => {});
   checkout?.addEventListener('click', async () => {
     checkout.setAttribute('aria-busy', 'true');
     try {
-      const me = await fetch(`${apiBase}/v1/me`, { credentials: 'include', headers: { 'x-client': 'web' } });
+      const me = await getAccount();
       if (!me.ok) return showModal();
       const response = await fetch(`${apiBase}/v1/billing/checkout`, {
         method: 'POST',

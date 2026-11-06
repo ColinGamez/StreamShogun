@@ -152,12 +152,12 @@
   </div>
 
   <!-- Account content (hidden until loaded) -->
+  <div id="error-banner" class="error-banner" role="alert"></div>
   <div id="account-content" class="hidden">
     <div class="account-header">
       <h1>Your Account</h1>
     </div>
 
-    <div id="error-banner" class="error-banner"></div>
 
     <!-- Account details card -->
     <div class="card">
@@ -353,8 +353,12 @@
         renderAccount(data);
       })
       .catch(function(err) {
-        // Not authenticated — redirect to login
-        window.location.href = '/login';
+        if (err.message === 'Session expired' || err.message === 'Still unauthorized') {
+          window.location.replace('/login?expired=1');
+          return;
+        }
+        loadingEl.hidden = true;
+        showError('Could not load your account. Please check your connection and reload the page.');
       });
   }
 
@@ -363,9 +367,11 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'x-client': 'web' },
+      body: '{}',
     })
       .then(function(res) {
-        if (!res.ok) throw new Error('Session expired');
+        if (res.status === 400 || res.status === 401) throw new Error('Session expired');
+        if (!res.ok) throw new Error('Could not refresh session');
         // Retry /me with new cookies
         return fetch(API_BASE + '/v1/me', {
           credentials: 'include',
@@ -373,7 +379,8 @@
         });
       })
       .then(function(res) {
-        if (!res.ok) throw new Error('Still unauthorized');
+        if (res.status === 401) throw new Error('Still unauthorized');
+        if (!res.ok) throw new Error('Failed to load account');
         return res.json();
       });
   }
@@ -481,6 +488,7 @@
       method: 'POST',
       credentials: 'include',
       headers: authHeaders(),
+      body: '{}',
     })
       .then(function(res) { return res.json(); })
       .then(function(data) {
@@ -501,12 +509,16 @@
 
   // ── Logout ──────────────────────────────────────────────────────
   function doLogout() {
+    var button = document.getElementById('logout-confirm-btn');
+    button.disabled = true;
     fetch(API_BASE + '/v1/auth/logout', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'x-client': 'web' },
+      body: '{}',
     })
-      .then(function() {
+      .then(function(res) {
+        if (!res.ok) throw new Error('Logout failed');
         try {
           sessionStorage.removeItem('shogun:user');
           sessionStorage.removeItem('shogun:subscription');
@@ -514,7 +526,11 @@
         window.location.href = '/login';
       })
       .catch(function() {
-        window.location.href = '/login';
+        hideLogoutConfirm();
+        showError('Could not log out. Please check your connection and try again.');
+      })
+      .finally(function() {
+        button.disabled = false;
       });
   }
 
@@ -668,6 +684,7 @@
       method: 'DELETE',
       credentials: 'include',
       headers: authHeaders(),
+      body: '{}',
     })
       .then(function(res) {
         if (res.ok || res.status === 204) {

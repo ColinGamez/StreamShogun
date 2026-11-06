@@ -359,9 +359,16 @@ details.legacy[open] summary{list-style:disclosure-open;border-bottom:none}
         headers: { 'x-client': 'web' },
       })
         .then(function(res) {
-          if (res.ok) {
-            window.location.href = '/account';
-          }
+          if (res.status !== 401) return res;
+          return fetch(API_BASE + '/v1/auth/refresh', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'x-client': 'web' },
+            body: '{}',
+          });
+        })
+        .then(function(res) {
+          if (res.ok) window.location.replace('/account');
         })
         .catch(function() {});
     }
