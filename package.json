@@ -49,7 +49,7 @@
     "build:desktop": "pnpm --filter @stream-shogun/desktop build",
     "test": "pnpm test:site && pnpm test:release && pnpm --filter @stream-shogun/core test && pnpm --filter @stream-shogun/ui test && pnpm --filter @stream-shogun/desktop test && pnpm --filter @stream-shogun/api test",
     "test:site": "node --test scripts/site-auth.test.cjs scripts/site-checkout.test.cjs",
-    "test:release": "node --test scripts/verify-release-artifacts.test.cjs scripts/merge-mac-update-info.test.cjs scripts/prepare-electron-dist.test.cjs apps/desktop/scripts/mac-signing.check.mjs",
+    "test:release": "node --test scripts/verify-release-artifacts.test.cjs scripts/merge-mac-update-info.test.cjs scripts/prepare-electron-dist.test.cjs scripts/prepare-builder-tools.test.cjs apps/desktop/scripts/mac-signing.check.mjs",
     "prisma:generate": "pnpm --filter @stream-shogun/api exec prisma generate",
     "typecheck": "pnpm --filter @stream-shogun/shared build && pnpm --filter @stream-shogun/core build && pnpm prisma:generate && pnpm --filter @stream-shogun/ui exec tsc --noEmit && pnpm --filter @stream-shogun/desktop exec tsc --noEmit && pnpm --filter @stream-shogun/api exec tsc --noEmit",
     "lint": "eslint \"apps/**/*.{ts,tsx}\" \"packages/**/*.ts\" --cache",

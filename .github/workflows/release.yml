@@ -75,6 +75,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/prepare-electron-dist.cjs
 
+      - name: Cache verified official packaging tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-builder-tools.cjs
+
       - name: Prepare macOS signing
         if: runner.os == 'macOS'
         env:
