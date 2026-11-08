@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_PLAYBACK_RETRIES,
+  normalizePlaybackVolume,
+  describePlaybackFailure,
+  shouldRetryPlaybackFailure,
   classifyPlaybackSource,
   isPlayableMediaUrl,
   nextPlaybackRetry,
@@ -80,5 +83,58 @@ describe("playback retry policy", () => {
     for (let attempt = 0; attempt < 10_000; attempt += 1) {
       expect(nextPlaybackRetry(attempt).delayMs).toBeLessThanOrEqual(8_000);
     }
+  });
+});
+
+describe("playback failure guidance", () => {
+  it.each([401, 403])("does not retry denied access (%s)", (status) => {
+    const failure = { kind: "network" as const, status };
+    expect(shouldRetryPlaybackFailure(failure)).toBe(false);
+    expect(describePlaybackFailure(failure)).toContain("Access to this stream was denied");
+  });
+  it.each([404, 410])("explains unavailable playlist links (%s)", (status) => {
+    const failure = { kind: "network" as const, status };
+    expect(shouldRetryPlaybackFailure(failure)).toBe(false);
+    expect(describePlaybackFailure(failure)).toContain("Refresh your playlist");
+  });
+  it.each([0, 408, 429, 500, 502, 503, 504])(
+    "allows bounded retries for transient network errors (%s)",
+    (status) => {
+      expect(shouldRetryPlaybackFailure({ kind: "network", status })).toBe(true);
+    },
+  );
+  it.each([3, 4])("explains native decode/format failures (%s)", (mediaCode) => {
+    const failure = { kind: "native" as const, mediaCode };
+    expect(shouldRetryPlaybackFailure(failure)).toBe(false);
+    expect(describePlaybackFailure(failure)).toContain("format is unsupported");
+  });
+  it("does not treat an aborted native request as a network retry", () => {
+    expect(shouldRetryPlaybackFailure({ kind: "native", mediaCode: 1 })).toBe(false);
+    expect(shouldRetryPlaybackFailure({ kind: "native", mediaCode: 2 })).toBe(true);
+  });
+  it("provides safe timeout and media guidance", () => {
+    expect(describePlaybackFailure({ kind: "timeout" })).toContain("stopped responding");
+    expect(describePlaybackFailure({ kind: "media" })).toContain("could not be decoded");
+    expect(describePlaybackFailure({ kind: "network", status: 500 })).toContain(
+      "Check your connection",
+    );
+  });
+});
+
+describe("persisted playback volume", () => {
+  it.each([null, "", " ", "NaN", "Infinity", "broken", "0.5invalid"])(
+    "falls back safely for %s",
+    (value) => {
+      expect(normalizePlaybackVolume(value)).toBe(0.8);
+    },
+  );
+  it.each([
+    ["0", 0],
+    ["0.35", 0.35],
+    ["1", 1],
+    ["-5", 0],
+    ["50", 1],
+  ])("clamps valid values (%s)", (value, expected) => {
+    expect(normalizePlaybackVolume(String(value))).toBe(expected);
   });
 });

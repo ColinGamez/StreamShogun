@@ -11,11 +11,11 @@
 import { useRef, useEffect, useState, useCallback, type RefObject } from "react";
 import Hls, { type ErrorData, type Events, type HlsConfig } from "hls.js";
 import {
-  MAX_PLAYBACK_RETRIES,
   classifyPlaybackSource,
+  normalizePlaybackVolume,
   isPlayableMediaUrl,
-  nextPlaybackRetry,
 } from "../lib/playback-policy";
+import { createPlaybackSession } from "../lib/playback-session";
 
 // ── Public interface ──────────────────────────────────────────────────
 
@@ -87,12 +87,15 @@ export function HlsPlayer({
   const [buffering, setBuffering] = useState(false);
   const [resolution, setResolution] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [terminalError, setTerminalError] = useState(false);
+  const [retryGeneration, setRetryGeneration] = useState(0);
+  const manualRetrySource = useRef<string | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(true);
 
   // ── Custom control state ────────────────────────────────────────────
   const [volume, setVolume] = useState(() => {
     try {
-      return parseFloat(localStorage.getItem("shogun:volume") ?? "0.8");
+      return normalizePlaybackVolume(localStorage.getItem("shogun:volume"));
     } catch {
       return 0.8;
     }
@@ -108,8 +111,6 @@ export function HlsPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Track retry state across re-renders without triggering them
-  const retryCount = useRef(0);
-  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const overlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -228,256 +229,178 @@ export function HlsPlayer({
   // ── Core attach / cleanup ───────────────────────────────────────────
   useEffect(() => {
     const video = videoEl.current;
-    if (!video || !src) {
-      setResolution("");
-      setErrorMsg("");
-      setBuffering(false);
-      setQualityLevels([]);
-      setAudioTracks([]);
-      return;
-    }
-
-    // Reject non-playable schemes up front (rtmp://, javascript:, …) with a
-    // clear error instead of a silent black screen.
-    if (!isPlayableMediaUrl(src)) {
-      const msg = "This stream protocol is not supported in the desktop player.";
-      setBuffering(false);
-      setErrorMsg(msg);
-      latest.current.onFatalError?.(msg);
-      return;
-    }
-
-    // Reset per-source state
-    retryCount.current = 0;
-    setErrorMsg("");
     setResolution("");
-    setBuffering(true);
+    setErrorMsg("");
+    setTerminalError(false);
+    setIsPlaying(false);
     setQualityLevels([]);
     setAudioTracks([]);
     setCurrentQuality(-1);
+    setCurrentAudioTrack(0);
+    setShowQualityMenu(false);
+    setShowAudioMenu(false);
+    if (!video || !src) {
+      setBuffering(false);
+      return;
+    }
+    if (!isPlayableMediaUrl(src)) {
+      const message = "This stream protocol is not supported in the desktop player.";
+      setBuffering(false);
+      setErrorMsg(message);
+      latest.current.onFatalError?.(message);
+      return;
+    }
     flashOverlay();
-
-    let destroyed = false;
-
-    const clearRetryTimer = () => {
-      if (retryTimer.current) {
-        clearTimeout(retryTimer.current);
-        retryTimer.current = null;
-      }
-    };
-
+    let hls: Hls | null = null;
     const destroyHls = () => {
-      clearRetryTimer();
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
+      const instance = hls;
+      hls = null;
+      hlsRef.current = null;
+      instance?.destroy();
     };
-
-    // ── Track resolution from <video> events ──────────────────────────
-    const onResize = () => {
-      if (video.videoWidth && video.videoHeight) {
-        setResolution(`${video.videoWidth}×${video.videoHeight}`);
-      }
-    };
-
-    let stallTimer: ReturnType<typeof setTimeout> | null = null;
-    const clearStallTimer = () => {
-      if (stallTimer) {
-        clearTimeout(stallTimer);
-        stallTimer = null;
-      }
-    };
-    const onPlaying = () => {
-      setBuffering(false);
-      setIsPlaying(true);
-      clearStallTimer();
-      onResize();
-    };
-    const onWaiting = () => {
-      setBuffering(true);
-      clearStallTimer();
-      stallTimer = setTimeout(() => {
-        if (destroyed) return;
-        const hls = hlsRef.current;
-        if (hls) {
-          console.warn("[HlsPlayer] Buffer stall – recovering");
-          hls.recoverMediaError();
-        } else if (video.currentTime > 0) {
-          video.currentTime += 0.1;
-          video.play().catch(() => {
-            /* stall nudge */
-          });
+    const playVideo = () => {
+      void video.play().catch((error: unknown) => {
+        if (session.active && error instanceof Error && error.name === "NotAllowedError") {
+          session.pause(); // Browser autoplay policy leaves the manual Play control available.
         }
-      }, 15_000);
+      });
     };
-    const onCanPlay = () => {
-      setBuffering(false);
-      clearStallTimer();
+    const retryRequested = manualRetrySource.current === src;
+    manualRetrySource.current = null;
+    const session = createPlaybackSession({
+      video,
+      autoPlay: latest.current.autoPlay || retryRequested,
+      recover: (failure) => {
+        setErrorMsg("");
+        if (hls) {
+          if (failure.kind === "media") {
+            hls.recoverMediaError();
+            playVideo();
+          } else {
+            if (failure.reloadSource) hls.loadSource(src);
+            hls.startLoad();
+          }
+        } else {
+          video.src = src;
+          video.load();
+          playVideo();
+        }
+      },
+      stop: () => {
+        destroyHls();
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      },
+      onBuffering: setBuffering,
+      onPlaying: (playing) => {
+        setIsPlaying(playing);
+        setErrorMsg("");
+      },
+      onRetry: (attempt, delayMs) => {
+        setErrorMsg(`Stream interrupted. Retrying ${attempt}/4 in ${delayMs / 1000}s...`);
+      },
+      onFailure: (message) => {
+        setErrorMsg(message);
+        setTerminalError(true);
+        latest.current.onFatalError?.(message);
+      },
+    });
+    const onResize = () => {
+      if (session.active && video.videoWidth && video.videoHeight) {
+        setResolution(`${video.videoWidth}x${video.videoHeight}`);
+      }
     };
-    const onPause = () => setIsPlaying(false);
-    const onPlay = () => setIsPlaying(true);
-
     video.addEventListener("resize", onResize);
-    video.addEventListener("playing", onPlaying);
-    video.addEventListener("waiting", onWaiting);
-    video.addEventListener("canplay", onCanPlay);
-    video.addEventListener("pause", onPause);
-    video.addEventListener("play", onPlay);
-
-    // Apply persisted volume
+    video.addEventListener("playing", onResize);
     video.volume = latest.current.volume;
     video.muted = latest.current.muted;
-
+    const onNativeError = () => {
+      if (session.active && video.error?.code !== 1) {
+        session.requestRecovery({ kind: "native", mediaCode: video.error?.code });
+      }
+    };
+    // Native source assignment can synchronously raise an error.
+    video.addEventListener("error", onNativeError);
     const cleanup = () => {
-      destroyed = true;
-      clearStallTimer();
-      destroyHls();
+      session.dispose();
       video.removeEventListener("resize", onResize);
-      video.removeEventListener("playing", onPlaying);
-      video.removeEventListener("waiting", onWaiting);
-      video.removeEventListener("canplay", onCanPlay);
-      video.removeEventListener("pause", onPause);
-      video.removeEventListener("play", onPlay);
+      video.removeEventListener("playing", onResize);
+      video.removeEventListener("error", onNativeError);
+      destroyHls();
+      video.pause();
       video.removeAttribute("src");
       video.load();
     };
-
     if (classifyPlaybackSource(src) === "hls" && Hls.isSupported()) {
+      // HLS owns media error interpretation; avoid duplicate native recovery.
+      video.removeEventListener("error", onNativeError);
       const hlsConfig: Partial<HlsConfig> = {
         enableWorker: true,
         lowLatencyMode: false,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
       };
-
-      const hls = new Hls(hlsConfig);
-      hlsRef.current = hls;
-
-      // ── Populate quality levels ─────────────────────────────────────
-      hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
-        if (destroyed) return;
-        const levels: QualityLevel[] = data.levels.map((lvl, i) => ({
-          index: i,
-          label: lvl.height ? `${lvl.height}p` : `Level ${i}`,
-          width: lvl.width,
-          height: lvl.height,
-          bitrate: lvl.bitrate,
+      const instance = new Hls(hlsConfig);
+      hls = instance;
+      hlsRef.current = instance;
+      const updateAudioTracks = () => {
+        if (!session.active) return;
+        setAudioTracks(
+          instance.audioTracks.map((track, index) => ({
+            id: index,
+            label: track.name || track.lang || `Track ${index + 1}`,
+            lang: track.lang || "",
+          })),
+        );
+        setCurrentAudioTrack(instance.audioTrack);
+      };
+      instance.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+        if (!session.active) return;
+        const levels: QualityLevel[] = data.levels.map((level, index) => ({
+          index,
+          label: level.height ? `${level.height}p` : `Level ${index}`,
+          width: level.width,
+          height: level.height,
+          bitrate: level.bitrate,
         }));
-        // Sort by height descending
-        levels.sort((a, b) => b.height - a.height);
-        setQualityLevels(levels);
-
-        // Populate audio tracks
-        if (hls.audioTracks.length > 1) {
-          const tracks: AudioTrack[] = hls.audioTracks.map((t, i) => ({
-            id: i,
-            label: t.name || t.lang || `Track ${i + 1}`,
-            lang: t.lang || "",
-          }));
-          setAudioTracks(tracks);
-        }
-
-        if (latest.current.autoPlay) {
-          video.play().catch(() => {
-            /* */
+        setQualityLevels(levels.sort((a, b) => b.height - a.height));
+        updateAudioTracks();
+        if (session.wantsPlayback) playVideo();
+      });
+      instance.on(Hls.Events.LEVEL_LOADED, () => {
+        if (!session.active) return;
+        const level = instance.levels[instance.currentLevel];
+        if (level?.width && level?.height) setResolution(`${level.width}x${level.height}`);
+      });
+      instance.on(Hls.Events.AUDIO_TRACKS_UPDATED, updateAudioTracks);
+      instance.on(Hls.Events.ERROR, (_event: Events.ERROR, data: ErrorData) => {
+        if (!session.active || !data.fatal) return;
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          const status = data.response?.code;
+          // A missing live segment can recover; a missing manifest cannot.
+          const manifestError =
+            data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR ||
+            data.details === Hls.ErrorDetails.MANIFEST_LOAD_TIMEOUT;
+          session.requestRecovery({
+            kind: "network",
+            reloadSource: manifestError,
+            status: status === 401 || status === 403 || manifestError ? status : undefined,
           });
-        }
-      });
-
-      hls.on(Hls.Events.LEVEL_LOADED, () => {
-        const level = hls.levels[hls.currentLevel];
-        if (level?.width && level?.height) {
-          setResolution(`${level.width}×${level.height}`);
-        }
-      });
-
-      hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
-        if (hls.audioTracks.length > 1) {
-          const tracks: AudioTrack[] = hls.audioTracks.map((t, i) => ({
-            id: i,
-            label: t.name || t.lang || `Track ${i + 1}`,
-            lang: t.lang || "",
-          }));
-          setAudioTracks(tracks);
-        }
-      });
-
-      // ── hls.js error handling with retry ────────────────────────────
-      hls.on(Hls.Events.ERROR, (_event: Events.ERROR, data: ErrorData) => {
-        if (!data.fatal) return;
-
-        const retry = nextPlaybackRetry(retryCount.current);
-        if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retry.retry) {
-          retryCount.current = retry.attempt;
-          const delay = retry.delayMs;
-          setErrorMsg(
-            `Network error – retry ${retryCount.current}/${MAX_PLAYBACK_RETRIES} in ${(delay / 1000).toFixed(0)}s…`,
-          );
-          clearRetryTimer();
-          retryTimer.current = setTimeout(() => {
-            if (destroyed) return;
-            setErrorMsg("");
-            hls.startLoad();
-          }, delay);
-        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retry.retry) {
-          retryCount.current = retry.attempt;
-          setErrorMsg(`Media error – recovering (${retryCount.current}/${MAX_PLAYBACK_RETRIES})…`);
-          hls.recoverMediaError();
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          session.requestRecovery({ kind: "media" });
         } else {
-          const msg = `Playback failed: ${data.type} / ${data.details}`;
-          setBuffering(false);
-          setErrorMsg(msg);
-          latest.current.onFatalError?.(msg);
+          session.requestRecovery({ kind: "native", mediaCode: 4 });
         }
       });
-
-      hls.attachMedia(video);
-      hls.loadSource(src);
+      instance.attachMedia(video);
+      instance.loadSource(src);
     } else {
-      // Native playback (Safari HLS or plain mp4/ts URL)
       video.src = src;
-      if (latest.current.autoPlay) {
-        video.play().catch(() => {
-          /* */
-        });
-      }
-
-      const onNativeError = () => {
-        if (destroyed) return;
-        const retry = nextPlaybackRetry(retryCount.current);
-        if (retry.retry) {
-          retryCount.current = retry.attempt;
-          const delay = retry.delayMs;
-          setErrorMsg(
-            `Playback error – retry ${retryCount.current}/${MAX_PLAYBACK_RETRIES} in ${(delay / 1000).toFixed(0)}s…`,
-          );
-          clearRetryTimer();
-          retryTimer.current = setTimeout(() => {
-            if (destroyed) return;
-            setErrorMsg("");
-            video.src = src;
-            if (latest.current.autoPlay)
-              video.play().catch(() => {
-                /* */
-              });
-          }, delay);
-        } else {
-          setBuffering(false);
-          setErrorMsg("Playback failed after maximum retries.");
-          latest.current.onFatalError?.("Playback failed after maximum retries.");
-        }
-      };
-      video.addEventListener("error", onNativeError);
-
-      return () => {
-        cleanup();
-        video.removeEventListener("error", onNativeError);
-      };
+      if (session.wantsPlayback) playVideo();
     }
-
     return cleanup;
-  }, [src, videoEl, flashOverlay]);
+  }, [src, videoEl, flashOverlay, retryGeneration]);
 
   // Cleanup overlay timer on unmount
   useEffect(() => {
@@ -547,6 +470,17 @@ export function HlsPlayer({
         {errorMsg && (
           <div className="hls-error-banner" role="alert">
             {errorMsg}
+            {terminalError && (
+              <button
+                className="btn-secondary btn-sm"
+                onClick={() => {
+                  manualRetrySource.current = src;
+                  setRetryGeneration((generation) => generation + 1);
+                }}
+              >
+                Retry stream
+              </button>
+            )}
           </div>
         )}
 
