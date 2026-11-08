@@ -22,7 +22,7 @@ import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { build, Platform } from "electron-builder";
-import { resolveMacSigningConfig } from "./mac-signing.mjs";
+import { normalizeEmptySigningEnvironment, resolveMacSigningConfig } from "./mac-signing.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -76,6 +76,7 @@ else if (args.includes("--mac")) targets = Platform.MAC.createTarget();
 else if (args.includes("--linux")) targets = Platform.LINUX.createTarget();
 
 try {
+  normalizeEmptySigningEnvironment();
   const isMacBuild =
     args.includes("--mac") ||
     (!args.some((arg) => ["--win", "--linux"].includes(arg)) && process.platform === "darwin");

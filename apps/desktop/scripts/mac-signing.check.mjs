@@ -13,7 +13,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveMacSigningConfig } from "./mac-signing.mjs";
+import { resolveMacSigningConfig, normalizeEmptySigningEnvironment } from "./mac-signing.mjs";
 import { prepareMacSigning, cleanupMacSigning } from "./prepare-mac-signing.mjs";
 
 const pem = "-----BEGIN PRIVATE KEY-----\nfake-test-key\n-----END PRIVATE KEY-----\n";
@@ -200,3 +200,41 @@ test(
     assert.equal(existsSync(join(outside, "AuthKey.p8")), true);
   },
 );
+
+test("normalization deletes empty workflow signing values from the actual environment object", () => {
+  const env = {
+    CSC_LINK: "",
+    CSC_KEY_PASSWORD: " ",
+    CSC_NAME: "\t",
+    CSC_INSTALLER_LINK: "\n",
+    CSC_INSTALLER_KEY_PASSWORD: "",
+    APPLE_API_KEY: "",
+    APPLE_API_KEY_ID: " ",
+    APPLE_API_ISSUER: "",
+    APPLE_ID: "",
+    APPLE_APP_SPECIFIC_PASSWORD: "",
+    APPLE_TEAM_ID: "",
+    APPLE_KEYCHAIN: " ",
+    APPLE_KEYCHAIN_PROFILE: "",
+    REQUIRE_MAC_SIGNING: "false",
+    UNRELATED_EMPTY: "",
+  };
+  assert.equal(normalizeEmptySigningEnvironment(env), env);
+  assert.equal(env.CSC_LINK, undefined);
+  assert.equal(Object.hasOwn(env, "CSC_LINK"), false);
+  assert.deepEqual(env, { REQUIRE_MAC_SIGNING: "false", UNRELATED_EMPTY: "" });
+  assert.equal(resolveMacSigningConfig({ env, platform: "darwin" }).mac.identity, "-");
+});
+
+test("normalization preserves nonempty credential values exactly", () => {
+  const env = {
+    CSC_LINK: "  sensitive-certificate  ",
+    CSC_KEY_PASSWORD: " password with spaces ",
+    CSC_NAME: "-",
+    APPLE_API_KEY: "/path with spaces/key.p8",
+    REQUIRE_MAC_SIGNING: "true",
+  };
+  const before = { ...env };
+  normalizeEmptySigningEnvironment(env);
+  assert.deepEqual(env, before);
+});

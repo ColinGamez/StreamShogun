@@ -9,6 +9,31 @@ const REQUIRED = [
 ];
 const present = (value) => typeof value === "string" && value.trim().length > 0;
 
+/** GitHub substitutes missing secrets with empty strings. Builder treats a defined
+ * empty CSC_LINK as a certificate path, so remove empty optional settings in-place.
+ * Nonempty credential values must remain byte-for-byte unchanged.
+ */
+export function normalizeEmptySigningEnvironment(env = process.env) {
+  for (const name of [
+    "CSC_LINK",
+    "CSC_KEY_PASSWORD",
+    "CSC_NAME",
+    "CSC_INSTALLER_LINK",
+    "CSC_INSTALLER_KEY_PASSWORD",
+    "APPLE_API_KEY",
+    "APPLE_API_KEY_ID",
+    "APPLE_API_ISSUER",
+    "APPLE_ID",
+    "APPLE_APP_SPECIFIC_PASSWORD",
+    "APPLE_TEAM_ID",
+    "APPLE_KEYCHAIN",
+    "APPLE_KEYCHAIN_PROFILE",
+  ]) {
+    if (typeof env[name] === "string" && env[name].trim().length === 0) delete env[name];
+  }
+  return env;
+}
+
 /** Validate before electron-builder can silently skip signing/notarization. Never include values in errors. */
 export function resolveMacSigningConfig({
   env = process.env,
