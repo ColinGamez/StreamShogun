@@ -133,12 +133,41 @@
 
 <main id="main" class="timeline">
 
+  <article class="release latest" id="v0.2.2">
+    <div class="release-dot"></div>
+    <div class="release-header">
+      <span class="release-version">v0.2.2</span>
+      <span class="release-tag tag-latest">Latest</span>
+      <span class="release-date">November 8, 2026</span>
+      <button class="copy-link" data-version="v0.2.2" aria-label="Copy link to this release">
+        Copy link
+        <span class="tooltip">Copied!</span>
+      </button>
+    </div>
+    <div class="release-body">
+      <h3 class="fix">Library and guide fixes</h3>
+      <ul>
+        <li>Removing a playlist clears its channels while preserving channels shared with another playlist.</li>
+        <li>Repeated stream URLs no longer create duplicate channels during import.</li>
+        <li>Removing a browser guide restores overlapping programmes from remaining sources, including after restarting.</li>
+        <li>Empty desktop libraries clear stale channels. Failed deletions show an error and keep the library entry visible.</li>
+      </ul>
+      <h3 class="improve">Accounts and reliability</h3>
+      <ul>
+        <li>Annual billing selection survives sign-in and registration, and checkout errors explain what went wrong.</li>
+        <li>Checkout reuses unfinished sessions and safely switches plans. Subscription activation verifies Stripe status and retries temporary failures.</li>
+        <li>Updated security dependencies and added installer, updater metadata, and packaged database checks.</li>
+      </ul>
+      <p>Older browser guides saved without source ownership may need re-importing after deleting a guide. Desktop guide data remains in its local database.</p>
+      <a href="https://github.com/ColinGamez/StreamShogun/releases/tag/v0.2.2" class="release-link" target="_blank" rel="noopener">View downloads on GitHub</a>
+    </div>
+  </article>
+
   <!-- ── v0.2.1 ────────────────────────────────────────────────── -->
-  <article class="release latest" id="v0.2.1">
+  <article class="release" id="v0.2.1">
     <div class="release-dot"></div>
     <div class="release-header">
       <span class="release-version">v0.2.1</span>
-      <span class="release-tag tag-latest">Latest</span>
       <span class="release-date">October 2026</span>
       <button class="copy-link" data-version="v0.2.1" aria-label="Copy link to this release">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
