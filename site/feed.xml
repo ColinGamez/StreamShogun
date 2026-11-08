@@ -13,6 +13,17 @@
   <icon>https://streamshogun.com/favicon.svg</icon>
 
   <entry>
+    <title>v0.2.5 - Playback Recovery</title>
+    <link href="https://streamshogun.com/changelog#v0.2.5" rel="alternate" />
+    <id>https://streamshogun.com/changelog#v0.2.5</id>
+    <updated>2026-11-08T00:00:00Z</updated>
+    <summary type="html"><![CDATA[
+      <p>Bounded startup and stall waiting, a Retry stream action for the current channel, and clearer final errors for access-denied responses, missing links, and unsupported media. Player timers are cleared when changing channels or closing playback.</p>
+      <p>Playback depends on your stream source. Mac builds remain ad-hoc signed and not notarized; Apple Developer credentials are not configured.</p>
+    ]]></summary>
+  </entry>
+
+  <entry>
     <title>v0.2.4 - Local Imports and First Launch</title>
     <link href="https://streamshogun.com/changelog#v0.2.4" rel="alternate" />
     <id>https://streamshogun.com/changelog#v0.2.4</id>

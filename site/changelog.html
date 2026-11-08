@@ -133,11 +133,32 @@
 
 <main id="main" class="timeline">
 
-  <article class="release latest" id="v0.2.4">
+  <article class="release latest" id="v0.2.5">
+    <div class="release-dot"></div>
+    <div class="release-header">
+      <span class="release-version">v0.2.5</span>
+      <span class="release-tag tag-latest">Latest</span>
+      <span class="release-date">November 8, 2026</span>
+      <button class="copy-link" data-version="v0.2.5" aria-label="Copy link to this release">Copy link<span class="tooltip">Copied!</span></button>
+    </div>
+    <div class="release-body">
+      <h3 class="fix">Playback recovery</h3>
+      <ul>
+        <li>Playback stops waiting after a bounded startup or stall timeout and shows a recovery message.</li>
+        <li>Retry stream reloads the current channel without requiring you to switch channels.</li>
+        <li>Final playback errors distinguish access-denied responses, missing stream links, and unsupported media without exposing private stream details.</li>
+        <li>Playback timers are cleared when the player changes channels or closes.</li>
+      </ul>
+      <p>Playback still depends on the availability and compatibility of your stream source.</p>
+      <p>Mac builds remain ad-hoc signed and not notarized. Apple Developer credentials are not configured for this release.</p>
+      <a href="https://github.com/ColinGamez/StreamShogun/releases/tag/v0.2.5" class="release-link" target="_blank" rel="noopener">View downloads on GitHub</a>
+    </div>
+  </article>
+
+  <article class="release" id="v0.2.4">
     <div class="release-dot"></div>
     <div class="release-header">
       <span class="release-version">v0.2.4</span>
-      <span class="release-tag tag-latest">Latest</span>
       <span class="release-date">November 8, 2026</span>
       <button class="copy-link" data-version="v0.2.4" aria-label="Copy link to this release">Copy link<span class="tooltip">Copied!</span></button>
     </div>
