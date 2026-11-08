@@ -31,7 +31,7 @@
     "jose": "^6.2.4",
     "nodemailer": "^10.0.13",
     "stripe": "^20.4.0",
-    "zod": "^3.23.0"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

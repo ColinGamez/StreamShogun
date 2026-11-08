@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, 'site.js'), 'utf8');
+const siteRoot = path.join(__dirname, '..', 'site');
+const source = fs.readFileSync(path.join(siteRoot, 'site.js'), 'utf8');
 
 async function run({ account = 200, billing = 200, payload = { url: 'https://checkout.stripe.com/test' }, network = false, interval = 'monthly' } = {}) {
   let click, assigned, requests = 0;
@@ -67,7 +68,7 @@ for (const options of [{ account: 500 }, { network: true }]) {
 
 for (const page of ['login.html', 'register.html']) {
   test(page + ' preserves only supported plans through authentication', () => {
-    const html = fs.readFileSync(path.join(__dirname, page), 'utf8');
+    const html = fs.readFileSync(path.join(siteRoot, page), 'utf8');
     const start = html.indexOf('    var selectedPlan =');
     const end = html.indexOf("    var googleClientId", start);
     for (const [plan, expected] of [['yearly', '/account?plan=yearly'], ['monthly', '/account?plan=monthly'], ['https://evil.example', '/account']]) {
@@ -79,7 +80,7 @@ for (const page of ['login.html', 'register.html']) {
 }
 
 test('account confirms the annual price and sends annual checkout without starting automatically', async () => {
-  const html = fs.readFileSync(path.join(__dirname, 'account.html'), 'utf8');
+  const html = fs.readFileSync(path.join(siteRoot, 'account.html'), 'utf8');
   const button = {};
   let handler, posted;
   const context = {

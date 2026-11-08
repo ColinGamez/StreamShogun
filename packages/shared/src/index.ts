@@ -182,7 +182,7 @@ export const resetPasswordSchema = z.object({
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export const cloudSettingsSchema = z.object({
-  settings: z.record(z.unknown()),
+  settings: z.record(z.string(), z.unknown()),
 });
 export type CloudSettingsInput = z.infer<typeof cloudSettingsSchema>;
 
@@ -202,7 +202,7 @@ export type CloudHistoryItem = z.infer<typeof cloudHistoryItemSchema>;
 export const CLOUD_HISTORY_LIMIT = 50;
 
 export const cloudSyncPutSchema = z.object({
-  settings: z.record(z.string()).optional(),
+  settings: z.record(z.string(), z.string()).optional(),
   favorites: z.array(z.string()).optional(),
   history: z.array(cloudHistoryItemSchema).max(CLOUD_HISTORY_LIMIT).optional(),
   localUpdatedAt: z.string().datetime({ message: "ISO-8601 datetime required" }),

@@ -33,7 +33,9 @@ overrides:
   fast-uri@3: ^3.1.7
   fast-uri@4: ^4.1.4
   flatted: ^3.4.2
-  js-yaml: ^4.3.0
+  fast-jwt: ^6.3.1
+  js-yaml: ^4.3.2
   picomatch: ^2.3.2
   postcss: ^8.5.18
+  shell-quote: ^1.11.0
   tar: ^7.5.11

@@ -12,7 +12,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       if (err instanceof ZodError) {
         reply.code(400).send({
           error: "Validation Error",
-          message: err.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "),
+          message: err.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "),
         });
         return;
       }
