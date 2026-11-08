@@ -133,11 +133,31 @@
 
 <main id="main" class="timeline">
 
-  <article class="release latest" id="v0.2.3">
+  <article class="release latest" id="v0.2.4">
+    <div class="release-dot"></div>
+    <div class="release-header">
+      <span class="release-version">v0.2.4</span>
+      <span class="release-tag tag-latest">Latest</span>
+      <span class="release-date">November 8, 2026</span>
+      <button class="copy-link" data-version="v0.2.4" aria-label="Copy link to this release">Copy link<span class="tooltip">Copied!</span></button>
+    </div>
+    <div class="release-body">
+      <h3 class="fix">Local imports and first launch</h3>
+      <ul>
+        <li>Desktop playlist imports use a native file picker for M3U and M3U8 files, so the app receives the full file path instead of only a filename.</li>
+        <li>Desktop guide imports use a native file picker for XMLTV and compressed GZ files.</li>
+        <li>The demo playlist uses its saved playlist ID. Failed imports show an error without adding a playlist that was never saved.</li>
+        <li>Settings and Support remain accessible before you import your first playlist.</li>
+      </ul>
+      <p>Mac builds remain ad-hoc signed and not notarized. Apple Developer credentials are not configured for this release.</p>
+      <a href="https://github.com/ColinGamez/StreamShogun/releases/tag/v0.2.4" class="release-link" target="_blank" rel="noopener">View downloads on GitHub</a>
+    </div>
+  </article>
+
+  <article class="release" id="v0.2.3">
     <div class="release-dot"></div>
     <div class="release-header">
       <span class="release-version">v0.2.3</span>
-      <span class="release-tag tag-latest">Latest</span>
       <span class="release-date">November 8, 2026</span>
       <button class="copy-link" data-version="v0.2.3" aria-label="Copy link to this release">Copy link<span class="tooltip">Copied!</span></button>
     </div>
