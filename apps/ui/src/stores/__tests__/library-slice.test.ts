@@ -206,7 +206,7 @@ describe("EPG add/remove", () => {
     expect(stored("shogun:epg-index")).not.toBeNull();
   });
 
-  it("wipes EPG state when the last source is removed, keeps it otherwise", () => {
+  it("clears unassignable legacy EPG data rather than retaining deleted sources", () => {
     store.setState({
       epgEntries: [epgEntry("a"), epgEntry("b")],
       epgIndex: { ch: [programme("ch", 0, 60, "X")] },
@@ -215,13 +215,66 @@ describe("EPG add/remove", () => {
 
     store.getState().removeEpg("a");
     expect(store.getState().epgEntries.map((e) => e.id)).toEqual(["b"]);
-    expect(store.getState().epgIndex["ch"]).toHaveLength(1); // kept
+    expect(store.getState().epgIndex).toEqual({}); // legacy ownership cannot be recovered
 
     store.getState().removeEpg("b");
     expect(store.getState().epgEntries).toHaveLength(0);
     expect(store.getState().epgIndex).toEqual({});
     expect(store.getState().programmes).toEqual([]);
     expect(stored("shogun:epg-index")).toEqual({});
+  });
+});
+
+describe("EPG source ownership", () => {
+  it("restores overlapping programmes after deleting the winning source across restart", () => {
+    store.getState().addEpg(epgEntry("a"), [programme("ch", 0, 120, "Original")], {});
+    store
+      .getState()
+      .addEpg(
+        epgEntry("b"),
+        [programme("ch", 0, 120, "Override"), programme("other", 0, 60, "Only B")],
+        {},
+      );
+    expect(store.getState().epgIndex.ch[0].titles[0]).toBe("Override");
+    store = makeStore();
+    store.getState().removeEpg("b");
+    expect(store.getState().epgIndex.ch[0].titles[0]).toBe("Original");
+    expect(store.getState().epgIndex.other).toBeUndefined();
+    expect(stored("shogun:epg-source-batches")).toHaveLength(1);
+    store = makeStore();
+    expect(store.getState().epgIndex.ch[0].titles[0]).toBe("Original");
+    store.getState().removeEpg("a");
+    expect(store.getState().programmes).toEqual([]);
+    expect(stored("shogun:epg-source-batches")).toEqual([]);
+  });
+
+  it("keeps the winning source when the lower-priority guide is removed", () => {
+    store.getState().addEpg(epgEntry("a"), [programme("ch", 0, 60, "Original")], {});
+    store.getState().addEpg(epgEntry("b"), [programme("ch", 0, 60, "Override")], {});
+    store.getState().removeEpg("a");
+    expect(store.getState().epgIndex.ch[0].titles[0]).toBe("Override");
+  });
+
+  it("migrates a single legacy source when adding a new overlapping guide", () => {
+    store.setState({
+      epgEntries: [epgEntry("legacy")],
+      epgIndex: { ch: [programme("ch", 0, 60, "Legacy")] },
+    });
+    store.getState().addEpg(epgEntry("new"), [programme("ch", 0, 60, "New")], {});
+    store = makeStore();
+    store.getState().removeEpg("new");
+    expect(store.getState().epgIndex.ch[0].titles[0]).toBe("Legacy");
+  });
+
+  it("preserves the database-rebuilt guide when desktop source metadata is removed", () => {
+    windowStub.shogun = {};
+    store.setState({
+      epgEntries: [epgEntry("a"), epgEntry("b")],
+      epgIndex: { ch: [programme("ch", 0, 60, "From DB")] },
+    });
+    store.getState().removeEpg("a");
+    expect(store.getState().epgIndex.ch[0].titles[0]).toBe("From DB");
+    expect(stored("shogun:epg-source-batches")).toBeNull();
   });
 });
 

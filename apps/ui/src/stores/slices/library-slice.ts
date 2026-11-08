@@ -73,6 +73,7 @@ export interface LibrarySlice {
   removePlaylist: (id: string) => void;
 
   epgEntries: EpgEntry[];
+  epgSourceBatches: EpgSourceBatch[];
   epgIndex: SerializedEpgIndex;
   programmes: Programme[];
   addEpg: (entry: EpgEntry, programmes: Programme[], index: SerializedEpgIndex) => void;
@@ -151,6 +152,7 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
 
   // ── EPG ────────────────────────────────────────────────────────
   epgEntries: loadJson<EpgEntry[]>(P, "shogun:epg-entries", []),
+  epgSourceBatches: loadJson<EpgSourceBatch[]>(P, "shogun:epg-source-batches", []),
   epgIndex: loadJson<SerializedEpgIndex>(P, "shogun:epg-index", {}),
   programmes: loadJson<Programme[]>(P, "shogun:programmes", []),
 
@@ -158,40 +160,65 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     const id = entry.id || uid();
     const newEntry = { ...entry, id };
     const entries = [...get().epgEntries, newEntry];
-    const existingProgrammes = Object.values(get().epgIndex).flat();
+    // Preserve raw sources so deleting a higher-priority guide restores overlaps.
+    const batches = [...get().epgSourceBatches];
+    if (!window.shogun && batches.length === 0 && Object.keys(get().epgIndex).length > 0) {
+      const legacyEntries = get().epgEntries;
+      batches.push({
+        sourceId: legacyEntries.length === 1 ? legacyEntries[0].id : "legacy-unassigned",
+        sourceName: legacyEntries.length === 1 ? legacyEntries[0].name : "Legacy EPG sources",
+        programmes: Object.values(get().epgIndex).flat(),
+      });
+    }
+    batches.push({ sourceId: id, sourceName: entry.name, programmes });
     const merged = serializeMergedEpg(
-      mergeEpgSources([
-        {
-          sourceId: "existing",
-          sourceName: "Existing EPG sources",
-          programmes: existingProgrammes,
-        },
-        { sourceId: id, sourceName: entry.name, programmes },
-      ]),
+      mergeEpgSources(
+        window.shogun
+          ? [
+              {
+                sourceId: "existing",
+                sourceName: "Existing EPG sources",
+                programmes: Object.values(get().epgIndex).flat(),
+              },
+              { sourceId: id, sourceName: entry.name, programmes },
+            ]
+          : batches,
+      ),
     );
     const allProgrammes = Object.values(merged).flat();
     saveJson(P, "shogun:epg-entries", entries);
     if (!window.shogun) {
+      saveJson(P, "shogun:epg-source-batches", batches);
       saveJson(P, "shogun:programmes", allProgrammes);
       saveJson(P, "shogun:epg-index", merged);
     }
-    set({ epgEntries: entries, programmes: allProgrammes, epgIndex: merged });
+    set({
+      epgEntries: entries,
+      epgSourceBatches: window.shogun ? [] : batches,
+      programmes: allProgrammes,
+      epgIndex: merged,
+    });
   },
 
   removeEpg: (id) => {
+    if (!get().epgEntries.some((entry) => entry.id === id)) return;
     const entries = get().epgEntries.filter((e) => e.id !== id);
-    // Rebuild programmes and epgIndex from remaining entries.
-    // Since we can't easily re-derive them, clear stale state.
-    // When no EPG entries remain, wipe all EPG data.
-    if (entries.length === 0) {
-      saveJson(P, "shogun:epg-entries", entries);
-      saveJson(P, "shogun:programmes", []);
-      saveJson(P, "shogun:epg-index", {});
-      set({ epgEntries: entries, programmes: [], epgIndex: {} });
-    } else {
-      saveJson(P, "shogun:epg-entries", entries);
+    saveJson(P, "shogun:epg-entries", entries);
+    // The desktop deletion already rebuilt the guide from the database.
+    if (window.shogun) {
       set({ epgEntries: entries });
+      return;
     }
+    const remainingIds = new Set(entries.map((entry) => entry.id));
+    // Unassigned legacy caches cannot safely identify the deleted source.
+    // Drop those programmes rather than continue showing a removed guide.
+    const batches = get().epgSourceBatches.filter((batch) => remainingIds.has(batch.sourceId));
+    const index = serializeMergedEpg(mergeEpgSources(batches));
+    const programmes = Object.values(index).flat();
+    saveJson(P, "shogun:epg-source-batches", batches);
+    saveJson(P, "shogun:programmes", programmes);
+    saveJson(P, "shogun:epg-index", index);
+    set({ epgEntries: entries, epgSourceBatches: batches, programmes, epgIndex: index });
   },
 
   // ── Favorites ──────────────────────────────────────────────────

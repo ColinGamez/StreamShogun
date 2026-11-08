@@ -65,6 +65,12 @@ jobs:
       - name: Build
         run: ${{ matrix.build-cmd }}
 
+      - name: Verify installers and updater metadata
+        run: node scripts/verify-release-artifacts.cjs apps/desktop/release
+
+      - name: Smoke test packaged database
+        run: node scripts/run-packaged-smoke.cjs apps/desktop/release
+
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

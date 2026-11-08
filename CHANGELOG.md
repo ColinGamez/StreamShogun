@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-08
+
+### Fixed
+
+- Playlist imports deduplicate stream URLs, and browser playlist deletion removes owned channels while preserving shared channels.
+- Browser guide deletion rebuilds the guide from its remaining sources, including overlapping programmes and saved sessions.
+- Empty desktop databases clear stale channel caches; failed playlist and guide deletions show an error without removing the UI entry.
+- Checkout preserves annual billing through sign-in, displays service failures accurately, and verifies Stripe subscriptions before granting Pro. Failed webhooks are retried.
+- Patched JWT, YAML, validation, and development-launcher dependency advisories. Installer releases now verify updater manifests and artifact hashes before upload.
+
 ### Added
 
 - **Korean UI language** - 한국어 is now available in the language selectors

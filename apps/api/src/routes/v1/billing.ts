@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply, FastifyBaseLogger } from "fastify";
 import type Stripe from "stripe";
+import type { Prisma } from "../../../generated/prisma/index.js";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { getStripe } from "../../lib/stripe.js";
@@ -110,10 +111,20 @@ function decodeJsonBody(body: unknown): unknown {
  * Resolve or create a Stripe customer for the given user.
  * Stores `stripeCustomerId` on the subscription row.
  */
-async function getOrCreateStripeCustomer(userId: string): Promise<string> {
+async function getOrCreateStripeCustomer(
+  userId: string,
+  tx?: Prisma.TransactionClient,
+): Promise<string> {
+  if (!tx) {
+    return prisma.$transaction((transaction) => getOrCreateStripeCustomer(userId, transaction), {
+      timeout: 30_000,
+    });
+  }
+  // Serialize customer and checkout creation across tabs and API instances.
+  await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
   const stripe = getStripe();
 
-  const sub = await prisma.subscription.findUnique({
+  const sub = await tx.subscription.findUnique({
     where: { userId },
     include: { user: { select: { email: true } } },
   });
@@ -126,12 +137,15 @@ async function getOrCreateStripeCustomer(userId: string): Promise<string> {
     return sub.stripeCustomerId;
   }
 
-  const customer = await stripe.customers.create({
-    email: sub.user.email,
-    metadata: { userId },
-  });
+  const customer = await stripe.customers.create(
+    {
+      email: sub.user.email,
+      metadata: { userId },
+    },
+    { idempotencyKey: `customer:${userId}` },
+  );
 
-  await prisma.subscription.update({
+  await tx.subscription.update({
     where: { userId },
     data: { stripeCustomerId: customer.id },
   });
@@ -196,49 +210,93 @@ export async function billingRoutes(app: FastifyInstance) {
       const stripe = getStripe();
       const { sub } = request.user;
 
-      const customerId = await getOrCreateStripeCustomer(sub);
+      const outcome = await prisma.$transaction(
+        async (tx) => {
+          const customerId = await getOrCreateStripeCustomer(sub, tx);
 
-      // Use Stripe as the source of truth while subscription webhooks may
-      // still be in flight. Existing subscriptions must be managed in Portal.
-      const customerSubscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "all",
-        limit: 100,
-      });
-      if (
-        customerSubscriptions.data.some(
-          (subscription) =>
-            subscription.status !== "canceled" && subscription.status !== "incomplete_expired",
-        )
-      ) {
-        return reply.code(409).send({
-          error: "Conflict",
-          message: "You already have a subscription. Manage it in the billing portal.",
-        });
-      }
+          // Use Stripe as the source of truth while subscription webhooks may
+          // still be in flight. Existing subscriptions must be managed in Portal.
+          const customerSubscriptions = await stripe.subscriptions.list({
+            customer: customerId,
+            status: "all",
+            limit: 100,
+          });
+          if (
+            customerSubscriptions.has_more ||
+            customerSubscriptions.data.some(
+              (subscription) =>
+                subscription.status !== "canceled" && subscription.status !== "incomplete_expired",
+            )
+          ) {
+            return {
+              statusCode: 409,
+              body: {
+                error: "Conflict",
+                message: "You already have a subscription. Manage it in the billing portal.",
+              },
+            };
+          }
 
-      const base = returnUrlBase();
+          const sessions = await stripe.checkout.sessions.list({
+            customer: customerId,
+            status: "open",
+            limit: 100,
+            expand: ["data.line_items"],
+          });
+          const openSessions = sessions.data.filter((session) => session.mode === "subscription");
+          const reusableSession = openSessions.find(
+            (session) => session.line_items?.data[0]?.price?.id === priceId && session.url,
+          );
+          for (const session of openSessions) {
+            if (session.id === reusableSession?.id) continue;
+            // Never create a second payable URL. If completion wins the race,
+            // Stripe rejects expiration and this request stops before creation.
+            await stripe.checkout.sessions.expire(session.id);
+          }
+          if (sessions.has_more) {
+            throw new Error("Too many open checkout sessions to safely start checkout");
+          }
+          if (reusableSession) {
+            return { statusCode: 200, body: { url: reusableSession.url } };
+          }
 
-      // Determine if this user qualifies for a free trial.
-      // Only first-time subscribers (never had a Stripe subscription) get a trial.
-      const existingSub = await prisma.subscription.findUnique({ where: { userId: sub } });
-      const isFirstSubscription = !existingSub?.stripeSubscriptionId;
+          const base = returnUrlBase();
 
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        mode: "subscription",
-        line_items: [{ price: priceId, quantity: 1 }],
-        allow_promotion_codes: true,
-        success_url: `${base}/billing/success`,
-        cancel_url: `${base}/billing/cancel`,
-        subscription_data: {
-          metadata: { userId: sub },
-          ...(isFirstSubscription ? { trial_period_days: 7 } : {}),
+          // Determine if this user qualifies for a free trial.
+          // Only first-time subscribers (never had a Stripe subscription) get a trial.
+          const existingSub = await tx.subscription.findUnique({ where: { userId: sub } });
+          const isFirstSubscription = !existingSub?.stripeSubscriptionId;
+
+          // A stable generation key also covers ambiguous network failures:
+          // retries cannot create a second session while the first POST finishes.
+          // Completed/expired sessions advance the generation for a fresh attempt.
+          const latestSessions = await stripe.checkout.sessions.list({
+            customer: customerId,
+            limit: 1,
+          });
+          const idempotencyKey = `checkout:${customerId}:${latestSessions.data[0]?.id ?? "first"}`;
+          const session = await stripe.checkout.sessions.create(
+            {
+              customer: customerId,
+              mode: "subscription",
+              line_items: [{ price: priceId, quantity: 1 }],
+              allow_promotion_codes: true,
+              success_url: `${base}/billing/success`,
+              cancel_url: `${base}/billing/cancel`,
+              subscription_data: {
+                metadata: { userId: sub },
+                ...(isFirstSubscription ? { trial_period_days: 7 } : {}),
+              },
+              metadata: { userId: sub },
+            },
+            { idempotencyKey },
+          );
+
+          return { statusCode: 200, body: { url: session.url } };
         },
-        metadata: { userId: sub },
-      });
-
-      return reply.send({ url: session.url });
+        { timeout: 30_000 },
+      );
+      return reply.code(outcome.statusCode).send(outcome.body);
     },
   );
 
