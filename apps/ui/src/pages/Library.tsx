@@ -5,6 +5,7 @@ import type { EpgLoadResult, MasterSourceLoadResult } from "../vite-env";
 import { useAppStore, type PlaylistEntry, type EpgEntry } from "../stores/app-store";
 import { t } from "../lib/i18n";
 import {
+  pickSourceFile,
   loadPlaylistFromUrl,
   loadPlaylistFromFile,
   loadEpgFromUrl,
@@ -14,32 +15,6 @@ import {
 } from "../lib/bridge";
 import { showToast } from "../components/Toast";
 import { EPG_PRESETS } from "../lib/epg-presets";
-
-/** Open a native file dialog (Electron) or an HTML <input type="file"> fallback. */
-function pickFilePath(accept: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    // Electron exposes a file dialog via IPC – prefer it when available
-    if (
-      typeof window !== "undefined" &&
-      (window as unknown as Record<string, unknown>).__electron_bridge
-    ) {
-      // bridge.openFileDialog already returns the path; caller handles it
-    }
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = accept;
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) return resolve(null);
-      // webkitRelativePath is empty for single picks; use .name as fallback
-      const path = (file as unknown as { path?: string }).path || file.name;
-      resolve(path);
-    };
-    // User cancelled the dialog
-    input.addEventListener("cancel", () => resolve(null));
-    input.click();
-  });
-}
 
 function resolvePlaylistData(data: Playlist | MasterSourceLoadResult): Playlist | null {
   if ("source" in data) return data.playlist ?? null;
@@ -158,8 +133,10 @@ export function LibraryPage() {
   const handleAddPlaylistFile = async () => {
     setLoading("playlist-file");
     try {
-      // Use a file picker input for cross-platform compatibility
-      const path = await pickFilePath(".m3u,.m3u8,.txt");
+      // Native dialogs provide the absolute path required by the file loader.
+      const result = await pickSourceFile("playlist");
+      if (!result.ok) throw new Error(result.error);
+      const path = result.data;
       if (!path) {
         setLoading(null);
         return;
@@ -224,7 +201,9 @@ export function LibraryPage() {
   const handleAddEpgFile = async () => {
     setLoading("epg-file");
     try {
-      const path = await pickFilePath(".xml,.xmltv,.gz");
+      const result = await pickSourceFile("epg");
+      if (!result.ok) throw new Error(result.error);
+      const path = result.data;
       if (!path) {
         setLoading(null);
         return;

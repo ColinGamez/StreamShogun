@@ -113,6 +113,7 @@ export interface RefreshStatus {
 export interface ShogunAPI {
   getAppInfo: () => Promise<{ name: string; version: string }>;
   ping: () => Promise<string>;
+  pickSourceFile: (kind: "playlist" | "epg") => Promise<IpcResponse<string | null>>;
   loadPlaylistFromFile: (filePath: string) => Promise<IpcResponse<Playlist>>;
   loadPlaylistFromUrl: (url: string) => Promise<IpcResponse<Playlist>>;
   loadEpgFromFile: (filePath: string) => Promise<IpcResponse<EpgLoadResult>>;
@@ -268,6 +269,7 @@ export interface ShogunAPI {
 export interface ElectronAPI {
   getAppInfo: () => Promise<{ name: string; version: string }>;
   ping: () => Promise<string>;
+  pickSourceFile: (kind: "playlist" | "epg") => Promise<IpcResponse<string | null>>;
 }
 
 declare global {

@@ -61,7 +61,11 @@ function App() {
   const settings = useAppStore((s) => s.settings);
   const incrementAppOpen = useAppStore((s) => s.incrementAppOpen);
   const showWelcome =
-    dbReady && !welcomeDismissed && playlistEntries.length === 0 && dbPlaylists.length === 0;
+    page === "library" &&
+    dbReady &&
+    !welcomeDismissed &&
+    playlistEntries.length === 0 &&
+    dbPlaylists.length === 0;
 
   // Theme toggle (supports dark / light / system)
   useEffect(() => {

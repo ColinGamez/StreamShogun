@@ -6,6 +6,7 @@ export const IpcChannels = {
   // NOTE: GET_CONFIG/SET_CONFIG/STREAM_EVENT were removed — they never had
   // a main-process handler or preload exposure, only enum entries.
   PING: "app:ping",
+  SOURCE_PICK_FILE: "source:pick-file",
   PLAYLIST_LOAD_FILE: "playlist:load-file",
   PLAYLIST_LOAD_URL: "playlist:load-url",
   EPG_LOAD_FILE: "epg:load-file",

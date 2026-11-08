@@ -8,6 +8,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fakes = vi.hoisted(() => ({
   dbSavePlaylist: vi.fn(),
   dbListPlaylists: vi.fn(async () => ({ ok: true as const, data: [] })),
+  dbRemovePlaylist: vi.fn(),
+  dbListChannels: vi.fn(async () => ({ ok: true as const, data: [] })),
 }));
 
 vi.mock("../bridge", () => fakes);
@@ -65,7 +67,7 @@ describe("loadSampleData", () => {
     expect(s.channels).toHaveLength(5); // dedupe by URL
   });
 
-  it("persists via the bridge when present, and survives bridge failure", async () => {
+  it("uses the persisted ID so the sample playlist can be deleted from the desktop database", async () => {
     windowStub.shogun = {};
     fakes.dbSavePlaylist.mockResolvedValue({ ok: true, data: { id: "db-1" } });
 
@@ -76,10 +78,49 @@ describe("loadSampleData", () => {
       "built-in://sample",
       expect.arrayContaining([expect.objectContaining({ url: expect.stringContaining("https") })]),
     );
+    const entry = useAppStore.getState().playlistEntries[0];
+    expect(entry.id).toBe("db-1");
+    fakes.dbRemovePlaylist.mockImplementation(async (id: string) =>
+      id === "db-1" ? { ok: true, data: null } : { ok: false, error: "Playlist not found" },
+    );
+    await useAppStore.getState().dbRemovePlaylist(entry.id);
+    useAppStore.getState().removePlaylist(entry.id);
+    expect(fakes.dbRemovePlaylist).toHaveBeenCalledWith("db-1");
+    expect(useAppStore.getState().playlistEntries).toEqual([]);
+    expect(useAppStore.getState().channels).toEqual([]);
+  });
 
-    // Bridge failure must not break first-run sample data.
+  it("does not add a phantom playlist when the desktop save rejects", async () => {
+    windowStub.shogun = {};
     fakes.dbSavePlaylist.mockRejectedValue(new Error("db down"));
-    await expect(loadSampleData()).resolves.toBeUndefined();
-    expect(useAppStore.getState().channels.length).toBeGreaterThan(0);
+    await expect(loadSampleData()).rejects.toThrow("db down");
+    expect(useAppStore.getState().playlistEntries).toEqual([]);
+    expect(useAppStore.getState().channels).toEqual([]);
+  });
+
+  it("reports a failed IPC response without adding in-memory sample data", async () => {
+    windowStub.shogun = {};
+    fakes.dbSavePlaylist.mockResolvedValue({ ok: false, error: "Disk full" });
+    await expect(loadSampleData()).rejects.toThrow("Could not save the sample playlist");
+    expect(useAppStore.getState().playlistEntries).toEqual([]);
+    expect(useAppStore.getState().channels).toEqual([]);
+  });
+
+  it("waits for persistence before showing channels", async () => {
+    windowStub.shogun = {};
+    let finish!: (row: unknown) => void;
+    fakes.dbSavePlaylist.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const loading = loadSampleData();
+    expect(useAppStore.getState().playlistEntries).toEqual([]);
+    expect(useAppStore.getState().channels).toEqual([]);
+    finish({ ok: true, data: { id: "db-deferred" } });
+    await loading;
+    expect(useAppStore.getState().playlistEntries[0].id).toBe("db-deferred");
+    expect(useAppStore.getState().channels).toHaveLength(5);
   });
 });

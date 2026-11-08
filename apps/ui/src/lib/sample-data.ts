@@ -77,14 +77,13 @@ export async function loadSampleData(): Promise<void> {
     addedAt: Date.now(),
   };
 
-  store.addPlaylist(entry, SAMPLE_CHANNELS);
-
-  // Also save to DB if bridge is available
+  // Desktop entries must use the persisted ID so deletion and reload address
+  // the same playlist. A failed save must leave the welcome screen intact.
   if (typeof window !== "undefined" && window.shogun) {
-    try {
-      await store.dbSavePlaylist(entry.name, "file", entry.location, SAMPLE_CHANNELS);
-    } catch {
-      // DB save is optional – sample data still works in-memory
-    }
+    const saved = await store.dbSavePlaylist(entry.name, "file", entry.location, SAMPLE_CHANNELS);
+    if (!saved?.id) throw new Error("Could not save the sample playlist. Please try again.");
+    entry.id = saved.id;
   }
+
+  store.addPlaylist(entry, SAMPLE_CHANNELS);
 }

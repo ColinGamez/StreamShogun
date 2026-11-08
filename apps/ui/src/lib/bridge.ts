@@ -28,6 +28,13 @@ const NO_BRIDGE: IpcResponse<never> = {
 
 // ── Original load-and-parse endpoints ─────────────────────────────────
 
+export async function pickSourceFile(
+  kind: "playlist" | "epg",
+): Promise<IpcResponse<string | null>> {
+  if (hasBridge()) return window.shogun!.pickSourceFile(kind);
+  return NO_BRIDGE;
+}
+
 export async function loadPlaylistFromUrl(url: string): Promise<IpcResponse<Playlist>> {
   if (hasBridge()) return window.shogun!.loadPlaylistFromUrl(url);
   return NO_BRIDGE;

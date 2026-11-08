@@ -229,6 +229,31 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IpcChannels.PING, () => `pong @ ${new Date().toISOString()}`);
 
+  ipcMain.handle(
+    IpcChannels.SOURCE_PICK_FILE,
+    async (_event, kind: unknown): Promise<IpcResponse<string | null>> => {
+      try {
+        if (kind !== "playlist" && kind !== "epg") {
+          throw new Error("Source kind must be playlist or epg");
+        }
+        const extensions = kind === "playlist" ? PLAYLIST_EXTENSIONS : EPG_EXTENSIONS;
+        const result = await dialog.showOpenDialog({
+          title: kind === "playlist" ? "Open playlist" : "Open programme guide",
+          properties: ["openFile"],
+          filters: [
+            {
+              name: kind === "playlist" ? "M3U playlists" : "XMLTV programme guides",
+              extensions: [...extensions].map((extension) => extension.slice(1)),
+            },
+          ],
+        });
+        return ok(result.canceled ? null : (result.filePaths[0] ?? null));
+      } catch (error) {
+        return fail(error);
+      }
+    },
+  );
+
   // ── Playlist: load from local file ──────────────────────────────
   ipcMain.handle(
     IpcChannels.PLAYLIST_LOAD_FILE,

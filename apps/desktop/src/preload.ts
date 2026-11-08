@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld("shogun", {
   ping: (): Promise<string> => ipcRenderer.invoke(IpcChannels.PING),
 
   // ── Playlists ───────────────────────────────────────────────────
+  pickSourceFile: (kind: "playlist" | "epg"): Promise<unknown> =>
+    ipcRenderer.invoke(IpcChannels.SOURCE_PICK_FILE, kind),
+
   loadPlaylistFromFile: (filePath: string): Promise<unknown> =>
     ipcRenderer.invoke(IpcChannels.PLAYLIST_LOAD_FILE, filePath),
 

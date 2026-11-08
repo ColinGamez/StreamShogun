@@ -17,6 +17,7 @@ const fakes = vi.hoisted(() => {
     isPackaged: false,
     openExternal,
     showSaveDialog: vi.fn(),
+    showOpenDialog: vi.fn(),
     db: {
       savePlaylist: vi.fn(),
       listPlaylists: vi.fn(() => []),
@@ -85,7 +86,7 @@ vi.mock("electron", () => ({
     },
   },
   shell: { openExternal: fakes.openExternal },
-  dialog: { showSaveDialog: fakes.showSaveDialog },
+  dialog: { showSaveDialog: fakes.showSaveDialog, showOpenDialog: fakes.showOpenDialog },
 }));
 
 vi.mock("../db", () => fakes.db);
@@ -144,6 +145,62 @@ describe("IPC URL validation (SSRF guard)", () => {
     // Private LAN ranges stay allowed — home IPTV servers live there.
     await invoke(IpcChannels.PLAYLIST_LOAD_URL, "http://192.168.1.10:8080/list.m3u");
     expect(fakes.fetchRaw).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("IPC native source picker", () => {
+  it.each([
+    ["playlist", "channels.m3u", ["m3u", "m3u8"]],
+    ["epg", "guide.xml.gz", ["xml", "xmltv", "gz"]],
+  ] as const)(
+    "returns the full native %s path and supported filters",
+    async (kind, filename, extensions) => {
+      const selectedPath = path.join(os.tmpdir(), "provider sources", filename);
+      expect(path.isAbsolute(selectedPath)).toBe(true);
+      fakes.showOpenDialog.mockResolvedValueOnce({ canceled: false, filePaths: [selectedPath] });
+      expect(await invoke(IpcChannels.SOURCE_PICK_FILE, kind)).toEqual({
+        ok: true,
+        data: selectedPath,
+      });
+      expect(fakes.showOpenDialog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          properties: ["openFile"],
+          filters: [expect.objectContaining({ extensions: [...extensions] })],
+        }),
+      );
+    },
+  );
+
+  it("returns null on cancellation or an empty native selection", async () => {
+    fakes.showOpenDialog.mockResolvedValueOnce({
+      canceled: true,
+      filePaths: [path.join(os.tmpdir(), "ignored.m3u")],
+    });
+    expect(await invoke(IpcChannels.SOURCE_PICK_FILE, "playlist")).toEqual({
+      ok: true,
+      data: null,
+    });
+    fakes.showOpenDialog.mockResolvedValueOnce({ canceled: false, filePaths: [] });
+    expect(await invoke(IpcChannels.SOURCE_PICK_FILE, "epg")).toEqual({ ok: true, data: null });
+  });
+
+  it.each([undefined, null, "", "video", {}, 123])(
+    "rejects invalid kind %s without opening a dialog",
+    async (kind) => {
+      expect(await invoke(IpcChannels.SOURCE_PICK_FILE, kind)).toEqual({
+        ok: false,
+        error: "Source kind must be playlist or epg",
+      });
+      expect(fakes.showOpenDialog).not.toHaveBeenCalled();
+    },
+  );
+
+  it("returns a failure response when the native dialog fails", async () => {
+    fakes.showOpenDialog.mockRejectedValueOnce(new Error("Dialog unavailable"));
+    expect(await invoke(IpcChannels.SOURCE_PICK_FILE, "playlist")).toEqual({
+      ok: false,
+      error: "Dialog unavailable",
+    });
   });
 });
 
