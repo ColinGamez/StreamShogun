@@ -13,6 +13,9 @@ $bscPackage = Join-Path $appRoot "dist\StreamShogun-roku-bsc.zip"
 
 Write-Host "Running BrighterScript validation..."
 npx --yes brighterscript --project (Join-Path $appRoot "bsconfig.json")
+if ($LASTEXITCODE -ne 0) {
+  throw "BrighterScript validation failed with exit code $LASTEXITCODE."
+}
 
 if ((Test-Path -LiteralPath $bscPackage) -and -not $KeepCompilerPackage) {
   Remove-Item -LiteralPath $bscPackage -Force
