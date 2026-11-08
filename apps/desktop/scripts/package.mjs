@@ -22,6 +22,7 @@ import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { build, Platform } from "electron-builder";
+import { resolveMacSigningConfig } from "./mac-signing.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -75,11 +76,15 @@ else if (args.includes("--mac")) targets = Platform.MAC.createTarget();
 else if (args.includes("--linux")) targets = Platform.LINUX.createTarget();
 
 try {
+  const isMacBuild =
+    args.includes("--mac") ||
+    (!args.some((arg) => ["--win", "--linux"].includes(arg)) && process.platform === "darwin");
+  const signingConfig = resolveMacSigningConfig({ isMacBuild });
   await build({
     projectDir: root,
     targets,
     // electron-builder.yml is auto-loaded from projectDir; this merges on top.
-    config: { electronVersion: electronPackage.version },
+    config: { electronVersion: electronPackage.version, ...signingConfig },
     publish: "never",
   });
 } catch (err) {

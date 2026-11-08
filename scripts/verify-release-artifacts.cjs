@@ -12,6 +12,7 @@ async function verifyReleaseArtifacts(directory, {
   arch = process.arch,
   refType,
   refName,
+  manifestName,
 } = {}) {
   if (!/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(expectedVersion || '')) {
     throw new Error('A valid expectedVersion is required');
@@ -50,7 +51,8 @@ async function verifyReleaseArtifacts(directory, {
   const expected = target.suffixes.map(artifactName);
   for (const name of expected) safeFile(name);
   if (target.blockmap) safeFile(artifactName(target.blockmap) + '.blockmap');
-  const manifest = yaml.load(fs.readFileSync(safeFile(target.manifest), 'utf8'), { schema: yaml.JSON_SCHEMA });
+  const metadataName = manifestName || target.manifest;
+  const manifest = yaml.load(fs.readFileSync(safeFile(metadataName), 'utf8'), { schema: yaml.JSON_SCHEMA });
   if (!manifest || manifest.version !== expectedVersion) throw new Error('Update manifest version does not match expectedVersion');
   if (!Array.isArray(manifest.files) || manifest.files.length === 0) throw new Error('Update manifest files are missing');
   const seen = new Set();
@@ -70,7 +72,7 @@ async function verifyReleaseArtifacts(directory, {
   if (!seen.has(updateName)) throw new Error(`Update manifest is missing ${updateName}`);
   const primary = manifest.files.find((entry) => entry.url === manifest.path);
   if (!primary || manifest.sha512 !== primary.sha512) throw new Error('Legacy manifest path/sha512 does not match a verified file');
-  return { version: expectedVersion, platform, arch, files: [...expected, target.manifest] };
+  return { version: expectedVersion, platform, arch, files: [...expected, metadataName], manifest };
 }
 
 module.exports = { verifyReleaseArtifacts };

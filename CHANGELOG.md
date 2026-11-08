@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-08
+
+### Added
+
+- Native Intel and Apple Silicon macOS installers, with a combined architecture-aware update feed.
+- Credential-gated Developer ID signing and Apple notarization configuration, including hardened-runtime entitlements and release setup documentation.
+
+### Fixed
+
+- macOS Dock activation reopens the main window even while picture-in-picture is still running. Second launches and update prompts use the main window.
+- Restored window bounds stay on a connected display after disconnecting an external monitor.
+
 ## [0.2.2] - 2026-11-08
 
 ### Fixed

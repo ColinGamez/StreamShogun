@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, session, shell } from "electron";
+import { app, BrowserWindow, dialog, screen, session, shell } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { registerIpcHandlers } from "./ipc";
@@ -7,6 +7,7 @@ import { stopScheduler } from "./scheduler";
 import { closePipWindow } from "./pip";
 import { disconnect as disconnectDiscord } from "./discord";
 import { initAutoUpdater } from "./updater";
+import { recoverWindowPlacement } from "./window-placement";
 
 // ── Determine environment ─────────────────────────────────────────────
 // process.defaultApp is set by Electron when launched in dev mode (electron .)
@@ -86,8 +87,21 @@ function saveWindowState(win: BrowserWindow, restoreBounds: Electron.Rectangle |
 }
 
 // ── Window creation ───────────────────────────────────────────────────
+let mainWindow: BrowserWindow | null = null;
+
+function showMainWindow(): void {
+  const win = mainWindow && !mainWindow.isDestroyed() ? mainWindow : createMainWindow();
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
 function createMainWindow(): BrowserWindow {
-  const saved = loadWindowState();
+  const saved = recoverWindowPlacement(
+    loadWindowState(),
+    screen.getAllDisplays().map((display) => display.workArea),
+    screen.getPrimaryDisplay().workArea,
+  );
   const win = new BrowserWindow({
     width: saved.width,
     height: saved.height,
@@ -102,6 +116,7 @@ function createMainWindow(): BrowserWindow {
       sandbox: true,
     },
   });
+  mainWindow = win;
 
   if (saved.maximized) win.maximize();
 
@@ -142,6 +157,7 @@ function createMainWindow(): BrowserWindow {
   });
   win.on("close", () => saveWindowState(win, restoreBounds));
   win.on("closed", () => {
+    if (mainWindow === win) mainWindow = null;
     if (saveTimer) clearTimeout(saveTimer);
   });
 
@@ -196,11 +212,7 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    const win = BrowserWindow.getAllWindows()[0];
-    if (win) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
-    }
+    if (app.isReady()) showMainWindow();
   });
 }
 
@@ -219,7 +231,7 @@ app.whenReady().then(() => {
     initDatabase();
     registerIpcHandlers();
     createMainWindow();
-    initAutoUpdater(() => BrowserWindow.getAllWindows()[0] ?? null);
+    initAutoUpdater(() => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null));
   } catch (err) {
     // A corrupt/locked DB or window failure previously killed startup
     // silently (only the process guards logged). Surface it loudly.
@@ -233,9 +245,7 @@ app.whenReady().then(() => {
   }
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
-    }
+    showMainWindow();
   });
 });
 
