@@ -10,16 +10,23 @@ for (const platform of ['win32', 'darwin', 'linux']) {
   for (const arch of ['x64', 'arm64']) {
     test(`resolves installed checksum pins for ${platform}/${arch}`, () => {
       const tools = requiredToolsets(platform, arch);
-      assert.equal(tools.length, platform === 'win32' ? 5 : platform === 'linux' ? 4 : 2);
+      assert.equal(tools.length, platform === 'win32' ? 5 : platform === 'linux' ? 4 : 3);
       assert.ok(tools.some((tool) => tool.filename === 'icons-bundle.tar.gz'));
       assert.ok(tools.every((tool) => /^[a-f0-9]{64}$/.test(tool.sha256)));
       const expectedReleases = ['7zip@1.0.0', 'icons@1.1.0'];
+      if (platform === 'darwin') expectedReleases.push('dmg-builder@1.2.5');
       if (platform === 'linux') expectedReleases.push('appimage-12.0.1', 'fpm@2.1.4');
       if (platform === 'win32') expectedReleases.push('winCodeSign-2.6.0', 'nsis-3.0.4.1', 'nsis-resources-3.4.1');
       assert.deepEqual(tools.map((tool) => tool.release), expectedReleases);
       const host = platform === 'win32' ? 'win' : platform;
       const toolArch = platform === 'darwin' && arch === 'x64' ? 'x86_64' : arch;
       assert.equal(tools[0].filename, `7zip-${host}-${toolArch}.tar.gz`);
+      if (platform === 'darwin') {
+        assert.equal(tools[2].filename, `dmgbuild-bundle-${toolArch}-75c8a6c.tar.gz`);
+        assert.equal(tools[2].sha256, arch === 'arm64'
+          ? '793404d0c96687e27d5ee40a668d498c92e36a64d6c2906df511031adb33cbeb'
+          : '1664972f9cc2d6e8fce3b63e42cd30078aff602669c5856939c4519921200433');
+      }
       if (platform === 'linux') assert.ok(tools.some((tool) => tool.filename === 'appimage-12.0.1.7z'));
       if (platform === 'linux') assert.equal(tools[3].filename, `fpm-1.17.0-ruby-3.4.3-linux-${arch === 'x64' ? 'amd64' : 'arm64v8'}.7z`);
     });

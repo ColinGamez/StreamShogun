@@ -16,6 +16,12 @@ function requiredToolsets(platform = process.platform, arch = process.arch) {
     ['7zip@1.0.0', `7zip-${host}-${toolArch}.tar.gz`, '7zip.js'],
     ['icons@1.1.0', 'icons-bundle.tar.gz', 'icons.js'],
   ];
+  if (platform === 'darwin') {
+    if (require('dmg-builder/package.json').version !== '26.15.3') {
+      throw new Error('DMG tool prefetch requires audited dmg-builder 26.15.3');
+    }
+    selected.push(['dmg-builder@1.2.5', `dmgbuild-bundle-${toolArch}-75c8a6c.tar.gz`, 'dmgUtil.js']);
+  }
   if (platform === 'linux') selected.push(
     ['appimage-12.0.1', 'appimage-12.0.1.7z', 'linux.js'],
     ['fpm@2.1.4', `fpm-1.17.0-ruby-3.4.3-linux-${arch === 'x64' ? 'amd64' : 'arm64v8'}.7z`, 'linux.js'],
@@ -27,7 +33,9 @@ function requiredToolsets(platform = process.platform, arch = process.arch) {
   );
   const sourceRoot = path.join(path.dirname(require.resolve('app-builder-lib/package.json')), 'out', 'toolsets');
   return selected.map(([release, filename, sourceName]) => {
-    const source = fs.readFileSync(path.join(sourceRoot, sourceName), 'utf8');
+    const sourcePath = sourceName === 'dmgUtil.js'
+      ? require.resolve('dmg-builder') : path.join(sourceRoot, sourceName);
+    const source = fs.readFileSync(sourcePath, 'utf8');
     const escaped = filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const pattern = new RegExp(`["']${escaped}["']\\s*\\]?\\s*[:,]\\s*["']([a-f0-9]{64})["']`, 'g');
     const hashes = [...source.matchAll(pattern)].map((match) => match[1]);
