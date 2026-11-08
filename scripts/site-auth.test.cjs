@@ -22,6 +22,7 @@ for (const page of ['login.html', 'register.html']) {
     let destination;
     const context = {
       API_BASE: 'https://api.example.test',
+      accountDestination: '/account',
       window: { location: { replace: (url) => { destination = url; } } },
       fetch: async (url, options) => {
         calls.push({ url, options });

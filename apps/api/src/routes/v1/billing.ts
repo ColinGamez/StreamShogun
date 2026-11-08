@@ -198,6 +198,25 @@ export async function billingRoutes(app: FastifyInstance) {
 
       const customerId = await getOrCreateStripeCustomer(sub);
 
+      // Use Stripe as the source of truth while subscription webhooks may
+      // still be in flight. Existing subscriptions must be managed in Portal.
+      const customerSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 100,
+      });
+      if (
+        customerSubscriptions.data.some(
+          (subscription) =>
+            subscription.status !== "canceled" && subscription.status !== "incomplete_expired",
+        )
+      ) {
+        return reply.code(409).send({
+          error: "Conflict",
+          message: "You already have a subscription. Manage it in the billing portal.",
+        });
+      }
+
       const base = returnUrlBase();
 
       // Determine if this user qualifies for a free trial.
@@ -577,8 +596,11 @@ export async function billingRoutes(app: FastifyInstance) {
         .catch((dbErr) => {
           request.log.warn({ err: dbErr }, "webhook: failed to record handler error");
         });
-      // Return 200 — failure is recorded; Stripe should not retry
-      return reply.code(200).send({ received: true });
+      // Acknowledge only successfully handled events so transient Stripe or
+      // database failures are retried automatically.
+      return reply
+        .code(500)
+        .send({ error: "InternalServerError", message: "Webhook processing failed" });
     }
 
     // ── Stripe failure metrics (structured log counters) ─────────
@@ -688,18 +710,12 @@ async function handleCheckoutCompleted(
   const customerId = resolveStripeId(session.customer);
 
   // Fetch subscription details from Stripe outside the transaction to avoid long row locks.
-  let billingInterval: "MONTHLY" | "YEARLY" | null = null;
-  let mappedStatus: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" = "ACTIVE";
-  let currentPeriodEnd: Date | null = null;
-  try {
-    const stripe = getStripe();
-    const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-    billingInterval = extractBillingInterval(stripeSub);
-    mappedStatus = mapStripeStatus(stripeSub.status);
-    currentPeriodEnd = extractPeriodEnd(stripeSub);
-  } catch {
-    log.warn({ ...wCtx }, "webhook.checkout: could not retrieve subscription details");
-  }
+  // Retrieval failures must propagate so Stripe retries the webhook. Never
+  // grant Pro based on an assumed status when payment cannot be verified.
+  const stripeSub = await getStripe().subscriptions.retrieve(stripeSubscriptionId);
+  const billingInterval = extractBillingInterval(stripeSub);
+  const mappedStatus = mapStripeStatus(stripeSub.status);
+  const currentPeriodEnd = extractPeriodEnd(stripeSub);
 
   return prisma.$transaction<HandlerResult>(async (tx) => {
     const existing = await tx.subscription.findUnique({ where: { userId } });

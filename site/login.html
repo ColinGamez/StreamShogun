@@ -134,6 +134,13 @@ details.legacy[open] summary{list-style:disclosure-open;border-bottom:none}
     }
 
     var API_BASE = resolveApiBase();
+    var selectedPlan = new URLSearchParams(window.location.search).get('plan');
+    var planQuery = selectedPlan === 'yearly' || selectedPlan === 'monthly'
+      ? '?plan=' + selectedPlan : '';
+    var accountDestination = '/account' + planQuery;
+    document.querySelectorAll('a[href="/login"], a[href="/register"]').forEach(function(link) {
+      link.href += planQuery;
+    });
     var googleClientId = '';
 
     var errorEl = document.getElementById('error');
@@ -157,7 +164,7 @@ details.legacy[open] summary{list-style:disclosure-open;border-bottom:none}
       if (params.get('expired') === '1') {
         showInfo('Your session expired. Please sign in again.');
       }
-      history.replaceState(null, '', '/login');
+      history.replaceState(null, '', '/login' + planQuery);
     }
 
     function setupLegacyLogin() {
@@ -192,7 +199,7 @@ details.legacy[open] summary{list-style:disclosure-open;border-bottom:none}
               return;
             }
             persistSession(result.data);
-            window.location.href = '/account';
+            window.location.href = accountDestination;
           })
           .catch(function() {
             showError('Network error. Please try again.');
@@ -293,7 +300,7 @@ details.legacy[open] summary{list-style:disclosure-open;border-bottom:none}
           }
 
           persistSession(result.data);
-          window.location.href = '/account';
+          window.location.href = accountDestination;
         })
         .catch(function() {
           legacyDetails.open = true;
@@ -317,7 +324,7 @@ details.legacy[open] summary{list-style:disclosure-open;border-bottom:none}
           });
         })
         .then(function(res) {
-          if (res.ok) window.location.replace('/account');
+          if (res.ok) window.location.replace(accountDestination);
         })
         .catch(function() {});
     }

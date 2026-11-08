@@ -309,6 +309,11 @@
   }
 
   var API_BASE = resolveApiBase();
+  var checkoutInterval = new URLSearchParams(window.location.search).get('plan') === 'yearly'
+    ? 'yearly' : 'monthly';
+  var upgradeLabel = checkoutInterval === 'yearly'
+    ? 'Upgrade to Pro - $69.99 / year' : 'Upgrade to Pro - $6.99 / month';
+  document.getElementById('upgrade-btn').textContent = upgradeLabel;
 
   var loadingEl = document.getElementById('loading');
   var contentEl = document.getElementById('account-content');
@@ -354,7 +359,7 @@
       })
       .catch(function(err) {
         if (err.message === 'Session expired' || err.message === 'Still unauthorized') {
-          window.location.replace('/login?expired=1');
+          window.location.replace('/login?expired=1&plan=' + checkoutInterval);
           return;
         }
         loadingEl.hidden = true;
@@ -459,7 +464,7 @@
       method: 'POST',
       credentials: 'include',
       headers: authHeaders(),
-      body: JSON.stringify({ interval: 'monthly' }),
+      body: JSON.stringify({ interval: checkoutInterval }),
     })
       .then(function(res) { return res.json(); })
       .then(function(data) {
@@ -468,13 +473,13 @@
         } else {
           showError('Could not create checkout session. Please try again.');
           btn.disabled = false;
-          btn.textContent = 'Upgrade to Pro';
+          btn.textContent = upgradeLabel;
         }
       })
       .catch(function() {
         showError('Network error. Please try again.');
         btn.disabled = false;
-        btn.textContent = 'Upgrade to Pro';
+        btn.textContent = upgradeLabel;
       });
   });
 

@@ -4,7 +4,7 @@
   document.documentElement.classList.add('js-ready');
   const releaseUrl = 'https://github.com/ColinGamez/StreamShogun/releases/latest';
   const apiBase = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-    ? 'http://localhost:3001/api'
+    ? `${location.origin}/api`
     : 'https://api.streamshogun.com';
 
   const platform = (() => {
@@ -42,6 +42,12 @@
   const cadence = document.querySelector('[data-pro-cadence]');
   const billed = document.querySelector('[data-pro-billed]');
   const checkout = document.querySelector('[data-checkout]');
+  const checkoutError = document.querySelector('[data-checkout-error]');
+  const showCheckoutError = (message) => {
+    if (!checkoutError) return;
+    checkoutError.textContent = message;
+    checkoutError.hidden = false;
+  };
 
   const setBilling = (interval) => {
     const yearly = interval === 'yearly';
@@ -61,6 +67,11 @@
   const modal = document.querySelector('[data-login-modal]');
   const showModal = () => {
     if (!modal) return;
+    const interval = checkout?.dataset.interval === 'yearly' ? 'yearly' : 'monthly';
+    modal.querySelectorAll('a[href^="/login"], a[href^="/register"]').forEach((link) => {
+      const path = link.getAttribute('href').split('?')[0];
+      link.setAttribute('href', `${path}?plan=${interval}`);
+    });
     modal.hidden = false;
     modal.querySelector('button')?.focus();
   };
@@ -96,20 +107,36 @@
     });
   }).catch(() => {});
   checkout?.addEventListener('click', async () => {
+    if (checkout.disabled) return;
+    checkout.disabled = true;
+    if (checkoutError) checkoutError.hidden = true;
     checkout.setAttribute('aria-busy', 'true');
     try {
       const me = await getAccount();
-      if (!me.ok) return showModal();
+      if (me.status === 401) return showModal();
+      if (!me.ok) throw new Error('Could not verify your account. Please try again.');
       const response = await fetch(`${apiBase}/v1/billing/checkout`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-client': 'web', 'X-CSRF-Token': decodeURIComponent(csrfToken()) },
         body: JSON.stringify({ interval: checkout.dataset.interval || 'monthly' }),
       });
-      const payload = await response.json();
-      if (payload.url) location.assign(payload.url); else showModal();
-    } catch { showModal(); }
-    finally { checkout.removeAttribute('aria-busy'); }
+      if (response.status === 401) return showModal();
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.url) {
+        showCheckoutError(typeof payload.message === 'string'
+          ? payload.message
+          : 'Could not start checkout. Please try again.');
+        return;
+      }
+      location.assign(payload.url);
+    } catch {
+      showCheckoutError('Could not connect to checkout. Please check your connection and try again.');
+    }
+    finally {
+      checkout.disabled = false;
+      checkout.removeAttribute('aria-busy');
+    }
   });
 
   document.querySelectorAll('.faq-item').forEach((item) => {

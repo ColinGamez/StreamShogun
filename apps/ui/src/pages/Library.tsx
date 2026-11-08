@@ -94,13 +94,21 @@ export function LibraryPage() {
   };
 
   const deletePlaylist = async (id: string): Promise<void> => {
-    if (window.shogun) await dbRemovePlaylist(id);
-    removePlaylist(id);
+    try {
+      if (window.shogun) await dbRemovePlaylist(id);
+      removePlaylist(id);
+    } catch (error) {
+      showToast(String(error), "error");
+    }
   };
 
   const deleteEpg = async (id: string): Promise<void> => {
-    if (window.shogun) await dbRemoveEpgSource(id);
-    removeEpg(id);
+    try {
+      if (window.shogun) await dbRemoveEpgSource(id);
+      removeEpg(id);
+    } catch (error) {
+      showToast(String(error), "error");
+    }
   };
 
   // ── Computed stats ──────────────────────────────────────────────────

@@ -27,6 +27,8 @@ export interface PlaylistEntry {
   location: string;
   type: "url" | "file";
   channelCount: number;
+  /** URLs owned by this import, including channels shared with other playlists. */
+  channelUrls?: string[];
   addedAt: number;
 }
 

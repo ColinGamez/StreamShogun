@@ -113,11 +113,15 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
 
   addPlaylist: (entry, channels) => {
     const id = entry.id || uid();
-    const newEntry = { ...entry, id };
+    const newEntry = { ...entry, id, channelUrls: [...new Set(channels.map((c) => c.url))] };
     const entries = [...get().playlistEntries, newEntry];
     // Deduplicate channels by URL to prevent accumulation on re-add
     const existingUrls = new Set(get().channels.map((c) => c.url));
-    const newChannels = channels.filter((c) => !existingUrls.has(c.url));
+    const newChannels = channels.filter((c) => {
+      if (existingUrls.has(c.url)) return false;
+      existingUrls.add(c.url);
+      return true;
+    });
     const allChannels = [...get().channels, ...newChannels];
     saveJson(P, "shogun:playlists", entries);
     if (!window.shogun) saveJson(P, "shogun:channels", allChannels);
@@ -128,18 +132,21 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     const removed = get().playlistEntries.find((e) => e.id === id);
     const entries = get().playlistEntries.filter((e) => e.id !== id);
     saveJson(P, "shogun:playlists", entries);
-    // If the removed entry stored a location, remove its channels too.
-    // For the in-memory path we rebuild from remaining playlists' channels.
-    // Since channels don't track which playlist they belong to, we must
-    // keep only channels whose URL still appears in a remaining playlist.
-    // However, we lack a per-playlist → channel mapping in the in-memory
-    // path, so clearing all channels from the removed entry isn't feasible.
-    // Best-effort: just persist the entry list. The DB-backed path
-    // (dbRemovePlaylist) already reloads channels correctly.
-    set({ playlistEntries: entries });
-    if (removed) {
-      saveJson(P, "shogun:playlists", entries);
-    }
+    // Older imports have no ownership metadata. Preserve their channels until
+    // the final playlist is removed; new imports can be removed precisely.
+    const remainingUrls = new Set(entries.flatMap((entry) => entry.channelUrls ?? []));
+    const removedUrls = new Set(removed?.channelUrls ?? []);
+    const hasLegacyEntry = entries.some((entry) => !entry.channelUrls);
+    const channels = window.shogun
+      ? get().channels // The DB-backed deletion already refreshed this list.
+      : entries.length === 0
+        ? []
+        : get().channels.filter(
+            (channel) =>
+              hasLegacyEntry || !removedUrls.has(channel.url) || remainingUrls.has(channel.url),
+          );
+    if (!window.shogun) saveJson(P, "shogun:channels", channels);
+    set({ playlistEntries: entries, channels });
   },
 
   // ── EPG ────────────────────────────────────────────────────────
@@ -223,7 +230,7 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
     }
 
     const chRes = await bridge.dbListChannels();
-    if (chRes.ok && chRes.data.length > 0) {
+    if (chRes.ok) {
       const dbChannels: Channel[] = chRes.data.map((r) => ({
         tvgId: r.tvgId,
         tvgName: r.name,
@@ -271,7 +278,8 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
   },
 
   dbRemovePlaylist: async (id) => {
-    await bridge.dbRemovePlaylist(id);
+    const result = await bridge.dbRemovePlaylist(id);
+    if (!result.ok) throw new Error(result.error);
     const plRes = await bridge.dbListPlaylists();
     if (plRes.ok) set({ dbPlaylists: plRes.data });
     const chRes = await bridge.dbListChannels();
@@ -300,7 +308,8 @@ export const createLibrarySlice: StateCreator<AppState, [], [], LibrarySlice> = 
   },
 
   dbRemoveEpgSource: async (id) => {
-    await bridge.dbRemoveEpgSource(id);
+    const result = await bridge.dbRemoveEpgSource(id);
+    if (!result.ok) throw new Error(result.error);
     const epgRes = await bridge.dbListEpgSources();
     if (epgRes.ok) set({ dbEpgSources: epgRes.data });
     const programmeRes = await bridge.dbListProgrammes();

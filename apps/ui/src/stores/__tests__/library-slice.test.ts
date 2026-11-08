@@ -152,6 +152,31 @@ describe("addPlaylist", () => {
   });
 });
 
+describe("playlist channel ownership", () => {
+  it("deduplicates repeated URLs within a single import", () => {
+    store.getState().addPlaylist(playlistEntry("a"), [channel("u://1"), channel("u://1")]);
+    expect(store.getState().channels.map((c) => c.url)).toEqual(["u://1"]);
+  });
+
+  it("removes only unshared channels and retains ownership after restart", () => {
+    store.getState().addPlaylist(playlistEntry("a"), [channel("u://a"), channel("u://shared")]);
+    store.getState().addPlaylist(playlistEntry("b"), [channel("u://b"), channel("u://shared")]);
+    store = makeStore();
+    store.getState().removePlaylist("a");
+    expect(store.getState().channels.map((c) => c.url)).toEqual(["u://shared", "u://b"]);
+    expect(stored("shogun:channels")).toHaveLength(2);
+    store.getState().removePlaylist("b");
+    expect(store.getState().channels).toEqual([]);
+    expect(stored("shogun:channels")).toEqual([]);
+  });
+
+  it("clears channels when deleting the last legacy playlist", () => {
+    store.setState({ playlistEntries: [playlistEntry("legacy")], channels: [channel("u://old")] });
+    store.getState().removePlaylist("legacy");
+    expect(store.getState().channels).toEqual([]);
+  });
+});
+
 describe("favorites", () => {
   it("toggles membership and persists the array form", () => {
     store.getState().toggleFavorite("u://1");
@@ -254,6 +279,18 @@ describe("initFromDb", () => {
     expect(fakes.loaders.loadLicense).toHaveBeenCalled();
   });
 
+  it("desktop path: an empty database clears stale locally cached channels", async () => {
+    windowStub.shogun = {};
+    fakes.bridge.dbListPlaylists.mockResolvedValue({ ok: true, data: [] });
+    fakes.bridge.dbListFavorites.mockResolvedValue({ ok: true, data: [] });
+    fakes.bridge.dbListEpgSources.mockResolvedValue({ ok: true, data: [] });
+    fakes.bridge.dbListProgrammes.mockResolvedValue({ ok: true, data: [] });
+    fakes.bridge.dbListChannels.mockResolvedValue({ ok: true, data: [] });
+    store.setState({ channels: [channel("u://stale")] });
+    await store.getState().initFromDb();
+    expect(store.getState().channels).toEqual([]);
+  });
+
   it("desktop path: DB channels replace local channels entirely", async () => {
     windowStub.shogun = {};
     fakes.bridge.dbListPlaylists.mockResolvedValue({ ok: true, data: [] });
@@ -283,6 +320,26 @@ describe("initFromDb", () => {
 });
 
 describe("db-backed mutations", () => {
+  it("preserves library state and reports failed database deletions", async () => {
+    store.getState().addPlaylist(playlistEntry("a"), [channel("u://a")]);
+    store.setState({ epgEntries: [epgEntry("guide")] });
+    fakes.bridge.dbRemovePlaylist.mockResolvedValueOnce({
+      ok: false,
+      error: "Disk unavailable",
+    } as never);
+    fakes.bridge.dbRemoveEpgSource.mockResolvedValueOnce({
+      ok: false,
+      error: "Disk unavailable",
+    } as never);
+    await expect(store.getState().dbRemovePlaylist("a")).rejects.toThrow("Disk unavailable");
+    await expect(store.getState().dbRemoveEpgSource("guide")).rejects.toThrow("Disk unavailable");
+    expect(store.getState().playlistEntries).toHaveLength(1);
+    expect(store.getState().channels).toHaveLength(1);
+    expect(store.getState().epgEntries).toHaveLength(1);
+    expect(fakes.bridge.dbListPlaylists).not.toHaveBeenCalled();
+    expect(fakes.bridge.dbListProgrammes).not.toHaveBeenCalled();
+  });
+
   it("dbToggleFavorite flips current state and refreshes from the DB", async () => {
     store.setState({ dbFavorites: new Set(["c1"]) });
     fakes.bridge.dbListFavorites.mockResolvedValue({ ok: true, data: [] });

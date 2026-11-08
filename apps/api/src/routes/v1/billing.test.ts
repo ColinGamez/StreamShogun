@@ -7,12 +7,19 @@ const prismaMock = {
     findUnique: vi.fn(),
   },
   subscription: {
+    findUnique: vi.fn(),
     findFirst: vi.fn(),
     upsert: vi.fn(),
   },
   auditLog: {
     create: vi.fn(),
   },
+  webhookEvent: {
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  },
+  $transaction: vi.fn(),
 };
 
 const stripeMock = {
@@ -21,7 +28,10 @@ const stripeMock = {
   },
   subscriptions: {
     list: vi.fn(),
+    retrieve: vi.fn(),
   },
+  checkout: { sessions: { create: vi.fn() } },
+  webhooks: { constructEvent: vi.fn() },
 };
 
 vi.mock("../../lib/prisma.js", () => ({
@@ -168,6 +178,81 @@ describe("billing reconcile route", () => {
       }),
     );
 
+    await app.close();
+  });
+});
+
+describe("billing checkout safety", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    prismaMock.subscription.findUnique.mockResolvedValue({
+      id: "subscription_123",
+      stripeCustomerId: "cus_123",
+      stripeSubscriptionId: null,
+    });
+    stripeMock.checkout.sessions.create.mockResolvedValue({ url: "https://checkout.example" });
+  });
+
+  it.each(["active", "trialing", "past_due", "unpaid", "paused", "incomplete"])(
+    "blocks duplicate checkout when Stripe has a %s subscription before local sync",
+    async (status) => {
+      stripeMock.subscriptions.list.mockResolvedValue({ data: [{ id: "sub_live", status }] });
+      const app = await buildTestApp();
+      const response = await app.inject({
+        method: "POST",
+        url: "/v1/billing/checkout",
+        headers: authHeader(app),
+        payload: { interval: "monthly" },
+      });
+      expect(response.statusCode).toBe(409);
+      expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
+      await app.close();
+    },
+  );
+
+  it.each([
+    { data: [] },
+    { data: [{ status: "canceled" }] },
+    { data: [{ status: "incomplete_expired" }] },
+  ])("allows checkout when no ongoing subscriptions remain (%j)", async (subscriptions) => {
+    stripeMock.subscriptions.list.mockResolvedValue(subscriptions);
+    const app = await buildTestApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/billing/checkout",
+      headers: authHeader(app),
+      payload: { interval: "monthly" },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledOnce();
+    await app.close();
+  });
+
+  it("fails the webhook for retry instead of granting Pro when Stripe retrieval fails", async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      id: "evt_checkout",
+      type: "checkout.session.completed",
+      data: {
+        object: { subscription: "sub_123", customer: "cus_123", metadata: { userId: "user_123" } },
+      },
+    });
+    stripeMock.subscriptions.retrieve.mockRejectedValue(new Error("Stripe unavailable"));
+    prismaMock.webhookEvent.findUnique.mockResolvedValue(null);
+    prismaMock.webhookEvent.create.mockResolvedValue({ id: "event_row" });
+    prismaMock.webhookEvent.update.mockResolvedValue({});
+
+    const app = await buildTestApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/billing/webhook",
+      headers: { "stripe-signature": "test_signature", "content-type": "application/json" },
+      payload: "{}",
+    });
+    expect(response.statusCode).toBe(500);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(prismaMock.webhookEvent.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "failed" }) }),
+    );
     await app.close();
   });
 });
