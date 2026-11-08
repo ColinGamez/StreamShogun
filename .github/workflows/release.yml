@@ -70,6 +70,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Download and verify official Electron distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-electron-dist.cjs
+
       - name: Prepare macOS signing
         if: runner.os == 'macOS'
         env:

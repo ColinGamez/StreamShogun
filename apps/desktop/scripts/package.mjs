@@ -84,7 +84,13 @@ try {
     projectDir: root,
     targets,
     // electron-builder.yml is auto-loaded from projectDir; this merges on top.
-    config: { electronVersion: electronPackage.version, ...signingConfig },
+    config: {
+      electronVersion: electronPackage.version,
+      ...(process.env.STREAMSHOGUN_ELECTRON_DIST
+        ? { electronDist: process.env.STREAMSHOGUN_ELECTRON_DIST }
+        : {}),
+      ...signingConfig,
+    },
     publish: "never",
   });
 } catch (err) {
