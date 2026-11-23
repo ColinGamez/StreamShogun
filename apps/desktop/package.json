@@ -23,7 +23,7 @@
   "dependencies": {
     "@stream-shogun/core": "workspace:*",
     "@stream-shogun/shared": "workspace:*",
-    "better-sqlite3": "^13.0.1",
+    "better-sqlite3": "^13.0.3",
     "electron-updater": "^6.8.9"
   },
   "devDependencies": {
